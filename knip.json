@@ -1,0 +1,7 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["index.tsx"],
+  "project": ["**/*.{ts,tsx}"],
+  "ignore": ["dist/**", "coverage/**", ".github/**", "scripts/**", "node_modules/**"],
+  "ignoreExportsUsedInFile": true
+}
