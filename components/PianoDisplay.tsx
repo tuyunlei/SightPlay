@@ -3,7 +3,8 @@ import { Note } from '../types';
 
 interface PianoDisplayProps {
   targetNote: Note | null;
-  detectedNote: Note | null;
+  detectedNote: Note | null; // For microphone input only
+  pressedKeys: Map<number, { note: Note; isCorrect: boolean }>; // For MIDI input - each key has its own frozen state
 }
 
 const START_MIDI = 36; 
@@ -12,7 +13,7 @@ const WHITE_KEY_WIDTH = 36; // Slightly narrower for cleaner look on mobile
 const BLACK_KEY_WIDTH = 20;
 const HEIGHT = 90;
 
-const PianoDisplay: React.FC<PianoDisplayProps> = ({ targetNote, detectedNote }) => {
+const PianoDisplay: React.FC<PianoDisplayProps> = ({ targetNote, detectedNote, pressedKeys }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isBlackKey = (midi: number) => [1, 3, 6, 8, 10].includes(midi % 12);
@@ -49,17 +50,24 @@ const PianoDisplay: React.FC<PianoDisplayProps> = ({ targetNote, detectedNote })
 
   const renderKey = (key: { midi: number, type: string, x: number }) => {
     const isTarget = targetNote?.midi === key.midi;
-    const isDetected = detectedNote?.midi === key.midi;
+    const pressedInfo = pressedKeys.get(key.midi); // MIDI: check if this key is pressed
+    const isMidiPressed = !!pressedInfo;
+    const isMicDetected = detectedNote?.midi === key.midi; // Microphone: single detected note
 
     // Default styles
     let fill = key.type === 'white' ? 'white' : 'url(#blackKeyGradient)';
     let stroke = key.type === 'white' ? '#e2e8f0' : '#1e293b';
 
-    // State Colors
-    if (isDetected) {
-      fill = isTarget ? '#4ade80' : '#fb7185'; // Green-400 or Rose-400
+    // State Colors - Priority: MIDI pressed > Mic detected > Target
+    if (isMidiPressed) {
+      // Use the frozen isCorrect state from when the key was pressed
+      fill = pressedInfo.isCorrect ? '#4ade80' : '#fb7185'; // Green-400 if correct, Rose-400 if wrong
+    } else if (isMicDetected) {
+      // For microphone, determine correctness in real-time
+      const micIsCorrect = isTarget;
+      fill = micIsCorrect ? '#4ade80' : '#fb7185';
     } else if (isTarget) {
-      fill = '#818cf8'; // Indigo-400
+      fill = '#818cf8'; // Indigo-400 for target
     }
 
     if (key.type === 'white') {
@@ -81,6 +89,7 @@ const PianoDisplay: React.FC<PianoDisplayProps> = ({ targetNote, detectedNote })
         </g>
       );
     } else {
+      const isHighlighted = isMidiPressed || isMicDetected || isTarget;
       return (
         <rect
           key={key.midi}
@@ -88,8 +97,8 @@ const PianoDisplay: React.FC<PianoDisplayProps> = ({ targetNote, detectedNote })
           y={0}
           width={BLACK_KEY_WIDTH}
           height={HEIGHT * 0.6}
-          fill={isDetected || isTarget ? fill : 'url(#blackKeyGradient)'}
-          stroke={isDetected || isTarget ? 'none' : '#0f172a'}
+          fill={isHighlighted ? fill : 'url(#blackKeyGradient)'}
+          stroke={isHighlighted ? 'none' : '#0f172a'}
           strokeWidth="0.5"
           rx="2" ry="2"
           className="z-10 transition-colors duration-200"

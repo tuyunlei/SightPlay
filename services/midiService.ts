@@ -1,16 +1,19 @@
 export class MidiService {
-  private midiAccess: any = null;
+  private midiAccess: MIDIAccess | null = null;
   private onNoteOnCallback: ((midiNumber: number) => void) | null = null;
+  private onNoteOffCallback: ((midiNumber: number) => void) | null = null;
   private onConnectionChangeCallback: ((isConnected: boolean) => void) | null = null;
-  private isInitializing: boolean = false;
+  private isInitializing = false;
 
   async initialize(
     onNoteOn: (midi: number) => void,
-    onConnectionChange: (isConnected: boolean) => void
+    onConnectionChange?: (isConnected: boolean) => void,
+    onNoteOff?: (midi: number) => void
   ): Promise<void> {
     // Update callbacks immediately so they are fresh
     this.onNoteOnCallback = onNoteOn;
-    this.onConnectionChangeCallback = onConnectionChange;
+    this.onNoteOffCallback = onNoteOff ?? null;
+    this.onConnectionChangeCallback = onConnectionChange ?? null;
 
     // If we already have access, just ensure inputs are bound and status is updated
     if (this.midiAccess) {
@@ -22,18 +25,18 @@ export class MidiService {
     if (this.isInitializing) return;
     this.isInitializing = true;
 
-    if (!(navigator as any).requestMIDIAccess) {
+    if (!navigator.requestMIDIAccess) {
       return;
     }
 
     try {
-      this.midiAccess = await (navigator as any).requestMIDIAccess();
+      this.midiAccess = await navigator.requestMIDIAccess();
       
       this.updateConnectionStatus();
       this.bindInputs();
 
       // Handle hot-plugging
-      this.midiAccess.onstatechange = (e: any) => {
+      this.midiAccess.onstatechange = (e: MIDIConnectionEvent) => {
         this.updateConnectionStatus();
         if (e.port.type === 'input' && e.port.state === 'connected') {
           this.bindInput(e.port);
@@ -54,7 +57,7 @@ export class MidiService {
     }
   }
 
-  private bindInput(input: any) {
+  private bindInput(input: MIDIInput) {
     // Re-binding is safe, it just replaces the handler
     input.onmidimessage = this.handleMidiMessage.bind(this);
   }
@@ -66,16 +69,17 @@ export class MidiService {
     this.onConnectionChangeCallback?.(hasInputs);
   }
 
-  private handleMidiMessage(event: any) {
+  private handleMidiMessage(event: MIDIMessageEvent) {
     const [command, note, velocity] = event.data;
-    
-    // Command 144-159 is Note On (0x90-0x9F)
-    const isNoteOn = (command & 0xF0) === 0x90;
-    
-    if (isNoteOn && velocity > 0) {
-      if (this.onNoteOnCallback) {
-        this.onNoteOnCallback(note);
-      }
+
+    const commandType = command & 0xF0;
+    const isNoteOn = commandType === 0x90 && velocity > 0;
+    const isNoteOff = commandType === 0x80 || (commandType === 0x90 && velocity === 0);
+
+    if (isNoteOn) {
+      this.onNoteOnCallback?.(note);
+    } else if (isNoteOff) {
+      this.onNoteOffCallback?.(note);
     }
   }
 }

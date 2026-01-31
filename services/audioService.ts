@@ -1,5 +1,5 @@
 import { Note } from '../types';
-import { createNoteFromMidi } from '../constants';
+import { createNoteFromMidi } from '../domain/note';
 
 export class AudioProcessor {
   private audioContext: AudioContext | null = null;
@@ -21,7 +21,7 @@ export class AudioProcessor {
         } 
       });
 
-      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
       this.analyser = this.audioContext.createAnalyser();
       this.analyser.fftSize = 4096; // Higher FFT size for better resolution at lower frequencies
       this.bufferLength = this.analyser.fftSize;
