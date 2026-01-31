@@ -1,0 +1,7 @@
+{
+  "name": "PitchPerfect AI",
+  "description": "Real-time sight-reading practice tool. Listen to your instrument or voice, detect the pitch, and check against the staff. Includes AI-generated sight-reading challenges.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
