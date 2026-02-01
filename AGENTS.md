@@ -1,10 +1,18 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI coding agents when working with code in this repository.
 
 ## Project Overview
 
-PitchPerfect AI is a music sight-singing and ear-training app built with React + TypeScript + Vite. It supports microphone pitch detection and MIDI keyboard input, and uses Gemini AI to provide intelligent coaching.
+PitchPerfect AI is a piano sight-reading practice app built with React + TypeScript + Vite. It helps users improve their ability to read sheet music and play the correct notes on the piano.
+
+**Core Features:**
+
+- **Staff display** — Shows target notes on treble or bass clef
+- **MIDI keyboard input** — Detects notes played via Web MIDI API
+- **Microphone input** — For acoustic pianos without MIDI output, uses pitch detection to identify played notes
+- **AI Coach** — Gemini AI generates personalized practice challenges (e.g., melodies, scales)
+- **Real-time feedback** — Score tracking, streak counter, "too high/too low" hints
 
 ## Common Commands
 
@@ -48,16 +56,18 @@ All user-facing copy must go through i18n (see `i18n.ts`). Do not hard-code stri
 
 | File               | Responsibility                                                       |
 | ------------------ | -------------------------------------------------------------------- |
-| `audioService.ts`  | Microphone pitch detection using autocorrelation                     |
+| `audioService.ts`  | Microphone pitch detection for acoustic pianos (autocorrelation)     |
 | `midiService.ts`   | Web MIDI API wrapper with hot-plug support                           |
 | `geminiService.ts` | Gemini AI interaction returning structured JSON (dialog + exercises) |
 
 ### Core Data Flow
 
-1. Audio input (microphone or MIDI) → pitch detection → `detectedNote`
-2. `noteQueue` stores the current queue of target notes (max 20)
-3. When the detected pitch matches the head note for 80ms → trigger `handleCorrectNote`
-4. On success, the head moves to `exitingNotes` (exit animation), and the queue is replenished
+1. User sees target note on staff
+2. User plays the note on piano (MIDI keyboard or acoustic piano via microphone)
+3. System detects the played note → `detectedNote`
+4. `noteQueue` stores the current queue of target notes (max 20)
+5. When the detected pitch matches the head note for 80ms → trigger `handleCorrectNote`
+6. On success, the head moves to `exitingNotes` (exit animation), and the queue is replenished
 
 ### Note System
 
