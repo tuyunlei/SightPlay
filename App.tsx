@@ -29,8 +29,7 @@ const App = () => {
   } = useAiCoach({
     clef: state.clef,
     lang,
-    onLoadChallenge: actions.loadChallenge,
-    onMissingApiKey: () => alert(t.apiKeyError)
+    onLoadChallenge: actions.loadChallenge
   });
 
   useEffect(() => {
