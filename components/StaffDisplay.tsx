@@ -144,13 +144,20 @@ const buildLedgers = (y: number, layout: StaffLayout) => {
   return ledgers;
 };
 
-const getNoteColor = (isExiting: boolean, index: number, status: StaffDisplayProps['status']) => {
+type NoteColorParams = {
+  isExiting: boolean;
+  index: number;
+  detectedNote: Note | null;
+  activeNote: Note | undefined;
+};
+
+const getNoteColor = ({ isExiting, index, detectedNote, activeNote }: NoteColorParams) => {
   if (isExiting) return '#22c55e';
-  if (index === 0) {
-    if (status === 'correct') return '#22c55e';
-    if (status === 'incorrect') return '#f43f5e';
-    return '#1e293b';
+  if (index === 0 && detectedNote && activeNote) {
+    // 按对了：目标音符变绿
+    if (detectedNote.midi === activeNote.midi) return '#22c55e';
   }
+  if (index === 0) return '#1e293b';
   return '#0f172a';
 };
 
@@ -161,7 +168,8 @@ type StaffNoteProps = {
   index: number;
   x: number;
   isExiting: boolean;
-  status: StaffDisplayProps['status'];
+  detectedNote: Note | null;
+  activeNote: Note | undefined;
   centerMidi: number;
   layout: StaffLayout;
 };
@@ -171,12 +179,13 @@ const StaffNote: React.FC<StaffNoteProps> = ({
   index,
   x,
   isExiting,
-  status,
+  detectedNote,
+  activeNote,
   centerMidi,
   layout,
 }) => {
   const y = getNoteY(note.midi, centerMidi, layout);
-  const color = getNoteColor(isExiting, index, status);
+  const color = getNoteColor({ isExiting, index, detectedNote, activeNote });
   const isStemUp = y > layout.STAFF_CENTER_Y;
   const ledgers = buildLedgers(y, layout);
   const showBarLine =
@@ -327,12 +336,19 @@ type NoteLayout = {
 
 type StaffNotesProps = {
   layoutNotes: NoteLayout[];
-  status: StaffDisplayProps['status'];
+  detectedNote: Note | null;
+  activeNote: Note | undefined;
   centerMidi: number;
   layout: StaffLayout;
 };
 
-const StaffNotes: React.FC<StaffNotesProps> = ({ layoutNotes, status, centerMidi, layout }) => (
+const StaffNotes: React.FC<StaffNotesProps> = ({
+  layoutNotes,
+  detectedNote,
+  activeNote,
+  centerMidi,
+  layout,
+}) => (
   <>
     {layoutNotes.map(({ note, index, x }) => (
       <StaffNote
@@ -341,7 +357,8 @@ const StaffNotes: React.FC<StaffNotesProps> = ({ layoutNotes, status, centerMidi
         index={index}
         x={x}
         isExiting={false}
-        status={status}
+        detectedNote={detectedNote}
+        activeNote={activeNote}
         centerMidi={centerMidi}
         layout={layout}
       />
@@ -364,7 +381,8 @@ const ExitingNotes: React.FC<ExitingNotesProps> = ({ exitingNotes, centerMidi, l
         index={0}
         x={layout.START_X}
         isExiting
-        status="waiting"
+        detectedNote={null}
+        activeNote={undefined}
         centerMidi={centerMidi}
         layout={layout}
       />
@@ -427,7 +445,6 @@ type StaffCanvasProps = {
   noteQueue: Note[];
   exitingNotes: Note[];
   detectedNote: Note | null;
-  status: StaffDisplayProps['status'];
   viewportWidth: number;
 };
 
@@ -436,7 +453,6 @@ const StaffCanvas: React.FC<StaffCanvasProps> = ({
   noteQueue,
   exitingNotes,
   detectedNote,
-  status,
   viewportWidth,
 }) => {
   const layout = useMemo(() => createStaffLayout(viewportWidth), [viewportWidth]);
@@ -478,7 +494,8 @@ const StaffCanvas: React.FC<StaffCanvasProps> = ({
       <StaffLines layout={layout} contentWidth={contentWidth} />
       <StaffNotes
         layoutNotes={layoutNotes}
-        status={status}
+        detectedNote={detectedNote}
+        activeNote={noteQueue[0]}
         centerMidi={centerMidi}
         layout={layout}
       />
@@ -532,7 +549,6 @@ const StaffDisplay: React.FC<StaffDisplayProps> = ({
         noteQueue={noteQueue}
         exitingNotes={exitingNotes}
         detectedNote={detectedNote}
-        status={status}
         viewportWidth={viewportWidth}
       />
       {status === 'listening' && (
