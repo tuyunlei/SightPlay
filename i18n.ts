@@ -2,7 +2,7 @@ export type Language = 'zh' | 'en';
 
 export const translations = {
   en: {
-    appTitle: 'PitchPerfect AI',
+    appTitle: 'SightPlay',
     subtitle: 'Listen. Detect. Improve.',
     score: 'Score',
     streak: 'Streak',
@@ -43,7 +43,7 @@ export const translations = {
     send: 'Send',
   },
   zh: {
-    appTitle: 'PitchPerfect AI 音准大师',
+    appTitle: '视弹 SightPlay',
     subtitle: '聆听 · 识别 · 提升',
     score: '得分',
     streak: '连胜',

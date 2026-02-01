@@ -4,7 +4,7 @@ This file provides guidance to AI coding agents when working with code in this r
 
 ## Project Overview
 
-PitchPerfect AI is a piano sight-reading practice app built with React + TypeScript + Vite. It helps users improve their ability to read sheet music and play the correct notes on the piano.
+SightPlay (视弹) is a piano sight-reading practice app built with React + TypeScript + Vite. It helps users improve their ability to read sheet music and play the correct notes on the piano.
 
 **Core Features:**
 
