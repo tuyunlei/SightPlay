@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
+import { CLEF_CENTER_MIDI } from '../config/music';
 import { ClefType, Note } from '../types';
 
 interface StaffDisplayProps {
@@ -456,7 +457,7 @@ const StaffCanvas: React.FC<StaffCanvasProps> = ({
   viewportWidth,
 }) => {
   const layout = useMemo(() => createStaffLayout(viewportWidth), [viewportWidth]);
-  const centerMidi = clef === ClefType.TREBLE ? 71 : 50;
+  const centerMidi = CLEF_CENTER_MIDI[clef];
   const availableWidth = Math.max(0, layout.VIEWPORT_WIDTH - layout.START_X - layout.RIGHT_PADDING);
   const maxFitNotes = Math.max(1, Math.floor(availableWidth / layout.NOTE_SPACING) + 1);
   const visibleCount = Math.min(noteQueue.length, maxFitNotes);

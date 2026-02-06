@@ -22,7 +22,7 @@ interface UsePracticeSessionOptions {
   onChallengeComplete?: () => void;
 }
 
-type PressedKeys = Map<number, { note: Note; isCorrect: boolean }>;
+type PressedKeys = Map<number, { note: Note; isCorrect: boolean; targetId?: string | null }>;
 
 type PracticeRefs = {
   matchTimer: MutableRefObject<number>;
@@ -34,6 +34,7 @@ type PracticeRefs = {
 
 const usePracticeStateSlice = () => {
   const clef = usePracticeStore((state) => state.clef);
+  const practiceRange = usePracticeStore((state) => state.practiceRange);
   const noteQueue = usePracticeStore((state) => state.noteQueue);
   const exitingNotes = usePracticeStore((state) => state.exitingNotes);
   const detectedNote = usePracticeStore((state) => state.detectedNote);
@@ -49,6 +50,7 @@ const usePracticeStateSlice = () => {
 
   return {
     clef,
+    practiceRange,
     noteQueue,
     exitingNotes,
     detectedNote,
@@ -68,6 +70,7 @@ const usePracticeActionsSlice = () => {
   const setClef = usePracticeStore((state) => state.setClef);
   const setIsListening = usePracticeStore((state) => state.setIsListening);
   const setIsMidiConnected = usePracticeStore((state) => state.setIsMidiConnected);
+  const setPracticeRange = usePracticeStore((state) => state.setPracticeRange);
   const setNoteQueue = usePracticeStore((state) => state.setNoteQueue);
   const setExitingNotes = usePracticeStore((state) => state.setExitingNotes);
   const setDetectedNote = usePracticeStore((state) => state.setDetectedNote);
@@ -82,6 +85,7 @@ const usePracticeActionsSlice = () => {
 
   return {
     setClef,
+    setPracticeRange,
     setIsListening,
     setIsMidiConnected,
     setNoteQueue,
@@ -119,9 +123,9 @@ const usePressedKeysState = () => {
   }, []);
 
   const addPressedKey = useCallback(
-    (midiNumber: number, note: Note, isCorrect: boolean) => {
+    (midiNumber: number, note: Note, isCorrect: boolean, targetId?: string | null) => {
       const next = new Map(pressedKeysRef.current);
-      next.set(midiNumber, { note, isCorrect });
+      next.set(midiNumber, { note, isCorrect, targetId });
       setPressedKeysValue(next);
     },
     [setPressedKeysValue]
@@ -148,21 +152,23 @@ const usePressedKeysState = () => {
 
 const useQueueInitialization = ({
   clef,
+  practiceRange,
   challengeSequenceLength,
   setNoteQueue,
   lastHitTime,
 }: {
   clef: ClefType;
+  practiceRange: PracticeStoreState['practiceRange'];
   challengeSequenceLength: number;
   setNoteQueue: PracticeActions['setNoteQueue'];
   lastHitTime: PracticeRefs['lastHitTime'];
 }) => {
   const initializeQueue = useCallback(
     (overrideClef?: ClefType) => {
-      const nextQueue = createInitialQueue(overrideClef ?? clef, DEFAULT_QUEUE_SIZE);
+      const nextQueue = createInitialQueue(overrideClef ?? clef, DEFAULT_QUEUE_SIZE, practiceRange);
       setNoteQueue(nextQueue);
     },
-    [clef, setNoteQueue]
+    [clef, practiceRange, setNoteQueue]
   );
 
   useEffect(() => {
@@ -266,7 +272,7 @@ const handleChallengeProgress = ({
     setTimeout(() => {
       setChallengeSequence([]);
       setChallengeInfo(null);
-      setNoteQueue(createInitialQueue(state.clef, DEFAULT_QUEUE_SIZE));
+      setNoteQueue(createInitialQueue(state.clef, DEFAULT_QUEUE_SIZE, state.practiceRange));
     }, TIMINGS.CHALLENGE_COMPLETE_DELAY_MS);
   }
 };
@@ -311,6 +317,7 @@ const useHandleCorrectNote = (
       clef: state.clef,
       challengeSequence: state.challengeSequence,
       challengeIndex: state.challengeIndex,
+      practiceRange: state.practiceRange,
       queueSize: DEFAULT_QUEUE_SIZE,
     });
 
@@ -395,7 +402,12 @@ const useMicNoteHandler = (
 
 const useMidiNoteHandlers = (
   setDetectedNote: PracticeActions['setDetectedNote'],
-  addPressedKey: (midiNumber: number, note: Note, isCorrect: boolean) => void,
+  addPressedKey: (
+    midiNumber: number,
+    note: Note,
+    isCorrect: boolean,
+    targetId?: string | null
+  ) => void,
   removePressedKey: (midiNumber: number) => { note: Note; isCorrect: boolean } | null,
   pressedKeysRef: MutableRefObject<PressedKeys>,
   handleCorrectNote: () => void,
@@ -411,7 +423,7 @@ const useMidiNoteHandlers = (
       const target = usePracticeStore.getState().noteQueue[0];
       const isCorrect = target ? midiNumber === target.midi : false;
 
-      addPressedKey(midiNumber, note, isCorrect);
+      addPressedKey(midiNumber, note, isCorrect, target?.id ?? null);
 
       if (target && !isCorrect) {
         hasMistakeForCurrent.current = true;
@@ -429,7 +441,8 @@ const useMidiNoteHandlers = (
 
       if (pressedInfo?.isCorrect && !isProcessingRef.current) {
         const target = usePracticeStore.getState().noteQueue[0];
-        if (target && target.midi === midiNumber) {
+        const isSameTarget = !pressedInfo.targetId || target?.id === pressedInfo.targetId;
+        if (isSameTarget && target && target.midi === midiNumber) {
           handleCorrectNote();
         }
       }
@@ -532,6 +545,7 @@ export const usePracticeSession = ({
 
   useQueueInitialization({
     clef: state.clef,
+    practiceRange: state.practiceRange,
     challengeSequenceLength: state.challengeSequence.length,
     setNoteQueue: actions.setNoteQueue,
     lastHitTime: refs.lastHitTime,
@@ -579,6 +593,7 @@ export const usePracticeSession = ({
     toggleClef,
     resetSessionStats,
     loadChallenge,
+    setPracticeRange: actions.setPracticeRange,
     setDetectedNote: actions.setDetectedNote,
     setIsListening: actions.setIsListening,
     setStatus: actions.setStatus,

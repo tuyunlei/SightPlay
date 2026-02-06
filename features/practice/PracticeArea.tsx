@@ -6,26 +6,78 @@ import StaffDisplay from '../../components/StaffDisplay';
 import { getNoteLabels } from '../../config/music';
 import { translations } from '../../i18n';
 import { PracticeStatus } from '../../store/practiceStore';
-import { ClefType, GeneratedChallenge, Note } from '../../types';
+import { ClefType, GeneratedChallenge, Note, PracticeRangeMode } from '../../types';
 
 interface PracticeAreaProps {
   clef: ClefType;
+  practiceRange: PracticeRangeMode;
   noteQueue: Note[];
   exitingNotes: Note[];
   detectedNote: Note | null;
   status: PracticeStatus;
   targetNote: Note | null;
-  pressedKeys: Map<number, { note: Note; isCorrect: boolean }>;
+  pressedKeys: Map<number, { note: Note; isCorrect: boolean; targetId?: string | null }>;
   challengeSequence: Note[];
   challengeIndex: number;
   challengeInfo: GeneratedChallenge | null;
   t: typeof translations.en;
   isMidiConnected: boolean;
+  onPracticeRangeChange: (mode: PracticeRangeMode) => void;
 }
 
 type TargetInfoProps = {
   targetNote: Note | null;
   t: typeof translations.en;
+};
+
+type PracticeRangeSelectorProps = {
+  value: PracticeRangeMode;
+  onChange: (mode: PracticeRangeMode) => void;
+  t: typeof translations.en;
+  disabled?: boolean;
+};
+
+const PracticeRangeSelector: React.FC<PracticeRangeSelectorProps> = ({
+  value,
+  onChange,
+  t,
+  disabled = false,
+}) => {
+  const options: { value: PracticeRangeMode; label: string }[] = [
+    { value: 'central', label: t.practiceRangeCentral },
+    { value: 'upper', label: t.practiceRangeUpper },
+    { value: 'combined', label: t.practiceRangeCombined },
+  ];
+
+  return (
+    <div className="px-4 pt-3 pb-2 border-b border-slate-100 dark:border-slate-800/70">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+          {t.practiceRangeLabel}
+        </span>
+      </div>
+      <div
+        className={`mt-2 inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-1 ${disabled ? 'opacity-60' : ''}`}
+      >
+        {options.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onChange(option.value)}
+            disabled={disabled}
+            aria-pressed={value === option.value}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition disabled:cursor-not-allowed ${
+              value === option.value
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-white/80 dark:hover:bg-slate-700'
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 const JianpuDots: React.FC<{ count: number; className?: string }> = ({ count, className }) => (
@@ -106,8 +158,121 @@ const FooterBar: React.FC<FooterBarProps> = ({ targetNote, t, showPiano, onToggl
   </div>
 );
 
+type PracticeMainPanelProps = {
+  clef: ClefType;
+  practiceRange: PracticeRangeMode;
+  noteQueue: Note[];
+  exitingNotes: Note[];
+  detectedNote: Note | null;
+  status: PracticeStatus;
+  targetNote: Note | null;
+  pressedKeys: Map<number, { note: Note; isCorrect: boolean; targetId?: string | null }>;
+  t: typeof translations.en;
+  isMidiConnected: boolean;
+  isChallengeActive: boolean;
+  onPracticeRangeChange: (mode: PracticeRangeMode) => void;
+};
+
+const PracticeMainPanel: React.FC<PracticeMainPanelProps> = ({
+  clef,
+  practiceRange,
+  noteQueue,
+  exitingNotes,
+  detectedNote,
+  status,
+  targetNote,
+  pressedKeys,
+  t,
+  isMidiConnected,
+  isChallengeActive,
+  onPracticeRangeChange,
+}) => {
+  const [showPiano, setShowPiano] = useState(true);
+
+  return (
+    <div className="w-full relative group">
+      {isMidiConnected && (
+        <div className="absolute -top-3 left-4 z-20 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 shadow-sm">
+          <Piano size={10} /> MIDI ACTIVE
+        </div>
+      )}
+
+      <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-slate-950/50 border border-slate-100 dark:border-slate-800 overflow-hidden">
+        <PracticeRangeSelector
+          value={practiceRange}
+          onChange={onPracticeRangeChange}
+          t={t}
+          disabled={isChallengeActive}
+        />
+        <div className="p-1 min-h-[220px]">
+          <StaffDisplay
+            clef={clef}
+            noteQueue={noteQueue}
+            exitingNotes={exitingNotes}
+            detectedNote={detectedNote}
+            status={status}
+            micLabel={t.micOn}
+          />
+        </div>
+
+        <FooterBar
+          targetNote={targetNote}
+          t={t}
+          showPiano={showPiano}
+          onTogglePiano={() => setShowPiano((prev) => !prev)}
+        />
+      </div>
+
+      <div
+        className={`w-full transition-all duration-500 ease-in-out overflow-hidden mt-2 rounded-xl shadow-lg ${showPiano ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}
+      >
+        <PianoDisplay
+          targetNote={targetNote}
+          detectedNote={detectedNote}
+          pressedKeys={pressedKeys}
+        />
+      </div>
+    </div>
+  );
+};
+
+type ChallengeProgressProps = {
+  challengeSequence: Note[];
+  challengeIndex: number;
+  challengeInfo: GeneratedChallenge | null;
+};
+
+const ChallengeProgress: React.FC<ChallengeProgressProps> = ({
+  challengeSequence,
+  challengeIndex,
+  challengeInfo,
+}) => {
+  if (challengeSequence.length === 0) return null;
+
+  return (
+    <div className="hidden lg:block bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+          <Music size={16} className="text-indigo-500" />
+          {challengeInfo?.title}
+        </span>
+        <span className="text-xs font-mono text-slate-500">
+          {challengeIndex} / {challengeSequence.length}
+        </span>
+      </div>
+      <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2">
+        <div
+          className="bg-indigo-500 h-2 rounded-full transition-all duration-500"
+          style={{ width: `${(challengeIndex / challengeSequence.length) * 100}%` }}
+        ></div>
+      </div>
+    </div>
+  );
+};
+
 const PracticeArea: React.FC<PracticeAreaProps> = ({
   clef,
+  practiceRange,
   noteQueue,
   exitingNotes,
   detectedNote,
@@ -119,68 +284,31 @@ const PracticeArea: React.FC<PracticeAreaProps> = ({
   challengeInfo,
   t,
   isMidiConnected,
+  onPracticeRangeChange,
 }) => {
-  const [showPiano, setShowPiano] = useState(true);
+  const isChallengeActive = challengeSequence.length > 0;
 
   return (
     <div className="lg:col-span-2 flex flex-col gap-4 justify-start">
-      <div className="w-full relative group">
-        {isMidiConnected && (
-          <div className="absolute -top-3 left-4 z-20 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 shadow-sm">
-            <Piano size={10} /> MIDI ACTIVE
-          </div>
-        )}
-
-        <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-slate-950/50 border border-slate-100 dark:border-slate-800 overflow-hidden">
-          <div className="p-1 min-h-[220px]">
-            <StaffDisplay
-              clef={clef}
-              noteQueue={noteQueue}
-              exitingNotes={exitingNotes}
-              detectedNote={detectedNote}
-              status={status}
-              micLabel={t.micOn}
-            />
-          </div>
-
-          <FooterBar
-            targetNote={targetNote}
-            t={t}
-            showPiano={showPiano}
-            onTogglePiano={() => setShowPiano((prev) => !prev)}
-          />
-        </div>
-
-        <div
-          className={`w-full transition-all duration-500 ease-in-out overflow-hidden mt-2 rounded-xl shadow-lg ${showPiano ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}
-        >
-          <PianoDisplay
-            targetNote={targetNote}
-            detectedNote={detectedNote}
-            pressedKeys={pressedKeys}
-          />
-        </div>
-      </div>
-
-      {challengeSequence.length > 0 && (
-        <div className="hidden lg:block bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-              <Music size={16} className="text-indigo-500" />
-              {challengeInfo?.title}
-            </span>
-            <span className="text-xs font-mono text-slate-500">
-              {challengeIndex} / {challengeSequence.length}
-            </span>
-          </div>
-          <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2">
-            <div
-              className="bg-indigo-500 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${(challengeIndex / challengeSequence.length) * 100}%` }}
-            ></div>
-          </div>
-        </div>
-      )}
+      <PracticeMainPanel
+        clef={clef}
+        practiceRange={practiceRange}
+        noteQueue={noteQueue}
+        exitingNotes={exitingNotes}
+        detectedNote={detectedNote}
+        status={status}
+        targetNote={targetNote}
+        pressedKeys={pressedKeys}
+        t={t}
+        isMidiConnected={isMidiConnected}
+        isChallengeActive={isChallengeActive}
+        onPracticeRangeChange={onPracticeRangeChange}
+      />
+      <ChallengeProgress
+        challengeSequence={challengeSequence}
+        challengeIndex={challengeIndex}
+        challengeInfo={challengeInfo}
+      />
     </div>
   );
 };

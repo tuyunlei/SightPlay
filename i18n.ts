@@ -41,6 +41,10 @@ export const translations = {
     hidePiano: 'Hide Piano',
     inputPlaceholder: 'Ask theory or request a song...',
     send: 'Send',
+    practiceRangeLabel: 'Practice Range',
+    practiceRangeCentral: 'Middle Octave',
+    practiceRangeUpper: 'Upper Octave',
+    practiceRangeCombined: 'Middle + Upper',
   },
   zh: {
     appTitle: '视弹 SightPlay',
@@ -82,5 +86,9 @@ export const translations = {
     hidePiano: '隐藏钢琴',
     inputPlaceholder: '问乐理问题或生成乐谱...',
     send: '发送',
+    practiceRangeLabel: '练习音域',
+    practiceRangeCentral: '中央八度',
+    practiceRangeUpper: '高一八度',
+    practiceRangeCombined: '中央 + 高',
   },
 };

@@ -1,4 +1,4 @@
-export type NoteName = "C" | "C#" | "D" | "D#" | "E" | "F" | "F#" | "G" | "G#" | "A" | "A#" | "B";
+export type NoteName = 'C' | 'C#' | 'D' | 'D#' | 'E' | 'F' | 'F#' | 'G' | 'G#' | 'A' | 'A#' | 'B';
 
 export interface Note {
   id: string; // Unique ID for React keys and animation
@@ -10,13 +10,15 @@ export interface Note {
 }
 
 export enum ClefType {
-  TREBLE = "treble",
-  BASS = "bass"
+  TREBLE = 'treble',
+  BASS = 'bass',
 }
+
+export type PracticeRangeMode = 'central' | 'upper' | 'combined';
 
 export interface ScaleConfig {
   root: NoteName;
-  scaleType: "major" | "minor";
+  scaleType: 'major' | 'minor';
 }
 
 export interface GeneratedChallenge {
@@ -26,12 +28,12 @@ export interface GeneratedChallenge {
 }
 
 export interface AiResponse {
-    replyText: string;
-    challengeData?: GeneratedChallenge | null;
+  replyText: string;
+  challengeData?: GeneratedChallenge | null;
 }
 
 export interface ChatMessage {
-    role: 'user' | 'ai';
-    text: string;
-    hasAction?: boolean;
+  role: 'user' | 'ai';
+  text: string;
+  hasAction?: boolean;
 }

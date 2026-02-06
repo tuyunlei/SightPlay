@@ -1,11 +1,12 @@
 import React, { useEffect, useRef } from 'react';
+
+import AiCoachPanel from './features/ai/AiCoachPanel';
 import TopBar from './features/controls/TopBar';
 import PracticeArea from './features/practice/PracticeArea';
-import AiCoachPanel from './features/ai/AiCoachPanel';
-import { usePracticeSession } from './hooks/usePracticeSession';
 import { useAiCoach } from './hooks/useAiCoach';
-import { useUiStore } from './store/uiStore';
+import { usePracticeSession } from './hooks/usePracticeSession';
 import { translations } from './i18n';
+import { useUiStore } from './store/uiStore';
 
 const App = () => {
   const lang = useUiStore((state) => state.lang);
@@ -16,22 +17,17 @@ const App = () => {
 
   const { state, derived, actions, pressedKeys } = usePracticeSession({
     onMicError: () => alert(t.micError),
-    onChallengeComplete: () => challengeCompleteRef.current()
+    onChallengeComplete: () => challengeCompleteRef.current(),
   });
 
-  const {
-    chatInput,
-    setChatInput,
-    chatHistory,
-    isLoadingAi,
-    sendMessage,
-    chatEndRef
-  } = useAiCoach({
-    clef: state.clef,
-    lang,
-    onLoadChallenge: actions.loadChallenge,
-    onMissingApiKey: () => alert(t.apiKeyError)
-  });
+  const { chatInput, setChatInput, chatHistory, isLoadingAi, sendMessage, chatEndRef } = useAiCoach(
+    {
+      clef: state.clef,
+      lang,
+      onLoadChallenge: actions.loadChallenge,
+      onMissingApiKey: () => alert(t.apiKeyError),
+    }
+  );
 
   useEffect(() => {
     challengeCompleteRef.current = () => {
@@ -62,6 +58,7 @@ const App = () => {
       <main className="relative z-10 flex-1 w-full max-w-7xl mx-auto p-4 gap-6 grid grid-cols-1 lg:grid-cols-3">
         <PracticeArea
           clef={state.clef}
+          practiceRange={state.practiceRange}
           noteQueue={state.noteQueue}
           exitingNotes={state.exitingNotes}
           detectedNote={state.detectedNote}
@@ -73,6 +70,7 @@ const App = () => {
           challengeInfo={state.challengeInfo}
           t={t}
           isMidiConnected={state.isMidiConnected}
+          onPracticeRangeChange={actions.setPracticeRange}
         />
 
         <AiCoachPanel
