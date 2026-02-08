@@ -5,6 +5,8 @@ import { defineConfig } from 'vite';
 
 import { devAuthMiddleware } from './scripts/dev-auth-middleware';
 
+const __projectRoot = path.resolve(__dirname);
+
 export default defineConfig(() => {
   return {
     server: {
@@ -16,7 +18,7 @@ export default defineConfig(() => {
       {
         name: 'dev-auth',
         configureServer(server) {
-          server.middlewares.use(devAuthMiddleware());
+          server.middlewares.use(devAuthMiddleware(__projectRoot, server));
         },
       },
     ],

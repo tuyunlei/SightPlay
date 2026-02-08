@@ -74,8 +74,9 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
       expectedChallenge: challenge,
       expectedOrigin: new URL(context.request.url).origin,
       expectedRPID: new URL(context.request.url).hostname,
+      requireUserVerification: false,
       credential: {
-        id: credential.id,  // Already base64url string
+        id: credential.id, // Already base64url string
         publicKey: base64urlToUint8Array(credential.publicKey),
         counter: credential.counter,
       },
@@ -90,9 +91,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
 
     // Update counter
     const updatedPasskeys = passkeys.map((pk) =>
-      pk.id === credential.id
-        ? { ...pk, counter: verification.authenticationInfo.newCounter }
-        : pk
+      pk.id === credential.id ? { ...pk, counter: verification.authenticationInfo.newCounter } : pk
     );
     await context.env.KV.put('passkeys', JSON.stringify(updatedPasskeys));
 

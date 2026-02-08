@@ -1,15 +1,11 @@
 import { type ReactNode } from 'react';
 
+import { AuthProvider, useAuthContext } from './AuthContext';
 import { LoginScreen } from './LoginScreen';
 import { RegisterScreen } from './RegisterScreen';
-import { useAuth } from './useAuth';
 
-interface AuthGateProps {
-  children: ReactNode;
-}
-
-export function AuthGate({ children }: AuthGateProps) {
-  const { isAuthenticated, hasPasskeys, isLoading } = useAuth();
+function AuthGateInner({ children }: { children: ReactNode }) {
+  const { isAuthenticated, hasPasskeys, isLoading } = useAuthContext();
 
   if (isLoading) {
     return (
@@ -27,4 +23,12 @@ export function AuthGate({ children }: AuthGateProps) {
   }
 
   return <>{children}</>;
+}
+
+export function AuthGate({ children }: { children: ReactNode }) {
+  return (
+    <AuthProvider>
+      <AuthGateInner>{children}</AuthGateInner>
+    </AuthProvider>
+  );
 }

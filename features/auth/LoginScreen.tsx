@@ -1,10 +1,10 @@
 import { KeyRound } from 'lucide-react';
 import { useState } from 'react';
 
-import { useAuth } from './useAuth';
+import { useAuthContext } from './AuthContext';
 
 export function LoginScreen() {
-  const { login } = useAuth();
+  const { login } = useAuthContext();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

@@ -1,10 +1,10 @@
 import { Fingerprint } from 'lucide-react';
 import { useState } from 'react';
 
-import { useAuth } from './useAuth';
+import { useAuthContext } from './AuthContext';
 
 export function RegisterScreen() {
-  const { register } = useAuth();
+  const { register } = useAuthContext();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

@@ -178,7 +178,7 @@ async function deletePasskeyById(id: string): Promise<boolean> {
   return response.ok;
 }
 
-export function PasskeyManagement({ onClose }: PasskeyManagementProps) {
+function usePasskeyManagementState() {
   const { checkSession } = useAuthContext();
   const [passkeys, setPasskeys] = useState<Passkey[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -230,6 +230,39 @@ export function PasskeyManagement({ onClose }: PasskeyManagementProps) {
       setError('Failed to remove passkey');
     }
   };
+
+  const handleCloseInvite = () => {
+    setInviteUrl(null);
+    setCopied(false);
+  };
+
+  return {
+    passkeys,
+    isLoading,
+    isGenerating,
+    inviteUrl,
+    copied,
+    error,
+    handleGenerateInvite,
+    handleCopyInvite,
+    handleRemovePasskey,
+    handleCloseInvite,
+  };
+}
+
+export function PasskeyManagement({ onClose }: PasskeyManagementProps) {
+  const {
+    passkeys,
+    isLoading,
+    isGenerating,
+    inviteUrl,
+    copied,
+    error,
+    handleGenerateInvite,
+    handleCopyInvite,
+    handleRemovePasskey,
+    handleCloseInvite,
+  } = usePasskeyManagementState();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
