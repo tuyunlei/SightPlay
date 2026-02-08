@@ -1,12 +1,15 @@
-import { ChevronDown, ChevronUp, Music, Piano } from 'lucide-react';
+import { ChevronDown, ChevronUp, Piano } from 'lucide-react';
 import React, { useState } from 'react';
 
 import PianoDisplay from '../../components/PianoDisplay';
 import StaffDisplay from '../../components/StaffDisplay';
-import { getNoteLabels } from '../../config/music';
 import { translations } from '../../i18n';
 import { PracticeStatus } from '../../store/practiceStore';
 import { ClefType, GeneratedChallenge, Note, PracticeRangeMode } from '../../types';
+
+import { ChallengeProgress } from './ChallengeProgress';
+import { PracticeRangeSelector } from './PracticeRangeSelector';
+import { TargetInfo } from './TargetInfo';
 
 interface PracticeAreaProps {
   clef: ClefType;
@@ -24,116 +27,6 @@ interface PracticeAreaProps {
   isMidiConnected: boolean;
   onPracticeRangeChange: (mode: PracticeRangeMode) => void;
 }
-
-type TargetInfoProps = {
-  targetNote: Note | null;
-  t: typeof translations.en;
-};
-
-type PracticeRangeSelectorProps = {
-  value: PracticeRangeMode;
-  onChange: (mode: PracticeRangeMode) => void;
-  t: typeof translations.en;
-  disabled?: boolean;
-};
-
-const PracticeRangeSelector: React.FC<PracticeRangeSelectorProps> = ({
-  value,
-  onChange,
-  t,
-  disabled = false,
-}) => {
-  const options: { value: PracticeRangeMode; label: string }[] = [
-    { value: 'central', label: t.practiceRangeCentral },
-    { value: 'upper', label: t.practiceRangeUpper },
-    { value: 'combined', label: t.practiceRangeCombined },
-  ];
-
-  return (
-    <div className="px-4 pt-3 pb-2 border-b border-slate-100 dark:border-slate-800/70">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-          {t.practiceRangeLabel}
-        </span>
-      </div>
-      <div
-        className={`mt-2 inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-1 ${disabled ? 'opacity-60' : ''}`}
-      >
-        {options.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => onChange(option.value)}
-            disabled={disabled}
-            aria-pressed={value === option.value}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition disabled:cursor-not-allowed ${
-              value === option.value
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-white/80 dark:hover:bg-slate-700'
-            }`}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const JianpuDots: React.FC<{ count: number; className?: string }> = ({ count, className }) => (
-  <div className={`flex items-center gap-1 ${className ?? ''}`}>
-    {Array.from({ length: count }).map((_, i) => (
-      <span key={`jianpu-dot-${i}`} className="inline-block w-1.5 h-1.5 rounded-full bg-current" />
-    ))}
-  </div>
-);
-
-const TargetInfo: React.FC<TargetInfoProps> = ({ targetNote, t }) => {
-  if (!targetNote) return <span className="text-sm font-bold">Complete!</span>;
-  const labels = getNoteLabels(targetNote.name);
-  const upDots = Math.max(0, targetNote.octave - 4);
-  const downDots = Math.max(0, 4 - targetNote.octave);
-
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 items-end gap-x-10 gap-y-3">
-      <div className="flex flex-col leading-none">
-        <span className="text-[10px] font-mono font-bold uppercase tracking-widest opacity-70 mb-1">
-          {t.noteNameLabel}
-        </span>
-        <div className="h-9 flex items-end">
-          <div className="flex items-baseline leading-none">
-            <span className="text-2xl font-black font-mono">{targetNote.name}</span>
-            <span className="text-sm font-bold opacity-60 ml-0.5">{targetNote.octave}</span>
-          </div>
-        </div>
-      </div>
-      <div className="flex flex-col leading-none">
-        <span className="text-[10px] font-mono font-bold uppercase tracking-widest opacity-70 mb-1">
-          {t.solfegeLabel}
-        </span>
-        <div className="h-9 flex items-end">
-          <span className="text-2xl font-black text-yellow-400 dark:text-indigo-600">
-            {labels.solfege}
-          </span>
-        </div>
-      </div>
-      <div className="flex flex-col items-center leading-none">
-        <span className="text-[10px] font-mono font-bold uppercase tracking-widest opacity-70 mb-1">
-          {t.jianpuLabel}
-        </span>
-        <div className="relative h-9 flex items-center justify-center">
-          {upDots > 0 && (
-            <JianpuDots count={upDots} className="absolute top-0 left-1/2 -translate-x-1/2" />
-          )}
-          <span className="text-2xl font-black opacity-90">{labels.number}</span>
-          {downDots > 0 && (
-            <JianpuDots count={downDots} className="absolute bottom-0 left-1/2 -translate-x-1/2" />
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 type FooterBarProps = {
   targetNote: Note | null;
@@ -231,40 +124,6 @@ const PracticeMainPanel: React.FC<PracticeMainPanelProps> = ({
           detectedNote={detectedNote}
           pressedKeys={pressedKeys}
         />
-      </div>
-    </div>
-  );
-};
-
-type ChallengeProgressProps = {
-  challengeSequence: Note[];
-  challengeIndex: number;
-  challengeInfo: GeneratedChallenge | null;
-};
-
-const ChallengeProgress: React.FC<ChallengeProgressProps> = ({
-  challengeSequence,
-  challengeIndex,
-  challengeInfo,
-}) => {
-  if (challengeSequence.length === 0) return null;
-
-  return (
-    <div className="hidden lg:block bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-          <Music size={16} className="text-indigo-500" />
-          {challengeInfo?.title}
-        </span>
-        <span className="text-xs font-mono text-slate-500">
-          {challengeIndex} / {challengeSequence.length}
-        </span>
-      </div>
-      <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2">
-        <div
-          className="bg-indigo-500 h-2 rounded-full transition-all duration-500"
-          style={{ width: `${(challengeIndex / challengeSequence.length) * 100}%` }}
-        ></div>
       </div>
     </div>
   );

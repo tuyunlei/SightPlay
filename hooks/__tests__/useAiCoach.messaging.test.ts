@@ -1,14 +1,13 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
-import * as geminiService from '../services/geminiService';
+import { useAiCoach } from '../useAiCoach';
 
-import { useAiCoach } from './useAiCoach';
+import { geminiService, defaultOptions } from './useAiCoach.setup';
 
+vi.mock('../../services/geminiService');
 
-vi.mock('../services/geminiService');
-
-describe('useAiCoach', () => {
+describe('useAiCoach - messaging', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -16,12 +15,6 @@ describe('useAiCoach', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
-
-  const defaultOptions = {
-    clef: 'treble',
-    lang: 'en' as const,
-    onLoadChallenge: vi.fn(() => 5),
-  };
 
   it('initializes with default AI message', () => {
     const { result } = renderHook(() => useAiCoach(defaultOptions));
@@ -198,126 +191,6 @@ describe('useAiCoach', () => {
       });
 
       expect(geminiService.chatWithAiCoach).toHaveBeenCalledWith('Generate a scale', 'bass', 'zh');
-    });
-
-    it('handles challenge data response', async () => {
-      const mockChallenge = {
-        title: 'C Major Scale',
-        notes: ['C4', 'D4', 'E4'],
-        description: 'A scale',
-      };
-      vi.mocked(geminiService.chatWithAiCoach).mockResolvedValue({
-        replyText: 'Here is a scale',
-        challengeData: mockChallenge,
-      });
-
-      const onLoadChallenge = vi.fn(() => 3);
-      const { result } = renderHook(() =>
-        useAiCoach({
-          ...defaultOptions,
-          onLoadChallenge,
-        })
-      );
-
-      await act(async () => {
-        await result.current.sendMessage('Generate a scale');
-      });
-
-      expect(onLoadChallenge).toHaveBeenCalledWith(mockChallenge);
-    });
-
-    it('adds challenge loaded message to chat', async () => {
-      const mockChallenge = {
-        title: 'C Major Scale',
-        notes: ['C4', 'D4', 'E4'],
-        description: 'A scale',
-      };
-      vi.mocked(geminiService.chatWithAiCoach).mockResolvedValue({
-        replyText: 'Here is a scale',
-        challengeData: mockChallenge,
-      });
-
-      const { result } = renderHook(() =>
-        useAiCoach({
-          ...defaultOptions,
-          onLoadChallenge: vi.fn(() => 3),
-        })
-      );
-
-      await act(async () => {
-        await result.current.sendMessage('Generate a scale');
-      });
-
-      const loadedMessage = result.current.chatHistory.find(
-        (m) => m.text.includes('C Major Scale') && m.text.includes('3 notes')
-      );
-      expect(loadedMessage).toBeDefined();
-      expect(loadedMessage?.hasAction).toBe(true);
-    });
-
-    it('does not add loaded message if noteCount is 0', async () => {
-      const mockChallenge = {
-        title: 'Empty',
-        notes: [],
-        description: 'Empty',
-      };
-      vi.mocked(geminiService.chatWithAiCoach).mockResolvedValue({
-        replyText: 'Here is a challenge',
-        challengeData: mockChallenge,
-      });
-
-      const { result } = renderHook(() =>
-        useAiCoach({
-          ...defaultOptions,
-          onLoadChallenge: vi.fn(() => 0),
-        })
-      );
-
-      await act(async () => {
-        await result.current.sendMessage('Generate');
-      });
-
-      const loadedMessage = result.current.chatHistory.find((m) => m.text.includes('0 notes'));
-      expect(loadedMessage).toBeUndefined();
-    });
-
-    it('handles errors gracefully', async () => {
-      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-      vi.mocked(geminiService.chatWithAiCoach).mockRejectedValue(new Error('Network error'));
-
-      const { result } = renderHook(() => useAiCoach(defaultOptions));
-
-      await act(async () => {
-        await result.current.sendMessage('Hello');
-      });
-
-      const errorMessage = result.current.chatHistory.find((m) => m.text.includes('Error'));
-      expect(errorMessage).toBeDefined();
-      expect(result.current.isLoadingAi).toBe(false);
-
-      consoleError.mockRestore();
-    });
-
-    it('marks AI response with hasAction when challenge is present', async () => {
-      vi.mocked(geminiService.chatWithAiCoach).mockResolvedValue({
-        replyText: 'Here is your challenge',
-        challengeData: {
-          title: 'Test',
-          notes: ['C4'],
-          description: 'Test',
-        },
-      });
-
-      const { result } = renderHook(() => useAiCoach(defaultOptions));
-
-      await act(async () => {
-        await result.current.sendMessage('Generate');
-      });
-
-      const responseMessage = result.current.chatHistory.find(
-        (m) => m.text === 'Here is your challenge'
-      );
-      expect(responseMessage?.hasAction).toBe(true);
     });
   });
 
