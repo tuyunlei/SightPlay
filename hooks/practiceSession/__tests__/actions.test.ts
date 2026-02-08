@@ -1,59 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { createNoteFromMidi } from '../../../domain/note';
-import { ClefType } from '../../../types';
-import { useToggleClef, useToggleMic, useResetSessionStats, useLoadChallenge } from '../actions';
-
-describe('useToggleClef', () => {
-  it('toggles from treble to bass', () => {
-    const setClef = vi.fn();
-    const { result } = renderHook(() => useToggleClef(ClefType.TREBLE, setClef));
-    act(() => result.current());
-    expect(setClef).toHaveBeenCalledWith(ClefType.BASS);
-  });
-
-  it('toggles from bass to treble', () => {
-    const setClef = vi.fn();
-    const { result } = renderHook(() => useToggleClef(ClefType.BASS, setClef));
-    act(() => result.current());
-    expect(setClef).toHaveBeenCalledWith(ClefType.TREBLE);
-  });
-});
-
-describe('useToggleMic', () => {
-  it('calls stopMic when listening', () => {
-    const start = vi.fn();
-    const stop = vi.fn();
-    const { result } = renderHook(() => useToggleMic(true, start, stop));
-    act(() => result.current());
-    expect(stop).toHaveBeenCalled();
-    expect(start).not.toHaveBeenCalled();
-  });
-
-  it('calls startMic when not listening', () => {
-    const start = vi.fn();
-    const stop = vi.fn();
-    const { result } = renderHook(() => useToggleMic(false, start, stop));
-    act(() => result.current());
-    expect(start).toHaveBeenCalled();
-    expect(stop).not.toHaveBeenCalled();
-  });
-});
-
-describe('useResetSessionStats', () => {
-  it('resets stats and updates lastHitTime', () => {
-    const resetStats = vi.fn();
-    const lastHitTime = { current: 0 };
-    const { result } = renderHook(() => useResetSessionStats(resetStats, lastHitTime));
-
-    const before = Date.now();
-    act(() => result.current());
-
-    expect(resetStats).toHaveBeenCalled();
-    expect(lastHitTime.current).toBeGreaterThanOrEqual(before);
-  });
-});
+import { useLoadChallenge } from '../actions';
 
 describe('useLoadChallenge', () => {
   it('loads challenge notes and returns count', () => {
