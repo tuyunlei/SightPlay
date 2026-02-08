@@ -240,7 +240,7 @@ export const useMidiNoteHandlers = (
     isCorrect: boolean,
     targetId?: string | null
   ) => void,
-  removePressedKey: (midiNumber: number) => { note: Note; isCorrect: boolean } | null,
+  removePressedKey: (midiNumber: number) => { note: Note; isCorrect: boolean; targetId?: string | null } | null,
   pressedKeysRef: MutableRefObject<PressedKeys>,
   handleCorrectNote: () => void,
   refs: PracticeRefs

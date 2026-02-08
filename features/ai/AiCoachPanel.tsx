@@ -13,7 +13,7 @@ interface AiCoachPanelProps {
   isLoadingAi: boolean;
   onChatInputChange: (value: string) => void;
   onSendMessage: (text: string) => void;
-  chatEndRef: React.RefObject<HTMLDivElement>;
+  chatEndRef: React.RefObject<HTMLDivElement | null>;
 }
 
 const AiCoachPanel: React.FC<AiCoachPanelProps> = ({

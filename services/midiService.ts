@@ -38,8 +38,8 @@ export class MidiService {
       // Handle hot-plugging
       this.midiAccess.onstatechange = (e: MIDIConnectionEvent) => {
         this.updateConnectionStatus();
-        if (e.port.type === 'input' && e.port.state === 'connected') {
-          this.bindInput(e.port);
+        if (e.port && e.port.type === 'input' && e.port.state === 'connected') {
+          this.bindInput(e.port as MIDIInput);
         }
       };
     } catch (err) {
@@ -70,6 +70,7 @@ export class MidiService {
   }
 
   private handleMidiMessage(event: MIDIMessageEvent) {
+    if (!event.data) return;
     const [command, note, velocity] = event.data;
 
     const commandType = command & 0xF0;
