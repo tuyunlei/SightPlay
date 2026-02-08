@@ -1,7 +1,8 @@
 import { useCallback, useRef, useState } from 'react';
+
+import { translations, Language } from '../i18n';
 import { chatWithAiCoach } from '../services/geminiService';
 import { ChatMessage, GeneratedChallenge } from '../types';
-import { translations, Language } from '../i18n';
 
 interface UseAiCoachOptions {
   clef: string;

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+
 import { ClefType, Note } from '../types';
+
 import { createNoteFromMidi } from './note';
 import { advanceQueue, createInitialQueue } from './queue';
 

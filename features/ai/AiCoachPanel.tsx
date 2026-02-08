@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
 import { ChevronDown, ChevronUp, Info, Music, Send, Sparkles, Wand2 } from 'lucide-react';
-import { ChatMessage, ClefType, Note } from '../../types';
+import React, { useEffect, useState } from 'react';
+
 import { translations } from '../../i18n';
+import { ChatMessage, ClefType, Note } from '../../types';
 
 interface AiCoachPanelProps {
   clef: ClefType;

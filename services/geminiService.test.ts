@@ -27,6 +27,7 @@ describe('geminiService', () => {
       expect(fetch).toHaveBeenCalledWith('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ message: 'Hello', clef: 'treble', lang: 'en' }),
       });
     });

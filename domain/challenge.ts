@@ -1,4 +1,5 @@
 import { Note } from '../types';
+
 import { createNoteFromMidi, noteStringToMidi } from './note';
 
 export const buildChallengeNotes = (noteStrings: string[]): Note[] => {

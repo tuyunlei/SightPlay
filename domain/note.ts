@@ -1,5 +1,5 @@
-import { Note } from '../types';
 import { NOTE_NAMES } from '../config/music';
+import { Note } from '../types';
 
 const A4_FREQ = 440;
 const A4_MIDI = 69;
