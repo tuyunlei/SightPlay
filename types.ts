@@ -16,11 +16,6 @@ export enum ClefType {
 
 export type PracticeRangeMode = 'central' | 'upper' | 'combined';
 
-export interface ScaleConfig {
-  root: NoteName;
-  scaleType: 'major' | 'minor';
-}
-
 export interface GeneratedChallenge {
   title: string;
   notes: string[]; // e.g., ["C4", "E4", "G4"]

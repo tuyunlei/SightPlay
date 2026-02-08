@@ -18,8 +18,6 @@ export const NOTE_NAMES: NoteName[] = [
 export const TREBLE_RANGE = { min: 60, max: 79 }; // C4 to G5
 export const BASS_RANGE = { min: 40, max: 60 }; // E2 to C4
 
-export const STAFF_LINE_NOTES_TREBLE = [64, 67, 71, 74, 77]; // E4, G4, B4, D5, F5
-export const STAFF_LINE_NOTES_BASS = [43, 47, 50, 53, 57]; // G2, B2, D3, F3, A3
 export const CLEF_CENTER_MIDI: Record<ClefType, number> = {
   [ClefType.TREBLE]: 71, // B4
   [ClefType.BASS]: 50, // D3
