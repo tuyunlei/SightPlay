@@ -7,10 +7,9 @@ interface UseAiCoachOptions {
   clef: string;
   lang: Language;
   onLoadChallenge: (challenge: GeneratedChallenge) => number;
-  onMissingApiKey: () => void;
 }
 
-export const useAiCoach = ({ clef, lang, onLoadChallenge, onMissingApiKey }: UseAiCoachOptions) => {
+export const useAiCoach = ({ clef, lang, onLoadChallenge }: UseAiCoachOptions) => {
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>(() => [{
@@ -21,10 +20,6 @@ export const useAiCoach = ({ clef, lang, onLoadChallenge, onMissingApiKey }: Use
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isLoadingAi) return;
-    if (!process.env.API_KEY) {
-      onMissingApiKey();
-      return;
-    }
 
     const userMsg: ChatMessage = { role: 'user', text };
     setChatHistory((prev) => [...prev, userMsg]);
@@ -59,7 +54,7 @@ export const useAiCoach = ({ clef, lang, onLoadChallenge, onMissingApiKey }: Use
     } finally {
       setIsLoadingAi(false);
     }
-  }, [clef, isLoadingAi, lang, onLoadChallenge, onMissingApiKey]);
+  }, [clef, isLoadingAi, lang, onLoadChallenge]);
 
   return {
     chatInput,

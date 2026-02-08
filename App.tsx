@@ -20,14 +20,18 @@ const App = () => {
     onChallengeComplete: () => challengeCompleteRef.current(),
   });
 
-  const { chatInput, setChatInput, chatHistory, isLoadingAi, sendMessage, chatEndRef } = useAiCoach(
-    {
-      clef: state.clef,
-      lang,
-      onLoadChallenge: actions.loadChallenge,
-      onMissingApiKey: () => alert(t.apiKeyError),
-    }
-  );
+  const {
+    chatInput,
+    setChatInput,
+    chatHistory,
+    isLoadingAi,
+    sendMessage,
+    chatEndRef
+  } = useAiCoach({
+    clef: state.clef,
+    lang,
+    onLoadChallenge: actions.loadChallenge
+  });
 
   useEffect(() => {
     challengeCompleteRef.current = () => {
