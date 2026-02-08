@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { computeAccuracy, computeScore, updateSessionStats } from './scoring';
 
 describe('scoring', () => {

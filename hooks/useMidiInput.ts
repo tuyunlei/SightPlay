@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+
 import { MidiService } from '../services/midiService';
 
 interface UseMidiInputOptions {

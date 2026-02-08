@@ -1,6 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import { KeyRound } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import AiCoachPanel from './features/ai/AiCoachPanel';
+import { AuthGate } from './features/auth/AuthGate';
+import { PasskeyManagement } from './features/auth/PasskeyManagement';
 import TopBar from './features/controls/TopBar';
 import PracticeArea from './features/practice/PracticeArea';
 import { useAiCoach } from './hooks/useAiCoach';
@@ -12,6 +15,7 @@ const App = () => {
   const lang = useUiStore((state) => state.lang);
   const toggleLang = useUiStore((state) => state.toggleLang);
   const t = translations[lang];
+  const [showPasskeyManagement, setShowPasskeyManagement] = useState(false);
 
   const challengeCompleteRef = useRef<() => void>(() => {});
 
@@ -40,11 +44,25 @@ const App = () => {
   }, [sendMessage]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-900 dark:text-slate-100">
+    <AuthGate>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-900 dark:text-slate-100">
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-3xl" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-purple-500/10 dark:bg-purple-500/5 rounded-full blur-3xl" />
       </div>
+
+      {/* Passkey Management Button */}
+      <button
+        onClick={() => setShowPasskeyManagement(true)}
+        className="fixed top-4 right-4 z-50 rounded-lg bg-slate-800/50 p-2 text-slate-400 backdrop-blur-sm transition-colors hover:bg-slate-700 hover:text-indigo-400"
+        title="Manage Passkeys"
+      >
+        <KeyRound className="h-5 w-5" />
+      </button>
+
+      {showPasskeyManagement && (
+        <PasskeyManagement onClose={() => setShowPasskeyManagement(false)} />
+      )}
 
       <TopBar
         isListening={state.isListening}
@@ -90,6 +108,7 @@ const App = () => {
         />
       </main>
     </div>
+    </AuthGate>
   );
 };
 

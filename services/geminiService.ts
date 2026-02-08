@@ -1,5 +1,5 @@
-import { AiResponse } from "../types";
 import { translations, Language } from "../i18n";
+import { AiResponse } from "../types";
 
 /**
  * Unified Chat Handler
@@ -14,6 +14,7 @@ export const chatWithAiCoach = async (
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ message: userMessage, clef, lang })
         });
 

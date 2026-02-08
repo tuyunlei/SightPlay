@@ -1,5 +1,5 @@
-import { Note } from '../types';
 import { createNoteFromMidi } from '../domain/note';
+import { Note } from '../types';
 
 export class AudioProcessor {
   private audioContext: AudioContext | null = null;

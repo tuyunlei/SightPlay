@@ -2,6 +2,7 @@ interface RequestContext {
   request: Request;
   env: {
     GEMINI_API_KEY: string;
+    JWT_SECRET: string;
   };
 }
 
@@ -21,10 +22,13 @@ interface GeminiResponse {
   }>;
 }
 
+import { getAuthenticatedUser } from './_auth-helpers';
+
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Credentials': 'true',
 };
 
 export function onRequestOptions(): Response {
@@ -32,6 +36,15 @@ export function onRequestOptions(): Response {
 }
 
 export async function onRequestPost(context: RequestContext): Promise<Response> {
+  // Check authentication
+  const user = await getAuthenticatedUser(context.request, context.env.JWT_SECRET);
+  if (!user) {
+    return new Response(JSON.stringify({ error: 'Authentication required' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  }
+
   const { message, clef, lang } = (await context.request.json()) as ChatRequestBody;
   const GEMINI_KEY = context.env.GEMINI_API_KEY;
 
