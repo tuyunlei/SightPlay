@@ -1,6 +1,6 @@
 import { generateRegistrationOptions } from '@simplewebauthn/server';
 
-import { CORS_HEADERS, getAuthenticatedUser } from '../_auth-helpers';
+import { CORS_HEADERS } from '../_auth-helpers';
 
 interface RequestContext {
   request: Request;
@@ -26,15 +26,28 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
     const passkeysData = await context.env.KV.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
-    // If passkeys exist, require authentication
+    // If passkeys exist, require valid invite token
     if (passkeys.length > 0) {
-      const user = await getAuthenticatedUser(context.request, context.env.JWT_SECRET);
-      if (!user) {
-        return new Response(JSON.stringify({ error: 'Authentication required' }), {
+      const body = (await context.request.json()) as { inviteToken?: string };
+      
+      if (!body.inviteToken) {
+        return new Response(JSON.stringify({ error: 'Invite token required' }), {
           status: 401,
           headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
         });
       }
+
+      // Verify invite token exists in KV
+      const inviteKey = `invite:${body.inviteToken}`;
+      const inviteData = await context.env.KV.get(inviteKey);
+      
+      if (!inviteData) {
+        return new Response(JSON.stringify({ error: 'Invalid or expired invite token' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+        });
+      }
+      // Do NOT delete the token yet - delete after successful verification
     }
 
     // Generate registration options

@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import AiCoachPanel from './features/ai/AiCoachPanel';
 import { AuthGate } from './features/auth/AuthGate';
+import { InviteRegister } from './features/auth/InviteRegister';
 import { PasskeyManagement } from './features/auth/PasskeyManagement';
 import TopBar from './features/controls/TopBar';
 import PracticeArea from './features/practice/PracticeArea';
@@ -42,6 +43,12 @@ const App = () => {
       sendMessage('I finished the challenge! How did I do?');
     };
   }, [sendMessage]);
+
+  // Check if this is an invite link (after all hooks)
+  const inviteToken = new URLSearchParams(window.location.search).get('token');
+  if (window.location.pathname === '/invite' && inviteToken) {
+    return <InviteRegister token={inviteToken} onSuccess={() => (window.location.href = '/')} />;
+  }
 
   return (
     <AuthGate>

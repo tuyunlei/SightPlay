@@ -40,12 +40,14 @@ export function useAuth() {
   }, [checkSession]);
 
   const register = useCallback(
-    async (name?: string) => {
+    async (name?: string, inviteToken?: string) => {
       try {
         // Get registration options
         const optionsResponse = await fetch('/api/auth/register-options', {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
+          body: JSON.stringify({ inviteToken }),
         });
 
         if (!optionsResponse.ok) {
@@ -62,7 +64,7 @@ export function useAuth() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ response: attResp, name }),
+          body: JSON.stringify({ response: attResp, name, inviteToken }),
         });
 
         if (!verifyResponse.ok) {

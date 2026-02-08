@@ -1,4 +1,4 @@
-import type { Connect } from 'vite';
+import type { Connect, ViteDevServer } from 'vite';
 import type { IncomingMessage, ServerResponse } from 'http';
 
 // In-memory KV store to simulate EdgeOne KV
@@ -82,46 +82,51 @@ async function fromWebResponse(res: ServerResponse, webResponse: Response): Prom
   res.end();
 }
 
-// Route map for edge functions
+// Route map for edge functions (paths relative to project root)
 const ROUTES = [
   {
     path: '/api/auth/register-options',
-    module: '../edge-functions/api/auth/register-options',
+    module: 'edge-functions/api/auth/register-options.ts',
     methods: ['POST', 'OPTIONS'],
   },
   {
     path: '/api/auth/register-verify',
-    module: '../edge-functions/api/auth/register-verify',
+    module: 'edge-functions/api/auth/register-verify.ts',
     methods: ['POST', 'OPTIONS'],
   },
   {
     path: '/api/auth/login-options',
-    module: '../edge-functions/api/auth/login-options',
+    module: 'edge-functions/api/auth/login-options.ts',
     methods: ['POST', 'OPTIONS'],
   },
   {
     path: '/api/auth/login-verify',
-    module: '../edge-functions/api/auth/login-verify',
+    module: 'edge-functions/api/auth/login-verify.ts',
     methods: ['POST', 'OPTIONS'],
   },
   {
     path: '/api/auth/session',
-    module: '../edge-functions/api/auth/session',
+    module: 'edge-functions/api/auth/session.ts',
     methods: ['GET', 'OPTIONS'],
   },
   {
     path: '/api/auth/passkeys',
-    module: '../edge-functions/api/auth/passkeys',
+    module: 'edge-functions/api/auth/passkeys.ts',
     methods: ['GET', 'DELETE', 'OPTIONS'],
   },
   {
+    path: '/api/auth/invite',
+    module: 'edge-functions/api/auth/invite.ts',
+    methods: ['GET', 'POST', 'OPTIONS'],
+  },
+  {
     path: '/api/chat',
-    module: '../edge-functions/api/chat',
+    module: 'edge-functions/api/chat.ts',
     methods: ['POST', 'OPTIONS'],
   },
 ];
 
-export function devAuthMiddleware(): Connect.NextHandleFunction {
+export function devAuthMiddleware(projectRoot: string, server: ViteDevServer): Connect.NextHandleFunction {
   const memoryKV = new MemoryKV();
   const JWT_SECRET = 'dev-jwt-secret-sightplay';
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
@@ -141,8 +146,9 @@ export function devAuthMiddleware(): Connect.NextHandleFunction {
     }
 
     try {
-      // Dynamically import the edge function
-      const edgeModule = await import(route.module);
+      // Use Vite's ssrLoadModule to handle TypeScript edge functions
+      const modulePath = `${projectRoot}/${route.module}`;
+      const edgeModule = await server.ssrLoadModule(modulePath);
 
       // Get the handler for this method
       const handlerName = `onRequest${method.charAt(0) + method.slice(1).toLowerCase()}`;

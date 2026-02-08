@@ -1,7 +1,7 @@
 import { verifyRegistrationResponse } from '@simplewebauthn/server';
 import type { RegistrationResponseJSON } from '@simplewebauthn/server';
 
-import { CORS_HEADERS } from '../_auth-helpers';
+import { CORS_HEADERS, signJWT, createCookie } from '../_auth-helpers';
 
 // Helper to convert Uint8Array to base64url
 function uint8ArrayToBase64url(bytes: Uint8Array): string {
@@ -35,6 +35,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
     const body = (await context.request.json()) as {
       response: RegistrationResponseJSON;
       name?: string;
+      inviteToken?: string;
     };
 
     // Verify the challenge exists
@@ -58,6 +59,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
       expectedChallenge: challenge,
       expectedOrigin: new URL(context.request.url).origin,
       expectedRPID: new URL(context.request.url).hostname,
+      requireUserVerification: false,
     });
 
     if (!verification.verified || !verification.registrationInfo) {
@@ -91,8 +93,27 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
     // Delete the used challenge
     await context.env.KV.delete(`challenge:${challenge}`);
 
+    // Delete invite token if provided (one-time use)
+    if (body.inviteToken) {
+      await context.env.KV.delete(`invite:${body.inviteToken}`);
+    }
+
+    // Auto-login: issue JWT after successful registration
+    const now = Math.floor(Date.now() / 1000);
+    const token = await signJWT(
+      { sub: 'owner', iat: now, exp: now + 7 * 24 * 60 * 60 },
+      context.env.JWT_SECRET
+    );
+    const cookie = createCookie('auth_token', token, {
+      maxAge: 7 * 24 * 60 * 60,
+      httpOnly: true,
+      secure: true,
+      sameSite: 'Lax',
+      path: '/',
+    });
+
     return new Response(JSON.stringify({ verified: true }), {
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      headers: { 'Content-Type': 'application/json', 'Set-Cookie': cookie, ...CORS_HEADERS },
     });
   } catch (error) {
     console.error('Error verifying registration:', error);
