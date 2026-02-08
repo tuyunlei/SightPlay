@@ -1,0 +1,5 @@
+pre-push:
+  commands:
+    typecheck:
+      run: npx tsc --noEmit
+      stage_fixed: false

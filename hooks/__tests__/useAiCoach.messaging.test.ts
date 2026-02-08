@@ -1,6 +1,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
+import { AiResponse } from '../../types';
 import { useAiCoach } from '../useAiCoach';
 
 import { geminiService, defaultOptions } from './useAiCoach.setup';
@@ -97,9 +98,9 @@ describe('useAiCoach - messaging', () => {
     });
 
     it('sets loading state while processing', async () => {
-      let resolvePromise: (value: unknown) => void;
+      let resolvePromise: (value: AiResponse | PromiseLike<AiResponse>) => void;
       vi.mocked(geminiService.chatWithAiCoach).mockReturnValue(
-        new Promise((resolve) => {
+        new Promise<AiResponse>((resolve) => {
           resolvePromise = resolve;
         })
       );
@@ -148,9 +149,9 @@ describe('useAiCoach - messaging', () => {
     });
 
     it('does not send while already loading', async () => {
-      let resolvePromise: (value: unknown) => void;
+      let resolvePromise: (value: AiResponse | PromiseLike<AiResponse>) => void;
       vi.mocked(geminiService.chatWithAiCoach).mockReturnValue(
-        new Promise((resolve) => {
+        new Promise<AiResponse>((resolve) => {
           resolvePromise = resolve;
         })
       );

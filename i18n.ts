@@ -45,6 +45,7 @@ export const translations = {
     practiceRangeCentral: 'Middle Octave',
     practiceRangeUpper: 'Upper Octave',
     practiceRangeCombined: 'Middle + Upper',
+    aiError: "Sorry, I'm having trouble connecting. Try again?",
   },
   zh: {
     appTitle: '视弹 SightPlay',
@@ -90,5 +91,6 @@ export const translations = {
     practiceRangeCentral: '中央八度',
     practiceRangeUpper: '高一八度',
     practiceRangeCombined: '中央 + 高',
+    aiError: '抱歉，连接出现问题，请重试。',
   },
 };
