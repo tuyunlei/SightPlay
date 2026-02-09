@@ -1,19 +1,7 @@
-import { verifyAuthenticationResponse } from '@simplewebauthn/server';
-import type { AuthenticationResponseJSON } from '@simplewebauthn/server';
+import { server } from '@passwordless-id/webauthn';
+import type { AuthenticationJSON, CredentialInfo } from '@passwordless-id/webauthn/dist/esm/types';
 
 import { CORS_HEADERS, signJWT, createCookie } from '../_auth-helpers';
-
-// Helper to convert base64url to Uint8Array
-function base64urlToUint8Array(base64url: string): Uint8Array {
-  const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
-  const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
-  const binary = atob(padded);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
-}
 
 interface RequestContext {
   request: Request;
@@ -27,6 +15,7 @@ interface Passkey {
   name: string;
   createdAt: number;
   transports?: string[];
+  algorithm?: string;
 }
 
 export function onRequestOptions(): Response {
@@ -36,7 +25,7 @@ export function onRequestOptions(): Response {
 export async function onRequestPost(context: RequestContext): Promise<Response> {
   try {
     const body = (await context.request.json()) as {
-      response: AuthenticationResponseJSON;
+      response: AuthenticationJSON;
     };
 
     // Decode clientDataJSON to get the challenge
@@ -67,31 +56,27 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
       });
     }
 
-    // Verify the authentication response
-    // ID is kept as base64url string, publicKey is converted to Uint8Array
-    const verification = await verifyAuthenticationResponse({
-      response: body.response,
-      expectedChallenge: challenge,
-      expectedOrigin: new URL(context.request.url).origin,
-      expectedRPID: new URL(context.request.url).hostname,
-      requireUserVerification: false,
-      credential: {
-        id: credential.id, // Already base64url string
-        publicKey: base64urlToUint8Array(credential.publicKey),
-        counter: credential.counter,
-      },
-    });
+    const origin = new URL(context.request.url).origin;
 
-    if (!verification.verified) {
-      return new Response(JSON.stringify({ error: 'Verification failed' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      });
-    }
+    // Build CredentialInfo for verification
+    const credentialInfo: CredentialInfo = {
+      id: credential.id,
+      publicKey: credential.publicKey,
+      algorithm: (credential.algorithm as 'ES256' | 'RS256' | 'EdDSA') || 'ES256',
+      transports: (credential.transports || []) as CredentialInfo['transports'],
+    };
+
+    // Verify the authentication response
+    const authInfo = await server.verifyAuthentication(body.response, credentialInfo, {
+      challenge,
+      origin,
+      userVerified: false,
+      counter: credential.counter,
+    });
 
     // Update counter
     const updatedPasskeys = passkeys.map((pk) =>
-      pk.id === credential.id ? { ...pk, counter: verification.authenticationInfo.newCounter } : pk
+      pk.id === credential.id ? { ...pk, counter: authInfo.counter } : pk
     );
     await context.env.KV.put('passkeys', JSON.stringify(updatedPasskeys));
 
@@ -104,14 +89,14 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
       {
         sub: 'owner',
         iat: now,
-        exp: now + 7 * 24 * 60 * 60, // 7 days
+        exp: now + 7 * 24 * 60 * 60,
       },
       context.env.JWT_SECRET
     );
 
     // Set cookie
     const cookie = createCookie('auth_token', token, {
-      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+      maxAge: 7 * 24 * 60 * 60,
       httpOnly: true,
       secure: true,
       sameSite: 'Lax',

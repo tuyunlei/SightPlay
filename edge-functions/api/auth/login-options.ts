@@ -1,4 +1,4 @@
-import { generateAuthenticationOptions } from '@simplewebauthn/server';
+import { server } from '@passwordless-id/webauthn';
 
 import { CORS_HEADERS } from '../_auth-helpers';
 
@@ -33,20 +33,25 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
       });
     }
 
-    // Generate authentication options
-    const options = await generateAuthenticationOptions({
-      rpID: new URL(context.request.url).hostname,
+    // Generate challenge
+    const challenge = server.randomChallenge();
+    const hostname = new URL(context.request.url).hostname;
+
+    const options = {
+      challenge,
+      rpId: hostname,
       allowCredentials: passkeys.map((pk) => ({
         id: pk.id,
-        type: 'public-key',
+        type: 'public-key' as const,
         transports: pk.transports as AuthenticatorTransport[] | undefined,
       })),
-      userVerification: 'preferred',
-    });
+      userVerification: 'preferred' as const,
+      timeout: 60000,
+    };
 
     // Store challenge in KV with 5min expiry
-    const challengeKey = `challenge:${options.challenge}`;
-    await context.env.KV.put(challengeKey, options.challenge, { expirationTtl: 300 });
+    const challengeKey = `challenge:${challenge}`;
+    await context.env.KV.put(challengeKey, challenge, { expirationTtl: 300 });
 
     return new Response(JSON.stringify(options), {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
