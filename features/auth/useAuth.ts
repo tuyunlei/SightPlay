@@ -1,5 +1,5 @@
-import * as Sentry from '@sentry/react';
 import { client } from '@passwordless-id/webauthn';
+import * as Sentry from '@sentry/react';
 import { useState, useEffect, useCallback } from 'react';
 
 // Convert base64url string to ArrayBuffer (for WebAuthn credential IDs)
