@@ -3,7 +3,6 @@ import { describe, expect, it, beforeEach } from 'vitest';
 
 import { usePracticeStore } from '../../../store/practiceStore';
 import { ClefType } from '../../../types';
-
 import {
   usePracticeStateSlice,
   usePracticeActionsSlice,

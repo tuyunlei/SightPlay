@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { ClefType } from '../../../types';
 import {
   useLoadChallenge,
   useToggleMic,
@@ -9,7 +10,6 @@ import {
   useMicInput,
   useQueueInitialization,
 } from '../actions';
-import { ClefType } from '../../../types';
 
 describe('useLoadChallenge', () => {
   it('loads challenge notes and returns count', () => {

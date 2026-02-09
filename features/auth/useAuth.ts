@@ -11,6 +11,53 @@ interface AuthState {
   isLoading: boolean;
 }
 
+async function performRegister(
+  name?: string,
+  inviteToken?: string
+): Promise<boolean> {
+  const optionsResponse = await fetch('/api/auth/register-options', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ inviteToken }),
+  });
+
+  if (!optionsResponse.ok) throw new Error('Failed to get registration options');
+  const options: PublicKeyCredentialCreationOptionsJSON = await optionsResponse.json();
+  const attResp = await startRegistration({ optionsJSON: options });
+
+  const verifyResponse = await fetch('/api/auth/register-verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ response: attResp, name, inviteToken }),
+  });
+
+  if (!verifyResponse.ok) throw new Error('Registration verification failed');
+  return true;
+}
+
+async function performLogin(): Promise<boolean> {
+  const optionsResponse = await fetch('/api/auth/login-options', {
+    method: 'POST',
+    credentials: 'include',
+  });
+
+  if (!optionsResponse.ok) throw new Error('Failed to get authentication options');
+  const options: PublicKeyCredentialRequestOptionsJSON = await optionsResponse.json();
+  const attResp = await startAuthentication({ optionsJSON: options });
+
+  const verifyResponse = await fetch('/api/auth/login-verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ response: attResp }),
+  });
+
+  if (!verifyResponse.ok) throw new Error('Authentication verification failed');
+  return true;
+}
+
 export function useAuth() {
   const [state, setState] = useState<AuthState>({
     isAuthenticated: false,
@@ -20,96 +67,31 @@ export function useAuth() {
 
   const checkSession = useCallback(async () => {
     try {
-      const response = await fetch('/api/auth/session', {
-        credentials: 'include',
-      });
+      const response = await fetch('/api/auth/session', { credentials: 'include' });
       const data = await response.json();
-      setState({
-        isAuthenticated: data.authenticated,
-        hasPasskeys: data.hasPasskeys,
-        isLoading: false,
-      });
+      setState({ isAuthenticated: data.authenticated, hasPasskeys: data.hasPasskeys, isLoading: false });
     } catch (error) {
       console.error('Error checking session:', error);
       setState((prev) => ({ ...prev, isLoading: false }));
     }
   }, []);
 
-  useEffect(() => {
-    checkSession();
+  useEffect(() => { checkSession(); }, [checkSession]);
+
+  const register = useCallback(async (name?: string, inviteToken?: string) => {
+    try {
+      await performRegister(name, inviteToken);
+      await checkSession();
+      return true;
+    } catch (error) {
+      console.error('Registration error:', error);
+      return false;
+    }
   }, [checkSession]);
-
-  const register = useCallback(
-    async (name?: string, inviteToken?: string) => {
-      try {
-        // Get registration options
-        const optionsResponse = await fetch('/api/auth/register-options', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ inviteToken }),
-        });
-
-        if (!optionsResponse.ok) {
-          throw new Error('Failed to get registration options');
-        }
-
-        const options: PublicKeyCredentialCreationOptionsJSON = await optionsResponse.json();
-
-        // Start registration
-        const attResp = await startRegistration({ optionsJSON: options });
-
-        // Verify registration
-        const verifyResponse = await fetch('/api/auth/register-verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ response: attResp, name, inviteToken }),
-        });
-
-        if (!verifyResponse.ok) {
-          throw new Error('Registration verification failed');
-        }
-
-        await checkSession();
-        return true;
-      } catch (error) {
-        console.error('Registration error:', error);
-        return false;
-      }
-    },
-    [checkSession]
-  );
 
   const login = useCallback(async () => {
     try {
-      // Get authentication options
-      const optionsResponse = await fetch('/api/auth/login-options', {
-        method: 'POST',
-        credentials: 'include',
-      });
-
-      if (!optionsResponse.ok) {
-        throw new Error('Failed to get authentication options');
-      }
-
-      const options: PublicKeyCredentialRequestOptionsJSON = await optionsResponse.json();
-
-      // Start authentication
-      const attResp = await startAuthentication({ optionsJSON: options });
-
-      // Verify authentication
-      const verifyResponse = await fetch('/api/auth/login-verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ response: attResp }),
-      });
-
-      if (!verifyResponse.ok) {
-        throw new Error('Authentication verification failed');
-      }
-
+      await performLogin();
       await checkSession();
       return true;
     } catch (error) {
@@ -119,20 +101,9 @@ export function useAuth() {
   }, [checkSession]);
 
   const logout = useCallback(() => {
-    // Clear cookie by setting it to expire
     document.cookie = 'auth_token=; Max-Age=0; path=/';
-    setState({
-      isAuthenticated: false,
-      hasPasskeys: state.hasPasskeys,
-      isLoading: false,
-    });
+    setState({ isAuthenticated: false, hasPasskeys: state.hasPasskeys, isLoading: false });
   }, [state.hasPasskeys]);
 
-  return {
-    ...state,
-    login,
-    register,
-    logout,
-    checkSession,
-  };
+  return { ...state, login, register, logout, checkSession };
 }
