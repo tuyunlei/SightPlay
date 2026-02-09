@@ -4,11 +4,7 @@ import type { MutableRefObject } from 'react';
 import { MATCH_THRESHOLD_MS, TIMINGS } from '../../config/timings';
 import { shouldCompleteChallenge } from '../../domain/challenge';
 import { createNoteFromMidi } from '../../domain/note';
-import {
-  createInitialQueue,
-  DEFAULT_QUEUE_SIZE,
-  advanceQueue,
-} from '../../domain/queue';
+import { createInitialQueue, DEFAULT_QUEUE_SIZE, advanceQueue } from '../../domain/queue';
 import { computeScore, updateSessionStats } from '../../domain/scoring';
 import { usePracticeStore } from '../../store/practiceStore';
 import { Note } from '../../types';
@@ -240,7 +236,9 @@ export const useMidiNoteHandlers = (
     isCorrect: boolean,
     targetId?: string | null
   ) => void,
-  removePressedKey: (midiNumber: number) => { note: Note; isCorrect: boolean; targetId?: string | null } | null,
+  removePressedKey: (
+    midiNumber: number
+  ) => { note: Note; isCorrect: boolean; targetId?: string | null } | null,
   pressedKeysRef: MutableRefObject<PressedKeys>,
   handleCorrectNote: () => void,
   refs: PracticeRefs
@@ -284,4 +282,3 @@ export const useMidiNoteHandlers = (
 
   return { handleMidiNoteOn, handleMidiNoteOff };
 };
-

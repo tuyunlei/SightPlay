@@ -1,7 +1,7 @@
 import { KeyRound, AlertCircle, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-import { useAuthContext } from './AuthContext';
+import { useAuthContext } from './useAuthContext';
 
 interface InviteRegisterProps {
   token: string;
@@ -88,9 +88,8 @@ function RegisterView({
         <div className="mt-6 rounded-lg bg-slate-900/50 p-4">
           <p className="text-xs text-slate-400">
             <strong className="text-slate-300">What's a passkey?</strong>
-            <br />
-            A passkey is a secure way to sign in without passwords. It uses your device's biometric
-            authentication (fingerprint, face recognition) or PIN to verify it's you.
+            <br />A passkey is a secure way to sign in without passwords. It uses your device's
+            biometric authentication (fingerprint, face recognition) or PIN to verify it's you.
           </p>
         </div>
       </div>

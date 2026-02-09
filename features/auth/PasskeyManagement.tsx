@@ -1,7 +1,7 @@
 import { KeyRound, Trash2, Link as LinkIcon, X, Copy, Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-import { useAuthContext } from './AuthContext';
+import { useAuthContext } from './useAuthContext';
 
 interface Passkey {
   id: string;

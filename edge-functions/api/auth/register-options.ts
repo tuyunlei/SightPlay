@@ -29,7 +29,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
     // If passkeys exist, require valid invite token
     if (passkeys.length > 0) {
       const body = (await context.request.json()) as { inviteToken?: string };
-      
+
       if (!body.inviteToken) {
         return new Response(JSON.stringify({ error: 'Invite token required' }), {
           status: 401,
@@ -40,7 +40,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
       // Verify invite token exists in KV
       const inviteKey = `invite:${body.inviteToken}`;
       const inviteData = await context.env.KV.get(inviteKey);
-      
+
       if (!inviteData) {
         return new Response(JSON.stringify({ error: 'Invalid or expired invite token' }), {
           status: 401,

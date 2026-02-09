@@ -13,12 +13,12 @@ export class AudioProcessor {
     if (this.audioContext) return;
 
     try {
-      this.microphoneStream = await navigator.mediaDevices.getUserMedia({ 
+      this.microphoneStream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           autoGainControl: false,
-          noiseSuppression: false 
-        } 
+          noiseSuppression: false,
+        },
       });
 
       this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -30,14 +30,14 @@ export class AudioProcessor {
       this.source = this.audioContext.createMediaStreamSource(this.microphoneStream);
       this.source.connect(this.analyser);
     } catch (err) {
-      console.error("Error accessing microphone", err);
+      console.error('Error accessing microphone', err);
       throw err;
     }
   }
 
   stop() {
     if (this.microphoneStream) {
-      this.microphoneStream.getTracks().forEach(track => track.stop());
+      this.microphoneStream.getTracks().forEach((track) => track.stop());
       this.microphoneStream = null;
     }
     if (this.audioContext) {
@@ -51,7 +51,7 @@ export class AudioProcessor {
     if (!this.analyser || !this.audioContext) return null;
 
     this.analyser.getFloatTimeDomainData(this.dataArray);
-    
+
     // RMS volume check to reduce noise
     let rms = 0;
     for (let i = 0; i < this.bufferLength; i++) {
@@ -59,12 +59,13 @@ export class AudioProcessor {
     }
     rms = Math.sqrt(rms / this.bufferLength);
 
-    if (rms < 0.015) { // Silence threshold
+    if (rms < 0.015) {
+      // Silence threshold
       return null;
     }
 
     const frequency = this.autoCorrelate(this.dataArray, this.audioContext.sampleRate);
-    
+
     if (frequency === -1 || frequency < 50 || frequency > 1500) {
       return null;
     }

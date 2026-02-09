@@ -16,7 +16,7 @@ export const createNoteFromMidi = (midi: number, globalIndex: number = 0): Note 
     octave,
     frequency,
     midi,
-    globalIndex
+    globalIndex,
   };
 };
 
@@ -26,7 +26,7 @@ export const noteStringToMidi = (noteStr: string): number | null => {
   if (!match) return null;
   const name = match[1];
   const octave = parseInt(match[2], 10);
-  const idx = NOTE_NAMES.indexOf(name as typeof NOTE_NAMES[number]);
+  const idx = NOTE_NAMES.indexOf(name as (typeof NOTE_NAMES)[number]);
   if (idx === -1) return null;
   return (octave + 1) * 12 + idx;
 };

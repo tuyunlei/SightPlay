@@ -1,7 +1,7 @@
 import { KeyRound } from 'lucide-react';
 import { useState } from 'react';
 
-import { useAuthContext } from './AuthContext';
+import { useAuthContext } from './useAuthContext';
 
 export function LoginScreen() {
   const { login } = useAuthContext();

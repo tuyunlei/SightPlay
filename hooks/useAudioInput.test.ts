@@ -5,7 +5,6 @@ import { AudioProcessor } from '../services/audioService';
 
 import { useAudioInput } from './useAudioInput';
 
-
 vi.mock('../services/audioService');
 
 describe('useAudioInput', () => {

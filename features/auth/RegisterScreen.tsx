@@ -1,7 +1,7 @@
 import { Fingerprint } from 'lucide-react';
 import { useState } from 'react';
 
-import { useAuthContext } from './AuthContext';
+import { useAuthContext } from './useAuthContext';
 
 export function RegisterScreen() {
   const { register } = useAuthContext();

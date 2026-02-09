@@ -1,8 +1,9 @@
 import { type ReactNode } from 'react';
 
-import { AuthProvider, useAuthContext } from './AuthContext';
+import { AuthProvider } from './AuthProvider';
 import { LoginScreen } from './LoginScreen';
 import { RegisterScreen } from './RegisterScreen';
+import { useAuthContext } from './useAuthContext';
 
 function AuthGateInner({ children }: { children: ReactNode }) {
   const { isAuthenticated, hasPasskeys, isLoading } = useAuthContext();
