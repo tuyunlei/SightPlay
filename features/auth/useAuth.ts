@@ -60,7 +60,10 @@ async function performRegister(name?: string, inviteToken?: string): Promise<boo
     body: JSON.stringify({ response: registration, name, inviteToken }),
   });
 
-  if (!verifyResponse.ok) throw new Error('Registration verification failed');
+  if (!verifyResponse.ok) {
+    const data = await verifyResponse.json().catch(() => ({}));
+    throw new Error(data.error || 'Registration verification failed');
+  }
   return true;
 }
 
@@ -122,14 +125,15 @@ export function useAuth() {
   }, [checkSession]);
 
   const register = useCallback(
-    async (name?: string, inviteToken?: string) => {
+    async (name?: string, inviteToken?: string): Promise<true | string> => {
       try {
         await performRegister(name, inviteToken);
         await checkSession();
         return true;
       } catch (error) {
-        console.error('Registration error:', error);
-        return false;
+        const message = error instanceof Error ? error.message : 'Registration failed';
+        console.error('Registration error:', message);
+        return message;
       }
     },
     [checkSession]

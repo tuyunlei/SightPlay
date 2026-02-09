@@ -1,7 +1,13 @@
+import * as Sentry from '@sentry/react';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
 import App from './App';
+
+Sentry.init({
+  dsn: 'https://8977ed5e05a090970509699e97aab2d2@o4510856750891008.ingest.us.sentry.io/4510856758886400',
+  enabled: import.meta.env.PROD,
+});
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

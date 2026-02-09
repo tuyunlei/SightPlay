@@ -103,8 +103,9 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
       headers: { 'Content-Type': 'application/json', 'Set-Cookie': cookie, ...CORS_HEADERS },
     });
   } catch (error) {
-    console.error('Error verifying registration:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('Error verifying registration:', message);
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
