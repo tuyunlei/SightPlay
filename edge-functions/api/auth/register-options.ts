@@ -1,11 +1,6 @@
 import { server } from '@passwordless-id/webauthn';
 
-import { CORS_HEADERS } from '../_auth-helpers';
-
-interface RequestContext {
-  request: Request;
-  env: { AUTH_STORE: KVNamespace; JWT_SECRET: string; GEMINI_API_KEY: string };
-}
+import { CORS_HEADERS, RequestContext, resolveKV } from '../_auth-helpers';
 
 interface Passkey {
   id: string;
@@ -22,8 +17,9 @@ export function onRequestOptions(): Response {
 
 export async function onRequestPost(context: RequestContext): Promise<Response> {
   try {
+    const kv = resolveKV(context);
     // Get existing passkeys
-    const passkeysData = await context.env.AUTH_STORE.get('passkeys');
+    const passkeysData = await kv.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
     // If passkeys exist, require valid invite token
@@ -39,7 +35,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
 
       // Verify invite token exists in KV
       const inviteKey = `invite:${body.inviteToken}`;
-      const inviteData = await context.env.AUTH_STORE.get(inviteKey);
+      const inviteData = await kv.get(inviteKey);
 
       if (!inviteData) {
         return new Response(JSON.stringify({ error: 'Invalid or expired invite token' }), {
@@ -90,7 +86,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
 
     // Store challenge in KV with 5min expiry
     const challengeKey = `challenge:${challenge}`;
-    await context.env.AUTH_STORE.put(challengeKey, challenge, { expirationTtl: 300 });
+    await kv.put(challengeKey, challenge, { expirationTtl: 300 });
 
     return new Response(JSON.stringify(options), {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },

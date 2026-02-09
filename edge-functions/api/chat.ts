@@ -22,7 +22,7 @@ interface GeminiResponse {
   }>;
 }
 
-import { getAuthenticatedUser } from './_auth-helpers';
+import { getAuthenticatedUser, resolveEnv } from './_auth-helpers';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -130,7 +130,7 @@ export function onRequestOptions(): Response {
 }
 
 export async function onRequestPost(context: RequestContext): Promise<Response> {
-  const user = await getAuthenticatedUser(context.request, context.env.JWT_SECRET);
+  const user = await getAuthenticatedUser(context.request, resolveEnv(context, 'JWT_SECRET'));
   if (!user) return jsonResponse({ error: 'Authentication required' }, 401);
 
   const { message, clef, lang } = (await context.request.json()) as ChatRequestBody;

@@ -27,3 +27,4 @@ dist-ssr
 coverage
 .edgeone/
 .tef_dist/
+.env
