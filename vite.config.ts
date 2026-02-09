@@ -1,11 +1,22 @@
+import { cpSync } from 'fs';
 import path from 'path';
 
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 
 import { devAuthMiddleware } from './scripts/dev-auth-middleware';
 
 const __projectRoot = path.resolve(__dirname);
+
+function copyEdgeFunctions(): Plugin {
+  return {
+    name: 'copy-edge-functions',
+    apply: 'build',
+    closeBundle() {
+      cpSync('edge-functions', 'dist/edge-functions', { recursive: true });
+    },
+  };
+}
 
 export default defineConfig(() => {
   return {
@@ -15,6 +26,7 @@ export default defineConfig(() => {
     },
     plugins: [
       react(),
+      copyEdgeFunctions(),
       {
         name: 'dev-auth',
         configureServer(server) {
