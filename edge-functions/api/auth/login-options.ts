@@ -4,7 +4,7 @@ import { CORS_HEADERS } from '../_auth-helpers';
 
 interface RequestContext {
   request: Request;
-  env: { KV: KVNamespace; JWT_SECRET: string; GEMINI_API_KEY: string };
+  env: { AUTH_STORE: KVNamespace; JWT_SECRET: string; GEMINI_API_KEY: string };
 }
 
 interface Passkey {
@@ -23,7 +23,7 @@ export function onRequestOptions(): Response {
 export async function onRequestPost(context: RequestContext): Promise<Response> {
   try {
     // Get stored credentials
-    const passkeysData = await context.env.KV.get('passkeys');
+    const passkeysData = await context.env.AUTH_STORE.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
     if (passkeys.length === 0) {
@@ -51,7 +51,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
 
     // Store challenge in KV with 5min expiry
     const challengeKey = `challenge:${challenge}`;
-    await context.env.KV.put(challengeKey, challenge, { expirationTtl: 300 });
+    await context.env.AUTH_STORE.put(challengeKey, challenge, { expirationTtl: 300 });
 
     return new Response(JSON.stringify(options), {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },

@@ -2,7 +2,7 @@ import { CORS_HEADERS, getAuthenticatedUser } from '../_auth-helpers';
 
 interface RequestContext {
   request: Request;
-  env: { KV: KVNamespace; JWT_SECRET: string; GEMINI_API_KEY: string };
+  env: { AUTH_STORE: KVNamespace; JWT_SECRET: string; GEMINI_API_KEY: string };
 }
 
 interface Passkey {
@@ -30,7 +30,7 @@ export async function onRequestGet(context: RequestContext): Promise<Response> {
     }
 
     // Get passkeys (exclude sensitive data)
-    const passkeysData = await context.env.KV.get('passkeys');
+    const passkeysData = await context.env.AUTH_STORE.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
     const safePasskeys = passkeys.map((pk) => ({
@@ -74,7 +74,7 @@ export async function onRequestDelete(context: RequestContext): Promise<Response
     }
 
     // Get passkeys
-    const passkeysData = await context.env.KV.get('passkeys');
+    const passkeysData = await context.env.AUTH_STORE.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
     // Prevent removing the last passkey
@@ -95,7 +95,7 @@ export async function onRequestDelete(context: RequestContext): Promise<Response
       });
     }
 
-    await context.env.KV.put('passkeys', JSON.stringify(updatedPasskeys));
+    await context.env.AUTH_STORE.put('passkeys', JSON.stringify(updatedPasskeys));
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },

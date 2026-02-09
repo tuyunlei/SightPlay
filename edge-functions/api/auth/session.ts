@@ -2,7 +2,7 @@ import { CORS_HEADERS, getAuthenticatedUser } from '../_auth-helpers';
 
 interface RequestContext {
   request: Request;
-  env: { KV: KVNamespace; JWT_SECRET: string; GEMINI_API_KEY: string };
+  env: { AUTH_STORE: KVNamespace; JWT_SECRET: string; GEMINI_API_KEY: string };
 }
 
 interface Passkey {
@@ -24,7 +24,7 @@ export async function onRequestGet(context: RequestContext): Promise<Response> {
     const user = await getAuthenticatedUser(context.request, context.env.JWT_SECRET);
 
     // Check if passkeys exist
-    const passkeysData = await context.env.KV.get('passkeys');
+    const passkeysData = await context.env.AUTH_STORE.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
     return new Response(

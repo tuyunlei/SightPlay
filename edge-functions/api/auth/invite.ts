@@ -2,7 +2,7 @@ import { CORS_HEADERS, getAuthenticatedUser } from '../_auth-helpers';
 
 interface RequestContext {
   request: Request;
-  env: { KV: KVNamespace; JWT_SECRET: string; GEMINI_API_KEY: string };
+  env: { AUTH_STORE: KVNamespace; JWT_SECRET: string; GEMINI_API_KEY: string };
 }
 
 // Convert Uint8Array to hex string
@@ -34,7 +34,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
 
     // Store token in KV with 30 minute expiry
     const inviteKey = `invite:${token}`;
-    await context.env.KV.put(inviteKey, 'valid', { expirationTtl: 1800 });
+    await context.env.AUTH_STORE.put(inviteKey, 'valid', { expirationTtl: 1800 });
 
     return new Response(JSON.stringify({ token, expiresIn: 1800 }), {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
@@ -63,7 +63,7 @@ export async function onRequestGet(context: RequestContext): Promise<Response> {
 
     // Check if token exists in KV
     const inviteKey = `invite:${token}`;
-    const inviteData = await context.env.KV.get(inviteKey);
+    const inviteData = await context.env.AUTH_STORE.get(inviteKey);
 
     return new Response(JSON.stringify({ valid: inviteData !== null }), {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },

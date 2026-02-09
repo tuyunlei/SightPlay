@@ -5,7 +5,7 @@ import { CORS_HEADERS, signJWT, createCookie } from '../_auth-helpers';
 
 interface RequestContext {
   request: Request;
-  env: { KV: KVNamespace; JWT_SECRET: string; GEMINI_API_KEY: string };
+  env: { AUTH_STORE: KVNamespace; JWT_SECRET: string; GEMINI_API_KEY: string };
 }
 
 interface Passkey {
@@ -35,7 +35,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
     const challenge = clientDataJSON.challenge;
 
     // Verify the challenge exists
-    const storedChallenge = await context.env.KV.get(`challenge:${challenge}`);
+    const storedChallenge = await context.env.AUTH_STORE.get(`challenge:${challenge}`);
     if (!storedChallenge) {
       return new Response(JSON.stringify({ error: 'Invalid or expired challenge' }), {
         status: 400,
@@ -44,7 +44,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
     }
 
     // Get stored credentials
-    const passkeysData = await context.env.KV.get('passkeys');
+    const passkeysData = await context.env.AUTH_STORE.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
     // Find the credential that was used
@@ -78,10 +78,10 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
     const updatedPasskeys = passkeys.map((pk) =>
       pk.id === credential.id ? { ...pk, counter: authInfo.counter } : pk
     );
-    await context.env.KV.put('passkeys', JSON.stringify(updatedPasskeys));
+    await context.env.AUTH_STORE.put('passkeys', JSON.stringify(updatedPasskeys));
 
     // Delete the used challenge
-    await context.env.KV.delete(`challenge:${challenge}`);
+    await context.env.AUTH_STORE.delete(`challenge:${challenge}`);
 
     // Create JWT token (7 day expiry)
     const now = Math.floor(Date.now() / 1000);
