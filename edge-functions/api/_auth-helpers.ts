@@ -42,6 +42,27 @@ export function resolveEnv(context: RequestContext, key: 'JWT_SECRET' | 'GEMINI_
   return value;
 }
 
+/**
+ * Resolve the real origin/hostname from the request.
+ * edgeone pages dev rewrites context.request.url to an internal proxy domain,
+ * so we prefer Origin or Referer headers which reflect the actual browser URL.
+ */
+export function resolveOrigin(context: RequestContext): { origin: string; hostname: string } {
+  const originHeader = context.request.headers.get('Origin');
+  if (originHeader) {
+    const url = new URL(originHeader);
+    return { origin: originHeader, hostname: url.hostname };
+  }
+  const referer = context.request.headers.get('Referer');
+  if (referer) {
+    const url = new URL(referer);
+    return { origin: url.origin, hostname: url.hostname };
+  }
+  // Fallback to request URL (works in production and npm run dev)
+  const url = new URL(context.request.url);
+  return { origin: url.origin, hostname: url.hostname };
+}
+
 export const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',

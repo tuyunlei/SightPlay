@@ -1,6 +1,6 @@
 import { server } from '@passwordless-id/webauthn';
 
-import { CORS_HEADERS, RequestContext, resolveKV } from '../_auth-helpers';
+import { CORS_HEADERS, RequestContext, resolveKV, resolveOrigin } from '../_auth-helpers';
 
 interface Passkey {
   id: string;
@@ -31,7 +31,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
 
     // Generate challenge
     const challenge = server.randomChallenge();
-    const hostname = new URL(context.request.url).hostname;
+    const { hostname } = resolveOrigin(context);
 
     const options = {
       challenge,

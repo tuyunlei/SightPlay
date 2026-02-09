@@ -1,7 +1,7 @@
 import { server } from '@passwordless-id/webauthn';
 import type { AuthenticationJSON, CredentialInfo } from '@passwordless-id/webauthn/dist/esm/types';
 
-import { CORS_HEADERS, signJWT, createCookie, RequestContext, resolveKV, resolveEnv } from '../_auth-helpers';
+import { CORS_HEADERS, signJWT, createCookie, RequestContext, resolveKV, resolveEnv, resolveOrigin } from '../_auth-helpers';
 
 interface Passkey {
   id: string;
@@ -52,7 +52,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
       });
     }
 
-    const origin = new URL(context.request.url).origin;
+    const { origin } = resolveOrigin(context);
 
     // Build CredentialInfo for verification
     const credentialInfo: CredentialInfo = {
