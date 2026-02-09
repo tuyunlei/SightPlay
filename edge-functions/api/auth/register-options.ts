@@ -1,4 +1,4 @@
-import { generateRegistrationOptions } from '@simplewebauthn/server';
+import { server } from '@passwordless-id/webauthn';
 
 import { CORS_HEADERS } from '../_auth-helpers';
 
@@ -50,27 +50,47 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
       // Do NOT delete the token yet - delete after successful verification
     }
 
-    // Generate registration options
-    const options = await generateRegistrationOptions({
-      rpName: 'SightPlay',
-      rpID: new URL(context.request.url).hostname,
-      userName: 'owner',
-      userDisplayName: 'Owner',
-      // Exclude existing credentials
+    // Generate challenge
+    const challenge = server.randomChallenge();
+    const hostname = new URL(context.request.url).hostname;
+
+    // Build PublicKeyCredentialCreationOptions manually
+    const userIdBytes = new TextEncoder().encode('owner');
+    const userIdBase64 = btoa(String.fromCharCode(...userIdBytes))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+
+    const options = {
+      challenge,
+      rp: {
+        name: 'SightPlay',
+        id: hostname,
+      },
+      user: {
+        id: userIdBase64,
+        name: 'owner',
+        displayName: 'Owner',
+      },
+      pubKeyCredParams: [
+        { alg: -7, type: 'public-key' as const },
+        { alg: -257, type: 'public-key' as const },
+      ],
       excludeCredentials: passkeys.map((pk) => ({
         id: pk.id,
-        type: 'public-key',
+        type: 'public-key' as const,
         transports: pk.transports as AuthenticatorTransport[] | undefined,
       })),
       authenticatorSelection: {
-        residentKey: 'preferred',
-        userVerification: 'preferred',
+        residentKey: 'preferred' as const,
+        userVerification: 'preferred' as const,
       },
-    });
+      timeout: 60000,
+    };
 
     // Store challenge in KV with 5min expiry
-    const challengeKey = `challenge:${options.challenge}`;
-    await context.env.KV.put(challengeKey, options.challenge, { expirationTtl: 300 });
+    const challengeKey = `challenge:${challenge}`;
+    await context.env.KV.put(challengeKey, challenge, { expirationTtl: 300 });
 
     return new Response(JSON.stringify(options), {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },

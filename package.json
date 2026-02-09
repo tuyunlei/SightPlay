@@ -22,8 +22,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "@simplewebauthn/browser": "^13.2.2",
-    "@simplewebauthn/server": "^13.2.2",
+    "@passwordless-id/webauthn": "^2.3.1",
     "lucide-react": "^0.563.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",

@@ -1,8 +1,4 @@
-import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
-import type {
-  PublicKeyCredentialCreationOptionsJSON,
-  PublicKeyCredentialRequestOptionsJSON,
-} from '@simplewebauthn/browser';
+import { client } from '@passwordless-id/webauthn';
 import { useState, useEffect, useCallback } from 'react';
 
 interface AuthState {
@@ -20,14 +16,31 @@ async function performRegister(name?: string, inviteToken?: string): Promise<boo
   });
 
   if (!optionsResponse.ok) throw new Error('Failed to get registration options');
-  const options: PublicKeyCredentialCreationOptionsJSON = await optionsResponse.json();
-  const attResp = await startRegistration({ optionsJSON: options });
+  const options = await optionsResponse.json();
+
+  // Use @passwordless-id/webauthn client to create credential
+  const registration = await client.register({
+    challenge: options.challenge,
+    user: {
+      id: options.user.id,
+      name: options.user.name,
+      displayName: options.user.displayName,
+    },
+    discoverable: options.authenticatorSelection?.residentKey,
+    userVerification: options.authenticatorSelection?.userVerification,
+    customProperties: {
+      rp: options.rp,
+      pubKeyCredParams: options.pubKeyCredParams,
+      excludeCredentials: options.excludeCredentials,
+      timeout: options.timeout,
+    },
+  });
 
   const verifyResponse = await fetch('/api/auth/register-verify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ response: attResp, name, inviteToken }),
+    body: JSON.stringify({ response: registration, name, inviteToken }),
   });
 
   if (!verifyResponse.ok) throw new Error('Registration verification failed');
@@ -41,14 +54,24 @@ async function performLogin(): Promise<boolean> {
   });
 
   if (!optionsResponse.ok) throw new Error('Failed to get authentication options');
-  const options: PublicKeyCredentialRequestOptionsJSON = await optionsResponse.json();
-  const attResp = await startAuthentication({ optionsJSON: options });
+  const options = await optionsResponse.json();
+
+  // Use @passwordless-id/webauthn client to authenticate
+  const authentication = await client.authenticate({
+    challenge: options.challenge,
+    allowCredentials: options.allowCredentials?.map((c: { id: string; transports?: string[] }) => ({
+      id: c.id,
+      transports: c.transports || [],
+    })),
+    userVerification: options.userVerification,
+    timeout: options.timeout,
+  });
 
   const verifyResponse = await fetch('/api/auth/login-verify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ response: attResp }),
+    body: JSON.stringify({ response: authentication }),
   });
 
   if (!verifyResponse.ok) throw new Error('Authentication verification failed');

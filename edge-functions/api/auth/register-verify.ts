@@ -1,16 +1,7 @@
-import { verifyRegistrationResponse } from '@simplewebauthn/server';
-import type { RegistrationResponseJSON } from '@simplewebauthn/server';
+import { server } from '@passwordless-id/webauthn';
+import type { RegistrationJSON } from '@passwordless-id/webauthn/dist/esm/types';
 
 import { CORS_HEADERS, signJWT, createCookie } from '../_auth-helpers';
-
-// Helper to convert Uint8Array to base64url
-function uint8ArrayToBase64url(bytes: Uint8Array): string {
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
 
 interface RequestContext {
   request: Request;
@@ -24,6 +15,7 @@ interface Passkey {
   name: string;
   createdAt: number;
   transports?: string[];
+  algorithm?: string;
 }
 
 export function onRequestOptions(): Response {
@@ -33,18 +25,18 @@ export function onRequestOptions(): Response {
 export async function onRequestPost(context: RequestContext): Promise<Response> {
   try {
     const body = (await context.request.json()) as {
-      response: RegistrationResponseJSON;
+      response: RegistrationJSON;
       name?: string;
       inviteToken?: string;
     };
 
-    // Verify the challenge exists
-    // Decode base64url clientDataJSON to get the actual challenge
+    // Decode clientDataJSON to get the challenge
     const clientDataJSON = JSON.parse(
       atob(body.response.response.clientDataJSON.replace(/-/g, '+').replace(/_/g, '/'))
     );
     const challenge = clientDataJSON.challenge;
 
+    // Verify the challenge exists
     const storedChallenge = await context.env.KV.get(`challenge:${challenge}`);
     if (!storedChallenge) {
       return new Response(JSON.stringify({ error: 'Invalid or expired challenge' }), {
@@ -53,38 +45,27 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
       });
     }
 
+    const origin = new URL(context.request.url).origin;
+
     // Verify the registration response
-    const verification = await verifyRegistrationResponse({
-      response: body.response,
-      expectedChallenge: challenge,
-      expectedOrigin: new URL(context.request.url).origin,
-      expectedRPID: new URL(context.request.url).hostname,
-      requireUserVerification: false,
+    const registrationInfo = await server.verifyRegistration(body.response, {
+      challenge,
+      origin,
     });
 
-    if (!verification.verified || !verification.registrationInfo) {
-      return new Response(JSON.stringify({ error: 'Verification failed' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      });
-    }
-
     // Store the credential
-    const { credential } = verification.registrationInfo;
+    const { credential } = registrationInfo;
     const passkeysData = await context.env.KV.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
-    // credential.id is already a base64url string
-    // credential.publicKey is Uint8Array, convert it to base64url string for storage
-    const publicKeyBase64 = uint8ArrayToBase64url(credential.publicKey);
-
     const newPasskey: Passkey = {
-      id: credential.id, // Already base64url string
-      publicKey: publicKeyBase64,
-      counter: credential.counter,
+      id: credential.id,
+      publicKey: credential.publicKey, // Already base64url string
+      counter: registrationInfo.authenticator.counter,
       name: body.name || `Passkey ${passkeys.length + 1}`,
       createdAt: Date.now(),
-      transports: body.response.response.transports,
+      transports: credential.transports,
+      algorithm: credential.algorithm,
     };
 
     passkeys.push(newPasskey);
