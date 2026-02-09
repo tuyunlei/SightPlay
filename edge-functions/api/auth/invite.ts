@@ -1,4 +1,10 @@
-import { CORS_HEADERS, getAuthenticatedUser, RequestContext, resolveKV, resolveEnv } from '../_auth-helpers';
+import {
+  CORS_HEADERS,
+  getAuthenticatedUser,
+  RequestContext,
+  resolveKV,
+  resolveEnv,
+} from '../_auth-helpers';
 
 // Convert Uint8Array to hex string
 function uint8ArrayToHex(bytes: Uint8Array): string {

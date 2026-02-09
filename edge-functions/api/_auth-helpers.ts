@@ -20,9 +20,7 @@ export interface RequestContext {
  * - Dev (npm run dev): context.env.AUTH_STORE (injected by Vite middleware)
  */
 export function resolveKV(context: RequestContext): KVNamespace {
-  const kv =
-    context.env?.AUTH_STORE ??
-    (globalThis as Record<string, unknown>).AUTH_STORE;
+  const kv = context.env?.AUTH_STORE ?? (globalThis as Record<string, unknown>).AUTH_STORE;
   if (!kv) {
     throw new Error('AUTH_STORE KV namespace not available');
   }
@@ -34,8 +32,7 @@ export function resolveKV(context: RequestContext): KVNamespace {
  */
 export function resolveEnv(context: RequestContext, key: 'JWT_SECRET' | 'GEMINI_API_KEY'): string {
   const value =
-    (context.env as Record<string, unknown>)?.[key] ??
-    (globalThis as Record<string, unknown>)[key];
+    (context.env as Record<string, unknown>)?.[key] ?? (globalThis as Record<string, unknown>)[key];
   if (!value || typeof value !== 'string') {
     throw new Error(`${key} environment variable not available`);
   }

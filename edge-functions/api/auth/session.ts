@@ -1,4 +1,10 @@
-import { CORS_HEADERS, getAuthenticatedUser, RequestContext, resolveKV, resolveEnv } from '../_auth-helpers';
+import {
+  CORS_HEADERS,
+  getAuthenticatedUser,
+  RequestContext,
+  resolveKV,
+  resolveEnv,
+} from '../_auth-helpers';
 
 interface Passkey {
   id: string;

@@ -1,7 +1,15 @@
 import { server } from '@passwordless-id/webauthn';
 import type { RegistrationJSON } from '@passwordless-id/webauthn/dist/esm/types';
 
-import { CORS_HEADERS, signJWT, createCookie, RequestContext, resolveKV, resolveEnv, resolveOrigin } from '../_auth-helpers';
+import {
+  CORS_HEADERS,
+  signJWT,
+  createCookie,
+  RequestContext,
+  resolveKV,
+  resolveEnv,
+  resolveOrigin,
+} from '../_auth-helpers';
 
 interface Passkey {
   id: string;
