@@ -11,5 +11,5 @@ interface UiState {
 export const useUiStore = create<UiState>((set) => ({
   lang: 'zh',
   setLang: (lang) => set({ lang }),
-  toggleLang: () => set((state) => ({ lang: state.lang === 'en' ? 'zh' : 'en' }))
+  toggleLang: () => set((state) => ({ lang: state.lang === 'en' ? 'zh' : 'en' })),
 }));

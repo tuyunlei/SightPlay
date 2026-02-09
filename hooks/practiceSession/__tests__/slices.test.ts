@@ -150,7 +150,14 @@ describe('usePressedKeysState', () => {
   it('adds a pressed key', () => {
     const { result } = renderHook(() => usePressedKeysState());
 
-    const note = { id: '1', name: 'C' as const, octave: 4, frequency: 261.63, midi: 60, globalIndex: 0 };
+    const note = {
+      id: '1',
+      name: 'C' as const,
+      octave: 4,
+      frequency: 261.63,
+      midi: 60,
+      globalIndex: 0,
+    };
 
     act(() => {
       result.current.addPressedKey(60, note, true, 'target-1');
@@ -167,7 +174,14 @@ describe('usePressedKeysState', () => {
   it('removes a pressed key and returns its info', () => {
     const { result } = renderHook(() => usePressedKeysState());
 
-    const note = { id: '1', name: 'C' as const, octave: 4, frequency: 261.63, midi: 60, globalIndex: 0 };
+    const note = {
+      id: '1',
+      name: 'C' as const,
+      octave: 4,
+      frequency: 261.63,
+      midi: 60,
+      globalIndex: 0,
+    };
 
     act(() => {
       result.current.addPressedKey(60, note, true);
@@ -196,7 +210,14 @@ describe('usePressedKeysState', () => {
   it('keeps pressedKeysRef in sync with state', () => {
     const { result } = renderHook(() => usePressedKeysState());
 
-    const note = { id: '1', name: 'D' as const, octave: 4, frequency: 293.66, midi: 62, globalIndex: 0 };
+    const note = {
+      id: '1',
+      name: 'D' as const,
+      octave: 4,
+      frequency: 293.66,
+      midi: 62,
+      globalIndex: 0,
+    };
 
     act(() => {
       result.current.addPressedKey(62, note, false);
@@ -209,8 +230,22 @@ describe('usePressedKeysState', () => {
   it('handles multiple keys', () => {
     const { result } = renderHook(() => usePressedKeysState());
 
-    const noteC = { id: '1', name: 'C' as const, octave: 4, frequency: 261.63, midi: 60, globalIndex: 0 };
-    const noteE = { id: '2', name: 'E' as const, octave: 4, frequency: 329.63, midi: 64, globalIndex: 1 };
+    const noteC = {
+      id: '1',
+      name: 'C' as const,
+      octave: 4,
+      frequency: 261.63,
+      midi: 60,
+      globalIndex: 0,
+    };
+    const noteE = {
+      id: '2',
+      name: 'E' as const,
+      octave: 4,
+      frequency: 329.63,
+      midi: 64,
+      globalIndex: 1,
+    };
 
     act(() => {
       result.current.addPressedKey(60, noteC, true);

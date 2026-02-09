@@ -5,7 +5,6 @@ import { MidiService } from '../services/midiService';
 
 import { useMidiInput } from './useMidiInput';
 
-
 vi.mock('../services/midiService');
 
 describe('useMidiInput', () => {

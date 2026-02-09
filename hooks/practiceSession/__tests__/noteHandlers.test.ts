@@ -321,7 +321,11 @@ describe('useMidiNoteHandlers', () => {
 
     const setDetectedNote = vi.fn();
     const addPressedKey = vi.fn();
-    const removePressedKey = vi.fn(() => ({ note: makeNote(60), isCorrect: true, targetId: target.id }));
+    const removePressedKey = vi.fn(() => ({
+      note: makeNote(60),
+      isCorrect: true,
+      targetId: target.id,
+    }));
     const pressedKeysRef = { current: new Map() };
     const handleCorrectNote = vi.fn();
     const refs = makeRefs();
@@ -347,7 +351,11 @@ describe('useMidiNoteHandlers', () => {
 
     const setDetectedNote = vi.fn();
     const addPressedKey = vi.fn();
-    const removePressedKey = vi.fn(() => ({ note: makeNote(62), isCorrect: false, targetId: null }));
+    const removePressedKey = vi.fn(() => ({
+      note: makeNote(62),
+      isCorrect: false,
+      targetId: null,
+    }));
     const pressedKeysRef = { current: new Map() };
     const handleCorrectNote = vi.fn();
     const refs = makeRefs();

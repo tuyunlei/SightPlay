@@ -86,7 +86,14 @@ describe('practiceStore', () => {
     });
 
     it('setDetectedNote updates detected note', () => {
-      const note = { id: '1', name: 'C' as const, octave: 4, frequency: 261.63, midi: 60, globalIndex: 0 };
+      const note = {
+        id: '1',
+        name: 'C' as const,
+        octave: 4,
+        frequency: 261.63,
+        midi: 60,
+        globalIndex: 0,
+      };
       act(() => usePracticeStore.getState().setDetectedNote(note));
       expect(usePracticeStore.getState().detectedNote).toEqual(note);
     });
@@ -125,7 +132,14 @@ describe('practiceStore', () => {
     });
 
     it('does not reset other state like clef or noteQueue', () => {
-      const note = { id: '1', name: 'C' as const, octave: 4, frequency: 261.63, midi: 60, globalIndex: 0 };
+      const note = {
+        id: '1',
+        name: 'C' as const,
+        octave: 4,
+        frequency: 261.63,
+        midi: 60,
+        globalIndex: 0,
+      };
       act(() => {
         const state = usePracticeStore.getState();
         state.setClef(ClefType.BASS);

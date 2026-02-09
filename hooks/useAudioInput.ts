@@ -10,7 +10,12 @@ interface UseAudioInputOptions {
   onError?: (error: unknown) => void;
 }
 
-export const useAudioInput = ({ onNoteDetected, onStart, onStop, onError }: UseAudioInputOptions) => {
+export const useAudioInput = ({
+  onNoteDetected,
+  onStart,
+  onStop,
+  onError,
+}: UseAudioInputOptions) => {
   const audioProcessor = useRef<AudioProcessor>(new AudioProcessor());
   const rafId = useRef<number>(0);
 

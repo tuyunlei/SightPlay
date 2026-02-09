@@ -31,7 +31,7 @@ export class MidiService {
 
     try {
       this.midiAccess = await navigator.requestMIDIAccess();
-      
+
       this.updateConnectionStatus();
       this.bindInputs();
 
@@ -43,7 +43,7 @@ export class MidiService {
         }
       };
     } catch (err) {
-      console.error("MIDI Access failed", err);
+      console.error('MIDI Access failed', err);
     } finally {
       this.isInitializing = false;
     }
@@ -73,7 +73,7 @@ export class MidiService {
     if (!event.data) return;
     const [command, note, velocity] = event.data;
 
-    const commandType = command & 0xF0;
+    const commandType = command & 0xf0;
     const isNoteOn = commandType === 0x90 && velocity > 0;
     const isNoteOff = commandType === 0x80 || (commandType === 0x90 && velocity === 0);
 

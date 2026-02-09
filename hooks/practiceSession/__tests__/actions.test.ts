@@ -20,7 +20,13 @@ describe('useLoadChallenge', () => {
     const setNoteQueue = vi.fn();
 
     const { result } = renderHook(() =>
-      useLoadChallenge(resetStats, setChallengeInfo, setChallengeSequence, setChallengeIndex, setNoteQueue)
+      useLoadChallenge(
+        resetStats,
+        setChallengeInfo,
+        setChallengeSequence,
+        setChallengeIndex,
+        setNoteQueue
+      )
     );
 
     let count: number;
@@ -34,11 +40,13 @@ describe('useLoadChallenge', () => {
 
     expect(count!).toBe(3);
     expect(setChallengeInfo).toHaveBeenCalled();
-    expect(setChallengeSequence).toHaveBeenCalledWith(expect.arrayContaining([
-      expect.objectContaining({ midi: 60 }),
-      expect.objectContaining({ midi: 64 }),
-      expect.objectContaining({ midi: 67 }),
-    ]));
+    expect(setChallengeSequence).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ midi: 60 }),
+        expect.objectContaining({ midi: 64 }),
+        expect.objectContaining({ midi: 67 }),
+      ])
+    );
     expect(setChallengeIndex).toHaveBeenCalledWith(0);
     expect(setNoteQueue).toHaveBeenCalled();
     expect(resetStats).toHaveBeenCalled();
@@ -52,7 +60,13 @@ describe('useLoadChallenge', () => {
     const setNoteQueue = vi.fn();
 
     const { result } = renderHook(() =>
-      useLoadChallenge(resetStats, setChallengeInfo, setChallengeSequence, setChallengeIndex, setNoteQueue)
+      useLoadChallenge(
+        resetStats,
+        setChallengeInfo,
+        setChallengeSequence,
+        setChallengeIndex,
+        setNoteQueue
+      )
     );
 
     let count: number;
@@ -155,7 +169,14 @@ describe('useMicInput', () => {
     });
 
     renderHook(() =>
-      useMicInput(handleMicNote, setIsListening, setStatus, setDetectedNote, onMicError, mockUseAudioInput)
+      useMicInput(
+        handleMicNote,
+        setIsListening,
+        setStatus,
+        setDetectedNote,
+        onMicError,
+        mockUseAudioInput
+      )
     );
 
     expect(mockUseAudioInput).toHaveBeenCalled();

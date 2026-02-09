@@ -15,7 +15,7 @@ describe('queue', () => {
     const sequence: Note[] = [
       createNoteFromMidi(60, 0),
       createNoteFromMidi(62, 1),
-      createNoteFromMidi(64, 2)
+      createNoteFromMidi(64, 2),
     ];
     const queue = sequence.slice(0, 2);
 
@@ -24,7 +24,7 @@ describe('queue', () => {
       clef: ClefType.TREBLE,
       challengeSequence: sequence,
       challengeIndex: 0,
-      queueSize: 2
+      queueSize: 2,
     });
 
     expect(nextChallengeIndex).toBe(1);

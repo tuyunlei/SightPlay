@@ -11,10 +11,7 @@ interface AuthState {
   isLoading: boolean;
 }
 
-async function performRegister(
-  name?: string,
-  inviteToken?: string
-): Promise<boolean> {
+async function performRegister(name?: string, inviteToken?: string): Promise<boolean> {
   const optionsResponse = await fetch('/api/auth/register-options', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -69,25 +66,34 @@ export function useAuth() {
     try {
       const response = await fetch('/api/auth/session', { credentials: 'include' });
       const data = await response.json();
-      setState({ isAuthenticated: data.authenticated, hasPasskeys: data.hasPasskeys, isLoading: false });
+      setState({
+        isAuthenticated: data.authenticated,
+        hasPasskeys: data.hasPasskeys,
+        isLoading: false,
+      });
     } catch (error) {
       console.error('Error checking session:', error);
       setState((prev) => ({ ...prev, isLoading: false }));
     }
   }, []);
 
-  useEffect(() => { checkSession(); }, [checkSession]);
-
-  const register = useCallback(async (name?: string, inviteToken?: string) => {
-    try {
-      await performRegister(name, inviteToken);
-      await checkSession();
-      return true;
-    } catch (error) {
-      console.error('Registration error:', error);
-      return false;
-    }
+  useEffect(() => {
+    checkSession();
   }, [checkSession]);
+
+  const register = useCallback(
+    async (name?: string, inviteToken?: string) => {
+      try {
+        await performRegister(name, inviteToken);
+        await checkSession();
+        return true;
+      } catch (error) {
+        console.error('Registration error:', error);
+        return false;
+      }
+    },
+    [checkSession]
+  );
 
   const login = useCallback(async () => {
     try {

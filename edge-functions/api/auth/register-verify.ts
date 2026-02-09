@@ -79,7 +79,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
     const publicKeyBase64 = uint8ArrayToBase64url(credential.publicKey);
 
     const newPasskey: Passkey = {
-      id: credential.id,  // Already base64url string
+      id: credential.id, // Already base64url string
       publicKey: publicKeyBase64,
       counter: credential.counter,
       name: body.name || `Passkey ${passkeys.length + 1}`,

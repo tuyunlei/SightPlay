@@ -20,8 +20,15 @@ interface AiCoachPanelProps {
 }
 
 const AiCoachPanel: React.FC<AiCoachPanelProps> = ({
-  clef, targetNote, t, chatHistory, chatInput, isLoadingAi,
-  onChatInputChange, onSendMessage, chatEndRef,
+  clef,
+  targetNote,
+  t,
+  chatHistory,
+  chatInput,
+  isLoadingAi,
+  onChatInputChange,
+  onSendMessage,
+  chatEndRef,
 }) => {
   const [showAiPanel, setShowAiPanel] = useState(true);
 
@@ -58,8 +65,15 @@ const AiCoachPanel: React.FC<AiCoachPanelProps> = ({
           </button>
         </div>
 
-        <div className={`flex-1 flex flex-col gap-3 overflow-hidden transition-all duration-300 ${showAiPanel ? 'opacity-100' : 'opacity-0 lg:opacity-100 h-0 lg:h-auto'}`}>
-          <ChatMessageList chatHistory={chatHistory} isLoadingAi={isLoadingAi} t={t} chatEndRef={chatEndRef} />
+        <div
+          className={`flex-1 flex flex-col gap-3 overflow-hidden transition-all duration-300 ${showAiPanel ? 'opacity-100' : 'opacity-0 lg:opacity-100 h-0 lg:h-auto'}`}
+        >
+          <ChatMessageList
+            chatHistory={chatHistory}
+            isLoadingAi={isLoadingAi}
+            t={t}
+            chatEndRef={chatEndRef}
+          />
           <QuickActions clef={clef} targetNote={targetNote} t={t} onSend={handleSend} />
           <div className="relative flex items-center">
             <input
