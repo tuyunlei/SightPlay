@@ -1,9 +1,4 @@
-import { CORS_HEADERS, getAuthenticatedUser } from '../_auth-helpers';
-
-interface RequestContext {
-  request: Request;
-  env: { KV: KVNamespace; JWT_SECRET: string; GEMINI_API_KEY: string };
-}
+import { CORS_HEADERS, getAuthenticatedUser, RequestContext, resolveKV, resolveEnv } from '../_auth-helpers';
 
 interface Passkey {
   id: string;
@@ -20,11 +15,13 @@ export function onRequestOptions(): Response {
 
 export async function onRequestGet(context: RequestContext): Promise<Response> {
   try {
+    const kv = resolveKV(context);
+    console.log('env keys:', Object.keys(context.env));
     // Check authentication
-    const user = await getAuthenticatedUser(context.request, context.env.JWT_SECRET);
+    const user = await getAuthenticatedUser(context.request, resolveEnv(context, 'JWT_SECRET'));
 
     // Check if passkeys exist
-    const passkeysData = await context.env.KV.get('passkeys');
+    const passkeysData = await kv.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
     return new Response(

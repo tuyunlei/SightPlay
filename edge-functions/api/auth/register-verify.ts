@@ -1,12 +1,7 @@
 import { server } from '@passwordless-id/webauthn';
 import type { RegistrationJSON } from '@passwordless-id/webauthn/dist/esm/types';
 
-import { CORS_HEADERS, signJWT, createCookie } from '../_auth-helpers';
-
-interface RequestContext {
-  request: Request;
-  env: { KV: KVNamespace; JWT_SECRET: string; GEMINI_API_KEY: string };
-}
+import { CORS_HEADERS, signJWT, createCookie, RequestContext, resolveKV, resolveEnv } from '../_auth-helpers';
 
 interface Passkey {
   id: string;
@@ -24,6 +19,7 @@ export function onRequestOptions(): Response {
 
 export async function onRequestPost(context: RequestContext): Promise<Response> {
   try {
+    const kv = resolveKV(context);
     const body = (await context.request.json()) as {
       response: RegistrationJSON;
       name?: string;
@@ -37,7 +33,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
     const challenge = clientDataJSON.challenge;
 
     // Verify the challenge exists
-    const storedChallenge = await context.env.KV.get(`challenge:${challenge}`);
+    const storedChallenge = await kv.get(`challenge:${challenge}`);
     if (!storedChallenge) {
       return new Response(JSON.stringify({ error: 'Invalid or expired challenge' }), {
         status: 400,
@@ -55,7 +51,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
 
     // Store the credential
     const { credential } = registrationInfo;
-    const passkeysData = await context.env.KV.get('passkeys');
+    const passkeysData = await kv.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
     const newPasskey: Passkey = {
@@ -69,21 +65,21 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
     };
 
     passkeys.push(newPasskey);
-    await context.env.KV.put('passkeys', JSON.stringify(passkeys));
+    await kv.put('passkeys', JSON.stringify(passkeys));
 
     // Delete the used challenge
-    await context.env.KV.delete(`challenge:${challenge}`);
+    await kv.delete(`challenge:${challenge}`);
 
     // Delete invite token if provided (one-time use)
     if (body.inviteToken) {
-      await context.env.KV.delete(`invite:${body.inviteToken}`);
+      await kv.delete(`invite:${body.inviteToken}`);
     }
 
     // Auto-login: issue JWT after successful registration
     const now = Math.floor(Date.now() / 1000);
     const token = await signJWT(
       { sub: 'owner', iat: now, exp: now + 7 * 24 * 60 * 60 },
-      context.env.JWT_SECRET
+      resolveEnv(context, 'JWT_SECRET')
     );
     const cookie = createCookie('auth_token', token, {
       maxAge: 7 * 24 * 60 * 60,

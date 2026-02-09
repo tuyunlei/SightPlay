@@ -1,5 +1,47 @@
 // Auth helper functions for JWT and cookies
 
+// KV namespace interface (EdgeOne Pages runtime)
+export interface KVNamespace {
+  get(key: string): Promise<string | null>;
+  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
+  delete(key: string): Promise<void>;
+}
+
+// Unified request context for edge functions
+export interface RequestContext {
+  request: Request;
+  env: { AUTH_STORE?: KVNamespace; JWT_SECRET?: string; GEMINI_API_KEY?: string };
+}
+
+/**
+ * Resolve KV namespace from context.env or globalThis.
+ * - Production (EdgeOne Pages): context.env.AUTH_STORE
+ * - Dev (edgeone pages dev): globalThis.AUTH_STORE (injected by CLI via EO_KV_BINDINGS)
+ * - Dev (npm run dev): context.env.AUTH_STORE (injected by Vite middleware)
+ */
+export function resolveKV(context: RequestContext): KVNamespace {
+  const kv =
+    context.env?.AUTH_STORE ??
+    (globalThis as Record<string, unknown>).AUTH_STORE;
+  if (!kv) {
+    throw new Error('AUTH_STORE KV namespace not available');
+  }
+  return kv as KVNamespace;
+}
+
+/**
+ * Resolve environment variable from context.env or globalThis.
+ */
+export function resolveEnv(context: RequestContext, key: 'JWT_SECRET' | 'GEMINI_API_KEY'): string {
+  const value =
+    (context.env as Record<string, unknown>)?.[key] ??
+    (globalThis as Record<string, unknown>)[key];
+  if (!value || typeof value !== 'string') {
+    throw new Error(`${key} environment variable not available`);
+  }
+  return value;
+}
+
 export const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',

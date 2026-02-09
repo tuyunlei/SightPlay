@@ -168,7 +168,7 @@ export function devAuthMiddleware(projectRoot: string, server: ViteDevServer): C
       const context = {
         request: webRequest,
         env: {
-          KV: memoryKV,
+          AUTH_STORE: memoryKV,
           JWT_SECRET,
           GEMINI_API_KEY,
         },
