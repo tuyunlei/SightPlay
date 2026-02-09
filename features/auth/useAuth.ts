@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react';
 import { client } from '@passwordless-id/webauthn';
 import { useState, useEffect, useCallback } from 'react';
 
@@ -132,6 +133,7 @@ export function useAuth() {
         return true;
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Registration failed';
+        Sentry.captureException(error, { tags: { flow: 'register' } });
         console.error('Registration error:', message);
         return message;
       }
@@ -145,6 +147,7 @@ export function useAuth() {
       await checkSession();
       return true;
     } catch (error) {
+      Sentry.captureException(error, { tags: { flow: 'login' } });
       console.error('Authentication error:', error);
       return false;
     }
