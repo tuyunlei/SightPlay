@@ -34,8 +34,9 @@ export async function onRequestGet(context: RequestContext): Promise<Response> {
       }
     );
   } catch (error) {
-    console.error('Error checking session:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error('Error checking session:', msg);
+    return new Response(JSON.stringify({ error: 'Internal server error', debug: msg }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
