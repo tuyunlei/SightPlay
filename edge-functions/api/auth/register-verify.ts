@@ -11,6 +11,15 @@ interface Passkey {
   createdAt: number;
   transports?: string[];
   algorithm?: string;
+  aaguid?: string;
+}
+
+function formatPasskeyName(authenticatorName: string): string {
+  const date = new Date();
+  const month = date.toLocaleString('en-US', { month: 'short' });
+  const day = date.getDate();
+  const year = date.getFullYear();
+  return `${authenticatorName} · ${month} ${day}, ${year}`;
 }
 
 export function onRequestOptions(): Response {
@@ -58,8 +67,9 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
       id: credential.id,
       publicKey: credential.publicKey, // Already base64url string
       counter: registrationInfo.authenticator.counter,
-      name: body.name || `Passkey ${passkeys.length + 1}`,
+      name: body.name || formatPasskeyName(registrationInfo.authenticator.name),
       createdAt: Date.now(),
+      aaguid: registrationInfo.authenticator.aaguid,
       transports: credential.transports,
       algorithm: credential.algorithm,
     };

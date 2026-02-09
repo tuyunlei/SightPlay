@@ -51,7 +51,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
     const { hostname } = resolveOrigin(context);
 
     // Build PublicKeyCredentialCreationOptions manually
-    const userIdBytes = new TextEncoder().encode('owner');
+    const userIdBytes = new TextEncoder().encode('sightplay-user');
     const userIdBase64 = btoa(String.fromCharCode(...userIdBytes))
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
@@ -65,8 +65,8 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
       },
       user: {
         id: userIdBase64,
-        name: 'owner',
-        displayName: 'Owner',
+        name: 'SightPlay User',
+        displayName: 'SightPlay User',
       },
       pubKeyCredParams: [
         { alg: -7, type: 'public-key' as const },
