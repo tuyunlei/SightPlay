@@ -3,6 +3,5 @@
   "entry": ["index.tsx", "edge-functions/**/*.ts"],
   "project": ["**/*.{ts,tsx}"],
   "ignore": ["dist/**", "coverage/**", ".github/**", "scripts/**", "node_modules/**"],
-  "ignoreExportsUsedInFile": true,
-  "ignoreDependencies": ["lefthook"]
+  "ignoreExportsUsedInFile": true
 }
