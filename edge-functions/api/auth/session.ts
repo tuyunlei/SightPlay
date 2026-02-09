@@ -16,7 +16,6 @@ export function onRequestOptions(): Response {
 export async function onRequestGet(context: RequestContext): Promise<Response> {
   try {
     const kv = resolveKV(context);
-    console.log('env keys:', Object.keys(context.env));
     // Check authentication
     const user = await getAuthenticatedUser(context.request, resolveEnv(context, 'JWT_SECRET'));
 
@@ -34,9 +33,8 @@ export async function onRequestGet(context: RequestContext): Promise<Response> {
       }
     );
   } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error);
-    console.error('Error checking session:', msg);
-    return new Response(JSON.stringify({ error: 'Internal server error', debug: msg }), {
+    console.error('Error checking session:', error);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
