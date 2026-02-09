@@ -9,6 +9,9 @@ pre-push:
     arch:
       run: npm run lint:arch
       stage_fixed: false
+    format:
+      run: npm run format:check
+      stage_fixed: false
     test:
       run: npx vitest run
       stage_fixed: false
