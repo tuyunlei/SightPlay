@@ -1,7 +1,7 @@
 import { KeyRound, AlertCircle, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-import { useAuthContext } from './AuthContext';
+import { useAuthContext } from './useAuthContext';
 
 interface InviteRegisterProps {
   token: string;

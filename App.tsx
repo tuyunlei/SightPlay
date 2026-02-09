@@ -2,8 +2,8 @@ import { KeyRound } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
 import AiCoachPanel from './features/ai/AiCoachPanel';
-import { AuthProvider } from './features/auth/AuthContext';
 import { AuthGate } from './features/auth/AuthGate';
+import { AuthProvider } from './features/auth/AuthProvider';
 import { InviteRegister } from './features/auth/InviteRegister';
 import { PasskeyManagement } from './features/auth/PasskeyManagement';
 import TopBar from './features/controls/TopBar';
