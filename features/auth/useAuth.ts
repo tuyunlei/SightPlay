@@ -1,6 +1,18 @@
 import { client } from '@passwordless-id/webauthn';
 import { useState, useEffect, useCallback } from 'react';
 
+// Convert base64url string to ArrayBuffer (for WebAuthn credential IDs)
+function base64urlToBuffer(base64url: string): ArrayBuffer {
+  const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+  const binary = atob(padded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
 interface AuthState {
   isAuthenticated: boolean;
   hasPasskeys: boolean;
@@ -31,7 +43,12 @@ async function performRegister(name?: string, inviteToken?: string): Promise<boo
     customProperties: {
       rp: options.rp,
       pubKeyCredParams: options.pubKeyCredParams,
-      excludeCredentials: options.excludeCredentials,
+      excludeCredentials: options.excludeCredentials?.map(
+        (c: { id: string; type: string; transports?: string[] }) => ({
+          ...c,
+          id: base64urlToBuffer(c.id),
+        })
+      ),
       timeout: options.timeout,
     },
   });
