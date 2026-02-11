@@ -28,3 +28,7 @@ coverage
 .edgeone/
 .tef_dist/
 .env
+
+# Playwright
+playwright-report/
+test-results/
