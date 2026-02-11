@@ -29,6 +29,11 @@ coverage
 .tef_dist/
 .env
 
+# Sentry
+.sentryclirc
+.sentry-*
+sentry-debug-files/
+
 # Playwright
 playwright-report/
 test-results/

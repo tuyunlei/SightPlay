@@ -9,7 +9,7 @@
 - [x] E2E 测试框架搭建（Playwright） ← `596170a`
 - [x] 核心用户流程 E2E 覆盖（练习、登录、AI 对话） ← `75f5dc9`（练习+认证流程，AI 对话待补）
 - [x] CI 集成 E2E ← `b1a576d`
-- [ ] 清理技术债（~~error-report.ts~~、~~CORS 重复~~、Sentry sourcemap 上传）
+- [x] 清理技术债（~~error-report.ts~~、~~CORS 重复~~、Sentry sourcemap 上传） ← (待 commit)
 
 ## P1 — 移动端体验
 
