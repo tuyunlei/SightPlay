@@ -17,7 +17,7 @@ export const ChallengeProgress: React.FC<ChallengeProgressProps> = ({
   if (challengeSequence.length === 0) return null;
 
   return (
-    <div className="hidden lg:block bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
+    <div className="hidden md:block bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
       <div className="flex justify-between items-center mb-2">
         <span className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
           <Music size={16} className="text-indigo-500" />

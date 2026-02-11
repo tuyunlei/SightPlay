@@ -95,7 +95,7 @@ const MainApp = () => {
           t={t}
         />
 
-        <main className="relative z-10 flex-1 w-full max-w-7xl mx-auto p-4 gap-6 grid grid-cols-1 lg:grid-cols-3">
+        <main className="relative z-10 flex-1 w-full max-w-7xl mx-auto p-3 sm:p-4 gap-4 sm:gap-6 grid grid-cols-1 md:grid-cols-3">
           <PracticeArea
             clef={state.clef}
             practiceRange={state.practiceRange}
