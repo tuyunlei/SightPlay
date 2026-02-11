@@ -21,7 +21,10 @@ export function LoginScreen() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 px-4">
+    <div
+      data-testid="login-screen"
+      className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 px-4"
+    >
       <div className="w-full max-w-md rounded-2xl bg-slate-800/50 p-8 shadow-2xl backdrop-blur-sm">
         <div className="mb-8 flex flex-col items-center gap-4">
           <div className="rounded-full bg-indigo-500/10 p-4">

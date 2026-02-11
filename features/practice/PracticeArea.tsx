@@ -41,6 +41,7 @@ const FooterBar: React.FC<FooterBarProps> = ({ targetNote, t, showPiano, onToggl
       <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[1fr_auto] sm:items-center sm:gap-4">
         <TargetInfo targetNote={targetNote} t={t} />
         <button
+          data-testid="toggle-piano-button"
           onClick={onTogglePiano}
           className="self-end sm:self-auto bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 p-2 rounded-lg shadow-sm transition-all border border-slate-200 dark:border-slate-700"
         >
