@@ -22,14 +22,7 @@ interface GeminiResponse {
   }>;
 }
 
-import { getAuthenticatedUser, resolveEnv } from './_auth-helpers';
-
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Credentials': 'true',
-};
+import { getAuthenticatedUser, resolveEnv, CORS_HEADERS } from './_auth-helpers';
 
 function jsonResponse(body: object, status = 200): Response {
   return new Response(JSON.stringify(body), {
