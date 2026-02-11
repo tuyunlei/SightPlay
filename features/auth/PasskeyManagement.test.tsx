@@ -15,9 +15,13 @@ vi.mock('./useAuthContext', () => ({
 
 // Mock clipboard API - must be done before importing the component
 const mockWriteText = vi.fn().mockResolvedValue(undefined);
-global.navigator.clipboard = {
-  writeText: mockWriteText,
-} as any;
+Object.defineProperty(global.navigator, 'clipboard', {
+  value: {
+    writeText: mockWriteText,
+  },
+  writable: true,
+  configurable: true,
+});
 
 // Mock window.confirm
 const originalConfirm = window.confirm;

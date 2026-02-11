@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-
 // Mock all sub-hooks and dependencies
 vi.mock('./practiceSession/actions', () => ({
   useQueueInitialization: vi.fn(),
@@ -107,9 +106,26 @@ describe('usePracticeSession', () => {
 
   describe('targetNote calculation', () => {
     it('returns first note from noteQueue when queue is not empty', () => {
-      const mockNote = { midi: 60, name: 'C4' };
+      const mockNote = {
+        id: 'note-1',
+        midi: 60,
+        name: 'C' as const,
+        octave: 4,
+        frequency: 261.63,
+        globalIndex: 0,
+      };
       vi.mocked(usePracticeStateSlice).mockReturnValue({
-        noteQueue: [mockNote, { midi: 64, name: 'E4' }],
+        noteQueue: [
+          mockNote,
+          {
+            id: 'note-2',
+            midi: 64,
+            name: 'E' as const,
+            octave: 4,
+            frequency: 329.63,
+            globalIndex: 1,
+          },
+        ],
         sessionStats: { totalAttempts: 0, cleanHits: 0, bpm: 0 },
         clef: 'treble' as any,
         practiceRange: 'combined',
@@ -263,12 +279,28 @@ describe('usePracticeSession', () => {
   describe('returned structure', () => {
     it('returns state from usePracticeStateSlice', () => {
       const mockState = {
-        noteQueue: [{ midi: 60, name: 'C4' }],
+        noteQueue: [
+          {
+            id: 'note-1',
+            midi: 60,
+            name: 'C' as const,
+            octave: 4,
+            frequency: 261.63,
+            globalIndex: 0,
+          },
+        ],
         sessionStats: { totalAttempts: 5, cleanHits: 4, bpm: 120 },
         clef: 'bass' as any,
-        practiceRange: 'treble',
+        practiceRange: 'central' as const,
         exitingNotes: [],
-        detectedNote: { midi: 62, name: 'D4' },
+        detectedNote: {
+          id: 'note-2',
+          midi: 62,
+          name: 'D' as const,
+          octave: 4,
+          frequency: 293.66,
+          globalIndex: 1,
+        },
         status: 'listening' as any,
         score: 100,
         streak: 3,
@@ -333,7 +365,15 @@ describe('usePracticeSession', () => {
     });
 
     it('returns pressedKeys from usePressedKeysState', () => {
-      const mockPressedKeys = new Map([[60, { note: { midi: 60, name: 'C4' }, isCorrect: true }]]);
+      const mockNote = {
+        id: 'note-1',
+        midi: 60,
+        name: 'C' as const,
+        octave: 4,
+        frequency: 261.63,
+        globalIndex: 0,
+      };
+      const mockPressedKeys = new Map([[60, { note: mockNote, isCorrect: true }]]);
 
       vi.mocked(usePressedKeysState).mockReturnValue({
         pressedKeys: mockPressedKeys,
@@ -369,7 +409,7 @@ describe('usePracticeSession', () => {
       expect(result.current.pressedKeys).toBe(mockPressedKeys);
       expect(result.current.pressedKeys.size).toBe(1);
       expect(result.current.pressedKeys.get(60)).toEqual({
-        note: { midi: 60, name: 'C4' },
+        note: mockNote,
         isCorrect: true,
       });
     });
