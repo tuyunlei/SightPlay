@@ -46,7 +46,7 @@
 
 - [ ] 配置 vitest coverage.thresholds（阈值 70%）
 - [ ] 梳理现有未覆盖代码，合理标注排除项
-- [ ] 补充高价值单元测试（优先覆盖业务逻辑，非 UI 组件）
+- [x] 补充高价值单元测试：usePracticeSession + PasskeyManagement ← `93724a7`
 
 ### 技术债
 
