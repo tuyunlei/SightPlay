@@ -1,15 +1,60 @@
-# SightPlay Roadmap v1
+# SightPlay Roadmap v2
 
 > 战略方向按优先级排列，具体任务在执行时细化。
+
+## 质量标准
+
+### develop → main 准入条件
+
+- CI 全绿（lint + typecheck + arch + 单元测试 + E2E + build）
+- 所有 commit 经过 review
+- 覆盖率 ≥ 70%（逐步提升）
+- ROADMAP 进度表已更新
+
+### 覆盖率规则
+
+- vitest 配置 coverage.thresholds，低于阈值 CI 失败
+- 排除列表每项必须写注释说明理由，定期 review
+- 禁止为凑覆盖率写无意义测试（只断言函数被调用等）
+
+### CI 分层
+
+| 检查项                       | 合入 develop | 合入 main |
+| ---------------------------- | :----------: | :-------: |
+| lint + typecheck + arch      |      ✅      |    ✅     |
+| 单元测试 + 覆盖率            |      ✅      |    ✅     |
+| E2E 测试                     |      —       |    ✅     |
+| build（含 Sentry sourcemap） |      —       |    ✅     |
+
+---
 
 ## P0 — 质量门禁
 
 强化项目的质量保障体系，确保每次改动都有信心。
 
-- [x] E2E 测试框架搭建（Playwright） ← `596170a`
-- [x] 核心用户流程 E2E 覆盖（练习、登录、AI 对话） ← `75f5dc9`（练习+认证流程，AI 对话待补）
-- [x] CI 集成 E2E ← `b1a576d`
-- [x] 清理技术债（~~error-report.ts~~、~~CORS 重复~~、Sentry sourcemap 上传） ← (待 commit)
+### E2E 测试
+
+- [x] Playwright 框架搭建 ← `596170a`
+- [x] CI 集成 E2E job ← `b1a576d`
+- [x] 基础 UI 存在性测试（页面加载、元素可见） ← `75f5dc9`
+- [ ] 练习交互 E2E（模拟键盘输入 → 音符判定 → 分数变化）
+- [ ] 认证流程 E2E（完整的 mock passkey 登录 → 进入练习）
+- [ ] AI 对话 E2E（发送消息 → 收到回复，mock API）
+- [ ] 移动端 viewport E2E（手机竖屏、iPad 横屏）
+
+### 覆盖率
+
+- [ ] 配置 vitest coverage.thresholds（阈值 70%）
+- [ ] 梳理现有未覆盖代码，合理标注排除项
+- [ ] 补充高价值单元测试（优先覆盖业务逻辑，非 UI 组件）
+
+### 技术债
+
+- [x] Sentry sourcemap 上传配置 ← `5bca201` + `5639436`
+- [x] package-lock.json 同步修复 ← `659b239`
+- [x] lint warnings 清理 ← `9c625ae`
+- ⏳ error-report.ts 清理（sub-agent 声称完成，未验证）
+- ⏳ CORS_HEADERS 统一（sub-agent 声称完成，未验证）
 
 ## P1 — 移动端体验
 
@@ -47,10 +92,12 @@
 
 ## 进度记录
 
-| 日期       | 内容                                  | Commit                          |
-| ---------- | ------------------------------------- | ------------------------------- |
-| 2026-02-10 | Roadmap 建立                          | —                               |
-| 2026-02-11 | P0: E2E 框架 + 练习流程测试 + CI 集成 | `596170a`, `75f5dc9`, `b1a576d` |
-| 2026-02-11 | P0: 技术债清理（error-report、CORS）  | `49a0a02`                       |
-| 2026-02-12 | P1: 移动端 safe-area 修复             | `251e8a7`                       |
-| 2026-02-12 | P1: 响应式布局优化（手机+iPad）       | `8a668a4`                       |
+| 日期       | 内容                                       | Commit                          |
+| ---------- | ------------------------------------------ | ------------------------------- |
+| 2026-02-10 | Roadmap 建立                               | —                               |
+| 2026-02-11 | E2E 框架 + 基础 UI 测试 + CI 集成          | `596170a`, `75f5dc9`, `b1a576d` |
+| 2026-02-12 | 移动端 safe-area 修复                      | `251e8a7`                       |
+| 2026-02-12 | 响应式布局优化                             | `8a668a4`                       |
+| 2026-02-12 | Sentry sourcemap 配置 + CI env             | `5bca201`, `5639436`            |
+| 2026-02-12 | lint warnings 修复 + package-lock 同步     | `9c625ae`, `659b239`            |
+| 2026-02-12 | Roadmap v2：质量标准、E2E 拆细、覆盖率规则 | —                               |
