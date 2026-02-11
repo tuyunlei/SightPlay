@@ -70,7 +70,10 @@ const MainApp = () => {
 
   return (
     <AuthGate>
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-900 dark:text-slate-100">
+      <div
+        className="bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-900 dark:text-slate-100"
+        style={{ minHeight: '100dvh' }}
+      >
         <BackgroundDecor />
 
         <PasskeyButton onClick={() => setShowPasskeyManagement(true)} />
