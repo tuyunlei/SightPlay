@@ -44,8 +44,8 @@
 
 ### 覆盖率
 
-- [ ] 配置 vitest coverage.thresholds（阈值 70%）
-- [ ] 梳理现有未覆盖代码，合理标注排除项
+- [x] 配置 vitest coverage.thresholds（阈值 70%） ← vitest.config.ts
+- [x] 梳理现有未覆盖代码，合理标注排除项 ← vitest.config.ts exclude 列表
 - [x] 补充高价值单元测试：usePracticeSession + PasskeyManagement ← `93724a7`
 
 ### 技术债
@@ -53,8 +53,8 @@
 - [x] Sentry sourcemap 上传配置 ← `5bca201` + `5639436`
 - [x] package-lock.json 同步修复 ← `659b239`
 - [x] lint warnings 清理 ← `9c625ae`
-- ⏳ error-report.ts 清理（sub-agent 声称完成，未验证）
-- ⏳ CORS_HEADERS 统一（sub-agent 声称完成，未验证）
+- [x] error-report.ts 清理 ← 已验证干净
+- [x] CORS_HEADERS 统一 ← `0fedaa1`
 
 ## P1 — 移动端体验
 
@@ -101,3 +101,4 @@
 | 2026-02-12 | Sentry sourcemap 配置 + CI env             | `5bca201`, `5639436`            |
 | 2026-02-12 | lint warnings 修复 + package-lock 同步     | `9c625ae`, `659b239`            |
 | 2026-02-12 | Roadmap v2：质量标准、E2E 拆细、覆盖率规则 | —                               |
+| 2026-02-12 | 覆盖率配置验证 + CORS_HEADERS 统一         | `0fedaa1`                       |
