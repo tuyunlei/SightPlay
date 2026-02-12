@@ -10,6 +10,7 @@ import TopBar from './features/controls/TopBar';
 import PracticeArea from './features/practice/PracticeArea';
 import { useAiCoach } from './hooks/useAiCoach';
 import { usePracticeSession } from './hooks/usePracticeSession';
+import { useTestAPI } from './hooks/useTestAPI';
 import { translations } from './i18n';
 import { useUiStore } from './store/uiStore';
 
@@ -49,10 +50,15 @@ const MainApp = () => {
   const [showPasskeyManagement, setShowPasskeyManagement] = useState(false);
   const challengeCompleteRef = useRef<() => void>(() => {});
 
-  const { state, derived, actions, pressedKeys } = usePracticeSession({
+  const practiceSession = usePracticeSession({
     onMicError: () => alert(t.micError),
     onChallengeComplete: () => challengeCompleteRef.current(),
   });
+
+  const { state, derived, actions, pressedKeys } = practiceSession;
+
+  // Register test API for E2E tests
+  useTestAPI(practiceSession);
 
   const { chatInput, setChatInput, chatHistory, isLoadingAi, sendMessage, chatEndRef } = useAiCoach(
     {

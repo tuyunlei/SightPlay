@@ -130,6 +130,7 @@ const TopBar: React.FC<TopBarProps> = ({
           <Languages size={18} />
         </button>
         <button
+          data-testid="reset-stats-button"
           onClick={onResetStats}
           className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition text-slate-500 dark:text-slate-400"
         >
