@@ -43,39 +43,17 @@ interface TestAPI {
   };
 }
 
-/**
- * Global test API registry
- * Set by the App component when test mode is enabled
- */
-let testAPI: TestAPI | null = null;
-
-/**
- * Register the test API for E2E tests
- * Call this from your App component in test/dev mode
- */
 declare global {
   interface Window {
     __sightplayTestAPI?: TestAPI;
   }
 }
 
+/**
+ * Register the test API for E2E tests.
+ */
 export function registerTestAPI(api: TestAPI) {
-  testAPI = api;
   if (typeof window !== 'undefined') {
     window.__sightplayTestAPI = api;
   }
-}
-
-/**
- * Get the test API (for internal use)
- */
-export function getTestAPI(): TestAPI | null {
-  return testAPI;
-}
-
-/**
- * Check if test mode is enabled
- */
-export function isTestMode(): boolean {
-  return import.meta.env.MODE === 'test' || import.meta.env.DEV;
 }
