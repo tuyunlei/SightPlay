@@ -24,7 +24,7 @@ function ModalHeader({ onClose }: { onClose: () => void }) {
       </div>
       <button
         onClick={onClose}
-        className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-700 hover:text-white"
+        className="rounded-lg p-2 text-slate-400 transition-all hover:bg-slate-700 hover:text-white active:scale-90"
       >
         <X className="h-5 w-5" />
       </button>
@@ -54,7 +54,7 @@ function InviteUrlDisplay({
         <div className="flex gap-2">
           <button
             onClick={onCopy}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600"
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-indigo-600 active:scale-95"
           >
             {copied ? (
               <>
@@ -70,7 +70,7 @@ function InviteUrlDisplay({
           </button>
           <button
             onClick={onClose}
-            className="rounded-lg bg-slate-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-600"
+            className="rounded-lg bg-slate-700 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-slate-600 active:scale-95"
           >
             Close
           </button>
@@ -112,7 +112,7 @@ function PasskeyList({
           </div>
           <button
             onClick={() => onRemove(passkey.id)}
-            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-500/10 hover:text-red-400"
+            className="rounded-lg p-2 text-slate-400 transition-all hover:bg-red-500/10 hover:text-red-400 active:scale-90 disabled:opacity-30"
             disabled={passkeys.length === 1}
             title={passkeys.length === 1 ? 'Cannot remove the last passkey' : 'Remove'}
           >
@@ -135,7 +135,7 @@ function GenerateInviteButton({
     <button
       onClick={onClick}
       disabled={isGenerating}
-      className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 px-4 py-3 font-medium text-white transition-all hover:from-indigo-600 hover:to-purple-600 disabled:cursor-not-allowed disabled:opacity-50"
+      className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 px-4 py-3 font-medium text-white transition-all hover:from-indigo-600 hover:to-purple-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
     >
       {isGenerating ? (
         <>
