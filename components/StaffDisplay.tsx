@@ -253,6 +253,7 @@ const StaffDisplay: React.FC<StaffDisplayProps> = ({
   return (
     <div
       ref={containerRef}
+      data-testid="staff-display"
       className="w-full bg-white dark:bg-slate-50 rounded-xl relative overflow-hidden select-none border border-slate-200 dark:border-slate-800 shadow-sm"
     >
       <StaffCanvas

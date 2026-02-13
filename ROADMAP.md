@@ -1,30 +1,76 @@
-# SightPlay Roadmap v1
+# SightPlay Roadmap v2
 
 > 战略方向按优先级排列，具体任务在执行时细化。
+
+## 质量标准
+
+### develop → main 准入条件
+
+- CI 全绿（lint + typecheck + arch + 单元测试 + E2E + build）
+- 所有 commit 经过 review
+- 覆盖率 ≥ 70%（逐步提升）
+- ROADMAP 进度表已更新
+
+### 覆盖率规则
+
+- vitest 配置 coverage.thresholds，低于阈值 CI 失败
+- 排除列表每项必须写注释说明理由，定期 review
+- 禁止为凑覆盖率写无意义测试（只断言函数被调用等）
+
+### CI 分层
+
+| 检查项                       | 合入 develop | 合入 main |
+| ---------------------------- | :----------: | :-------: |
+| lint + typecheck + arch      |      ✅      |    ✅     |
+| 单元测试 + 覆盖率            |      ✅      |    ✅     |
+| E2E 测试                     |      —       |    ✅     |
+| build（含 Sentry sourcemap） |      —       |    ✅     |
+
+---
 
 ## P0 — 质量门禁
 
 强化项目的质量保障体系，确保每次改动都有信心。
 
-- [ ] E2E 测试框架搭建（Playwright）
-- [ ] 核心用户流程 E2E 覆盖（练习、登录、AI 对话）
-- [ ] CI 集成 E2E
-- [ ] 清理技术债（error-report.ts、CORS 重复、Sentry sourcemap 上传）
+### E2E 测试
+
+- [x] Playwright 框架搭建 ← `596170a`
+- [x] CI 集成 E2E job ← `b1a576d`
+- [x] 基础 UI 存在性测试（页面加载、元素可见） ← `75f5dc9`
+- [x] 练习交互 E2E（模拟键盘输入 → 音符判定 → 分数变化） ← `868cfda`
+- [x] 认证流程 E2E（完整的 mock passkey 登录 → 进入练习） ← `ce684d2`
+- [x] AI 对话 E2E（发送消息 → 收到回复，mock API） ← `920a329`
+- [x] 移动端 viewport E2E（手机竖屏、iPad 横屏） ← `69ad15f`
+
+### 覆盖率
+
+- [x] 配置 vitest coverage.thresholds（阈值 70%） ← vitest.config.ts
+- [x] 梳理现有未覆盖代码，合理标注排除项 ← vitest.config.ts exclude 列表
+- [x] 补充高价值单元测试：usePracticeSession + PasskeyManagement ← `93724a7`
+
+### 技术债
+
+- [x] Sentry sourcemap 上传配置 ← `5bca201` + `5639436`
+- [x] package-lock.json 同步修复 ← `659b239`
+- [x] lint warnings 清理 ← `9c625ae`
+- [x] error-report.ts 清理 ← 已验证干净
+- [x] CORS_HEADERS 统一 ← `0fedaa1`
 
 ## P1 — 移动端体验
 
 全面优化手机和 iPad 的使用体验。
 
-- [ ] 修复白边 / safe-area 问题
-- [ ] 响应式布局优化（手机竖屏、iPad 横屏）
-- [ ] 触控交互适配（钢琴键盘触控、手势）
-- [ ] 移动端 passkey 注册验证
+- [x] 修复白边 / safe-area 问题 ← `251e8a7`
+- [x] 响应式布局优化（手机竖屏、iPad 横屏） ← `8a668a4`
+- [x] 触控交互适配（钢琴键盘触控、手势） ← `c50d9f3`
+- [x] 移动端 passkey 注册验证 ← `5b5d1a1`
 
 ## P2 — 五线谱能力增强
 
 强化五线谱引擎的基础能力，支撑更丰富的练习场景。
 
-- [ ] 节拍 / 时值支持（全音符、半音符、四分音符等，节拍线）
+- [x] 节拍 / 时值支持 Phase 1（Duration 数据模型 + 音符形状渲染） ← `f6f50f6`
+- [ ] 节拍 / 时值支持 Phase 2（小节线、拍号显示、节拍分组）
 - [ ] 升降号 / 半音显示与练习
 - [ ] 双手 / 大谱表（高低音谱同时显示）
 - [ ] 内置曲库（分难度、分类，跟谱练习）
@@ -47,6 +93,20 @@
 
 ## 进度记录
 
-| 日期       | 内容         | Commit |
-| ---------- | ------------ | ------ |
-| 2026-02-10 | Roadmap 建立 | —      |
+| 日期       | 内容                                                       | Commit                          |
+| ---------- | ---------------------------------------------------------- | ------------------------------- |
+| 2026-02-10 | Roadmap 建立                                               | —                               |
+| 2026-02-11 | E2E 框架 + 基础 UI 测试 + CI 集成                          | `596170a`, `75f5dc9`, `b1a576d` |
+| 2026-02-12 | 移动端 safe-area 修复                                      | `251e8a7`                       |
+| 2026-02-12 | 响应式布局优化                                             | `8a668a4`                       |
+| 2026-02-12 | Sentry sourcemap 配置 + CI env                             | `5bca201`, `5639436`            |
+| 2026-02-12 | lint warnings 修复 + package-lock 同步                     | `9c625ae`, `659b239`            |
+| 2026-02-12 | Roadmap v2：质量标准、E2E 拆细、覆盖率规则                 | —                               |
+| 2026-02-12 | 覆盖率配置验证 + CORS_HEADERS 统一                         | `0fedaa1`                       |
+| 2026-02-12 | 练习交互 E2E 测试（MIDI 模拟 + 3 测试）                    | `868cfda`                       |
+| 2026-02-12 | 认证流程 E2E 测试（注册 + 登录 + 6 测试）                  | `ce684d2`                       |
+| 2026-02-12 | AI 对话 E2E 测试（多轮对话 + mock API）                    | `920a329`                       |
+| 2026-02-12 | 移动端 viewport E2E（手机竖屏 + iPad 横屏，9 测试）        | `69ad15f`                       |
+| 2026-02-12 | 触控交互适配（钢琴键盘 touch 支持 + E2E 测试）             | `c50d9f3`                       |
+| 2026-02-13 | 移动端 passkey 兼容（WebAuthn 检查 + 错误提示 + 触觉反馈） | `5b5d1a1`                       |
+| 2026-02-13 | P2 时值支持 Phase 1（Duration 模型 + 5 种音符渲染）        | `f6f50f6`                       |

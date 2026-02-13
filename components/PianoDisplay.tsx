@@ -221,7 +221,10 @@ const PianoDisplay: React.FC<PianoDisplayProps> = ({ targetNote, detectedNote, p
   }, [targetMidi]);
 
   return (
-    <div className="w-full relative rounded-b-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
+    <div
+      data-testid="piano-display"
+      className="w-full relative rounded-b-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700"
+    >
       <div
         ref={scrollRef}
         className="overflow-x-auto no-scrollbar relative w-full pt-1 pb-1 px-1"

@@ -10,6 +10,7 @@ import TopBar from './features/controls/TopBar';
 import PracticeArea from './features/practice/PracticeArea';
 import { useAiCoach } from './hooks/useAiCoach';
 import { usePracticeSession } from './hooks/usePracticeSession';
+import { useTestAPI } from './hooks/useTestAPI';
 import { translations } from './i18n';
 import { useUiStore } from './store/uiStore';
 
@@ -49,10 +50,15 @@ const MainApp = () => {
   const [showPasskeyManagement, setShowPasskeyManagement] = useState(false);
   const challengeCompleteRef = useRef<() => void>(() => {});
 
-  const { state, derived, actions, pressedKeys } = usePracticeSession({
+  const practiceSession = usePracticeSession({
     onMicError: () => alert(t.micError),
     onChallengeComplete: () => challengeCompleteRef.current(),
   });
+
+  const { state, derived, actions, pressedKeys } = practiceSession;
+
+  // Register test API for E2E tests
+  useTestAPI(practiceSession);
 
   const { chatInput, setChatInput, chatHistory, isLoadingAi, sendMessage, chatEndRef } = useAiCoach(
     {
@@ -70,7 +76,10 @@ const MainApp = () => {
 
   return (
     <AuthGate>
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-900 dark:text-slate-100">
+      <div
+        className="bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-900 dark:text-slate-100"
+        style={{ minHeight: '100dvh' }}
+      >
         <BackgroundDecor />
 
         <PasskeyButton onClick={() => setShowPasskeyManagement(true)} />
@@ -92,7 +101,7 @@ const MainApp = () => {
           t={t}
         />
 
-        <main className="relative z-10 flex-1 w-full max-w-7xl mx-auto p-4 gap-6 grid grid-cols-1 lg:grid-cols-3">
+        <main className="relative z-10 flex-1 w-full max-w-7xl mx-auto p-3 sm:p-4 gap-4 sm:gap-6 grid grid-cols-1 md:grid-cols-3">
           <PracticeArea
             clef={state.clef}
             practiceRange={state.practiceRange}

@@ -107,7 +107,7 @@ export class AudioProcessor {
 
     const newBuf = buf.slice(r1, r2);
     const newSize = newBuf.length;
-    const c = new Array(newSize).fill(0);
+    const c = Array.from({ length: newSize }, () => 0);
 
     for (let i = 0; i < newSize; i++) {
       for (let j = 0; j < newSize - i; j++) {

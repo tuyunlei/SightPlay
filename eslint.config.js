@@ -78,7 +78,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/__tests__/**', '**/*.test.{ts,tsx}'],
+    files: ['**/__tests__/**', '**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       complexity: 'off',

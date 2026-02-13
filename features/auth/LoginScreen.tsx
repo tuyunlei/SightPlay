@@ -12,16 +12,19 @@ export function LoginScreen() {
     setIsLoading(true);
     setError(null);
 
-    const success = await login();
+    const result = await login();
 
-    if (!success) {
-      setError('Authentication failed. Please try again.');
+    if (result !== true) {
+      setError(result);
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 px-4">
+    <div
+      data-testid="login-screen"
+      className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 px-4"
+    >
       <div className="w-full max-w-md rounded-2xl bg-slate-800/50 p-8 shadow-2xl backdrop-blur-sm">
         <div className="mb-8 flex flex-col items-center gap-4">
           <div className="rounded-full bg-indigo-500/10 p-4">
@@ -42,7 +45,7 @@ export function LoginScreen() {
         <button
           onClick={handleLogin}
           disabled={isLoading}
-          className="w-full rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 px-6 py-3 font-medium text-white shadow-lg transition-all hover:from-indigo-600 hover:to-purple-600 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 px-6 py-3 font-medium text-white shadow-lg transition-all hover:from-indigo-600 hover:to-purple-600 hover:shadow-xl active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading ? (
             <span className="flex items-center justify-center gap-2">

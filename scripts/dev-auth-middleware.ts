@@ -34,7 +34,7 @@ class MemoryKV {
 }
 
 // Convert Node.js IncomingMessage to Web API Request
-async function toWebRequest(req: IncomingMessage, baseUrl: string): Promise<Request> {
+async function toWebRequest(req: IncomingMessage, _baseUrl: string): Promise<Request> {
   const protocol = 'http'; // localhost dev
   const host = req.headers.host || 'localhost:3000';
   const url = `${protocol}://${host}${req.url}`;

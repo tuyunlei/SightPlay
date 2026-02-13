@@ -54,6 +54,17 @@ describe('note', () => {
       expect(note.globalIndex).toBe(0);
     });
 
+    it('accepts optional duration', () => {
+      const note = createNoteFromMidi(60, 2, 'half');
+      expect(note.duration).toBe('half');
+      expect(note.globalIndex).toBe(2);
+    });
+
+    it('keeps duration undefined for backward compatibility', () => {
+      const note = createNoteFromMidi(60, 2);
+      expect(note.duration).toBeUndefined();
+    });
+
     it('generates unique ids', () => {
       const note = createNoteFromMidi(60, 0);
       expect(note.id).toBe('test-uuid-1234');

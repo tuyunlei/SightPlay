@@ -45,7 +45,7 @@ const AiCoachPanel: React.FC<AiCoachPanelProps> = ({
   };
 
   return (
-    <div className="lg:col-span-1 flex flex-col h-full min-h-[400px]">
+    <div className="md:col-span-1 flex flex-col h-full min-h-[320px] md:min-h-[400px]">
       <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col gap-3 shadow-sm h-full overflow-hidden">
         <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
           <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
@@ -59,14 +59,14 @@ const AiCoachPanel: React.FC<AiCoachPanelProps> = ({
           </div>
           <button
             onClick={() => setShowAiPanel(!showAiPanel)}
-            className="lg:hidden p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
+            className="md:hidden p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
           >
             {showAiPanel ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
           </button>
         </div>
 
         <div
-          className={`flex-1 flex flex-col gap-3 overflow-hidden transition-all duration-300 ${showAiPanel ? 'opacity-100' : 'opacity-0 lg:opacity-100 h-0 lg:h-auto'}`}
+          className={`flex-1 flex flex-col gap-3 overflow-hidden transition-all duration-300 ${showAiPanel ? 'opacity-100' : 'opacity-0 md:opacity-100 h-0 md:h-auto'}`}
         >
           <ChatMessageList
             chatHistory={chatHistory}

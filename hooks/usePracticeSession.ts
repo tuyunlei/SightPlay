@@ -98,10 +98,23 @@ export const usePracticeSession = ({
     setNoteQueue: actions.setNoteQueue,
   };
 
-  return {
+  const result = {
     state,
     derived: { targetNote, accuracy },
     actions: sessionActions,
     pressedKeys,
   };
+
+  // Expose test handlers in test/dev mode for E2E testing
+  if (import.meta.env.MODE === 'test' || import.meta.env.DEV) {
+    return {
+      ...result,
+      __testHandlers: {
+        handleMidiNoteOn,
+        handleMidiNoteOff,
+      },
+    };
+  }
+
+  return result;
 };

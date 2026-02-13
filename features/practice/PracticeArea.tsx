@@ -36,11 +36,12 @@ type FooterBarProps = {
 };
 
 const FooterBar: React.FC<FooterBarProps> = ({ targetNote, t, showPiano, onTogglePiano }) => (
-  <div className="px-3 pb-3">
-    <div className="bg-slate-900/95 dark:bg-white/95 text-white dark:text-slate-900 px-4 py-3 rounded-xl shadow-lg backdrop-blur-md border border-slate-700/50">
-      <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[1fr_auto] sm:items-center sm:gap-4">
+  <div className="px-2 sm:px-3 pb-2 sm:pb-3">
+    <div className="bg-slate-900/95 dark:bg-white/95 text-white dark:text-slate-900 px-3 sm:px-4 py-2 sm:py-3 rounded-xl shadow-lg backdrop-blur-md border border-slate-700/50">
+      <div className="flex flex-col gap-2 sm:gap-3 sm:grid sm:grid-cols-[1fr_auto] sm:items-center sm:gap-4">
         <TargetInfo targetNote={targetNote} t={t} />
         <button
+          data-testid="toggle-piano-button"
           onClick={onTogglePiano}
           className="self-end sm:self-auto bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 p-2 rounded-lg shadow-sm transition-all border border-slate-200 dark:border-slate-700"
         >
@@ -97,7 +98,7 @@ const PracticeMainPanel: React.FC<PracticeMainPanelProps> = ({
           t={t}
           disabled={isChallengeActive}
         />
-        <div className="p-1 min-h-[220px]">
+        <div className="p-1 min-h-[180px] sm:min-h-[220px]">
           <StaffDisplay
             clef={clef}
             noteQueue={noteQueue}
@@ -117,7 +118,7 @@ const PracticeMainPanel: React.FC<PracticeMainPanelProps> = ({
       </div>
 
       <div
-        className={`w-full transition-all duration-500 ease-in-out overflow-hidden mt-2 rounded-xl shadow-lg ${showPiano ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}
+        className={`w-full transition-all duration-500 ease-in-out overflow-hidden mt-2 rounded-xl shadow-lg ${showPiano ? 'max-h-32 sm:max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}
       >
         <PianoDisplay
           targetNote={targetNote}
@@ -148,7 +149,7 @@ const PracticeArea: React.FC<PracticeAreaProps> = ({
   const isChallengeActive = challengeSequence.length > 0;
 
   return (
-    <div className="lg:col-span-2 flex flex-col gap-4 justify-start">
+    <div className="md:col-span-2 flex flex-col gap-3 sm:gap-4 justify-start">
       <PracticeMainPanel
         clef={clef}
         practiceRange={practiceRange}

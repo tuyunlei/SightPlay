@@ -28,7 +28,12 @@ const DesktopStats: React.FC<StatsProps> = ({ score, bpm, accuracy }) => (
   <div className="hidden md:flex items-center gap-6 px-4">
     <div className="flex items-center gap-2">
       <Trophy size={14} className="text-yellow-500" />
-      <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{score}</span>
+      <span
+        data-testid="score-display"
+        className="text-sm font-bold text-slate-700 dark:text-slate-200"
+      >
+        {score}
+      </span>
     </div>
     <div className="flex items-center gap-2">
       <Activity size={14} className="text-cyan-500" />
@@ -46,7 +51,9 @@ const MobileStats: React.FC<StatsProps> = ({ score, bpm, accuracy, t }) => (
     <div className="flex items-center justify-between pt-2">
       <div className="flex flex-col items-center">
         <span className="text-[10px] text-slate-400 uppercase font-bold">{t.score}</span>
-        <span className="text-sm font-bold">{score}</span>
+        <span data-testid="score-display" className="text-sm font-bold">
+          {score}
+        </span>
       </div>
       <div className="w-px h-6 bg-slate-100 dark:bg-slate-800"></div>
       <div className="flex flex-col items-center">
@@ -99,13 +106,18 @@ const TopBar: React.FC<TopBarProps> = ({
         </button>
 
         <button
+          data-testid="toggle-clef-button"
           onClick={onToggleClef}
           className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition border border-slate-200 dark:border-slate-700"
         >
           {clef === ClefType.TREBLE ? (
-            <span className="text-xl font-serif">𝄞</span>
+            <span data-testid="treble-clef-icon" className="text-xl font-serif">
+              𝄞
+            </span>
           ) : (
-            <span className="text-xl font-serif">𝄢</span>
+            <span data-testid="bass-clef-icon" className="text-xl font-serif">
+              𝄢
+            </span>
           )}
         </button>
 
@@ -118,6 +130,7 @@ const TopBar: React.FC<TopBarProps> = ({
           <Languages size={18} />
         </button>
         <button
+          data-testid="reset-stats-button"
           onClick={onResetStats}
           className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition text-slate-500 dark:text-slate-400"
         >
