@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { DURATION_BEATS, getNoteLabels, NOTE_NAMES, SOLFEGE_MAP, NUMBER_MAP } from './music';
+import {
+  DURATION_BEATS,
+  TIME_SIGNATURES,
+  getNoteLabels,
+  NOTE_NAMES,
+  SOLFEGE_MAP,
+  NUMBER_MAP,
+} from './music';
 
 describe('music config', () => {
   describe('DURATION_BEATS', () => {
@@ -11,6 +18,17 @@ describe('music config', () => {
         quarter: 1,
         eighth: 0.5,
         sixteenth: 0.25,
+      });
+    });
+  });
+
+  describe('TIME_SIGNATURES', () => {
+    it('provides common preset signatures', () => {
+      expect(TIME_SIGNATURES).toEqual({
+        '4/4': { beats: 4, beatUnit: 4 },
+        '3/4': { beats: 3, beatUnit: 4 },
+        '2/4': { beats: 2, beatUnit: 4 },
+        '6/8': { beats: 6, beatUnit: 8 },
       });
     });
   });

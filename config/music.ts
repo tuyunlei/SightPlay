@@ -1,4 +1,4 @@
-import { ClefType, Duration, NoteName } from '../types';
+import { ClefType, Duration, NoteName, TimeSignature } from '../types';
 
 export const NOTE_NAMES: NoteName[] = [
   'C',
@@ -24,6 +24,13 @@ export const DURATION_BEATS: Record<Duration, number> = {
   quarter: 1,
   eighth: 0.5,
   sixteenth: 0.25,
+};
+
+export const TIME_SIGNATURES: Record<'4/4' | '3/4' | '2/4' | '6/8', TimeSignature> = {
+  '4/4': { beats: 4, beatUnit: 4 },
+  '3/4': { beats: 3, beatUnit: 4 },
+  '2/4': { beats: 2, beatUnit: 4 },
+  '6/8': { beats: 6, beatUnit: 8 },
 };
 
 export const CLEF_CENTER_MIDI: Record<ClefType, number> = {

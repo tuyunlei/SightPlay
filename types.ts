@@ -1,6 +1,11 @@
 export type NoteName = 'C' | 'C#' | 'D' | 'D#' | 'E' | 'F' | 'F#' | 'G' | 'G#' | 'A' | 'A#' | 'B';
 export type Duration = 'whole' | 'half' | 'quarter' | 'eighth' | 'sixteenth';
 
+export type TimeSignature = {
+  beats: number;
+  beatUnit: number;
+};
+
 export interface Note {
   id: string; // Unique ID for React keys and animation
   name: NoteName;

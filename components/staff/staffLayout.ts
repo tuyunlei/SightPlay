@@ -9,7 +9,6 @@ export type StaffLayout = {
   STAFF_BOTTOM_Y: number;
   START_X: number;
   NOTE_SPACING: number;
-  BAR_INTERVAL: number;
   RIGHT_PADDING: number;
   NOTE_HEAD_RX: number;
   NOTE_HEAD_RY: number;
@@ -40,7 +39,6 @@ export const createStaffLayout = (viewportWidth: number): StaffLayout => {
   const STAFF_BOTTOM_Y = STAFF_CENTER_Y + STAFF_SPACE * 2;
   const START_X = STAFF_SPACE * 5.5;
   const NOTE_SPACING = STAFF_SPACE * 2.2;
-  const BAR_INTERVAL = 4;
   const RIGHT_PADDING = STAFF_SPACE * 2;
   const NOTE_HEAD_RX = STAFF_SPACE * 0.6;
   const NOTE_HEAD_RY = STAFF_SPACE * 0.42;
@@ -69,7 +67,6 @@ export const createStaffLayout = (viewportWidth: number): StaffLayout => {
     STAFF_BOTTOM_Y,
     START_X,
     NOTE_SPACING,
-    BAR_INTERVAL,
     RIGHT_PADDING,
     NOTE_HEAD_RX,
     NOTE_HEAD_RY,
