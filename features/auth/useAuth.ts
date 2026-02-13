@@ -2,25 +2,49 @@ import { client } from '@passwordless-id/webauthn';
 import * as Sentry from '@sentry/react';
 import { useState, useEffect, useCallback } from 'react';
 
-// Convert base64url string to ArrayBuffer (for WebAuthn credential IDs)
-function base64urlToBuffer(base64url: string): ArrayBuffer {
-  const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
-  const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
-  const binary = atob(padded);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes.buffer;
-}
-
 interface AuthState {
   isAuthenticated: boolean;
   hasPasskeys: boolean;
   isLoading: boolean;
 }
 
+// Check if WebAuthn is supported
+function isWebAuthnSupported(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    window.PublicKeyCredential !== undefined &&
+    typeof window.PublicKeyCredential === 'function'
+  );
+}
+
+// Get user-friendly error message
+function getAuthErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    // User canceled biometric authentication
+    if (error.name === 'NotAllowedError') {
+      return 'Authentication was canceled. Please try again.';
+    }
+    // User doesn't have a compatible authenticator
+    if (error.name === 'NotSupportedError') {
+      return 'Your device does not support passkeys. Please use a device with biometric authentication.';
+    }
+    // Network or timeout errors
+    if (error.name === 'NetworkError' || error.name === 'AbortError') {
+      return 'Connection timeout. Please check your network and try again.';
+    }
+    return error.message;
+  }
+  return 'An unknown error occurred';
+}
+
 async function performRegister(name?: string, inviteToken?: string): Promise<boolean> {
+  // Check WebAuthn support before attempting registration
+  if (!isWebAuthnSupported()) {
+    throw new Error(
+      'Passkeys are not supported on this browser. Please use a modern browser with biometric authentication support.'
+    );
+  }
+
   const optionsResponse = await fetch('/api/auth/register-options', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -31,6 +55,29 @@ async function performRegister(name?: string, inviteToken?: string): Promise<boo
   if (!optionsResponse.ok) throw new Error('Failed to get registration options');
   const options = await optionsResponse.json();
 
+  // Prepare excludeCredentials with proper transports
+  const excludeCredentials = options.excludeCredentials?.map(
+    (c: { id: string; type: string; transports?: string[] }) => ({
+      id: c.id,
+      type: c.type as 'public-key',
+      transports: c.transports || ['internal', 'hybrid'],
+    })
+  );
+
+  // Build customProperties with mobile-friendly WebAuthn options
+  const customProperties: Record<string, unknown> = {
+    rp: options.rp,
+    pubKeyCredParams: options.pubKeyCredParams,
+    excludeCredentials,
+    // For mobile: prefer platform authenticators (Face ID, Touch ID, fingerprint)
+    authenticatorSelection: {
+      authenticatorAttachment: 'platform', // Platform authenticator for mobile biometrics
+      residentKey: options.authenticatorSelection?.residentKey || 'preferred',
+      requireResidentKey: false, // Don't strictly require, for compatibility
+      userVerification: options.authenticatorSelection?.userVerification || 'preferred',
+    },
+  };
+
   // Use @passwordless-id/webauthn client to create credential
   const registration = await client.register({
     challenge: options.challenge,
@@ -39,19 +86,14 @@ async function performRegister(name?: string, inviteToken?: string): Promise<boo
       name: options.user.name,
       displayName: options.user.displayName,
     },
-    discoverable: options.authenticatorSelection?.residentKey,
-    userVerification: options.authenticatorSelection?.userVerification,
-    customProperties: {
-      rp: options.rp,
-      pubKeyCredParams: options.pubKeyCredParams,
-      excludeCredentials: options.excludeCredentials?.map(
-        (c: { id: string; type: string; transports?: string[] }) => ({
-          ...c,
-          id: base64urlToBuffer(c.id),
-        })
-      ),
-      timeout: options.timeout,
-    },
+    // Discoverable credentials (resident keys) for better mobile UX
+    discoverable: options.authenticatorSelection?.residentKey || 'preferred',
+    // User verification: preferred for biometric authentication
+    userVerification: options.authenticatorSelection?.userVerification || 'preferred',
+    timeout: options.timeout || 60000,
+    attestation: options.attestation !== 'none',
+    hints: ['security-key', 'client-device', 'hybrid'],
+    customProperties,
   });
 
   const verifyResponse = await fetch('/api/auth/register-verify', {
@@ -69,6 +111,13 @@ async function performRegister(name?: string, inviteToken?: string): Promise<boo
 }
 
 async function performLogin(): Promise<boolean> {
+  // Check WebAuthn support before attempting login
+  if (!isWebAuthnSupported()) {
+    throw new Error(
+      'Passkeys are not supported on this browser. Please use a modern browser with biometric authentication support.'
+    );
+  }
+
   const optionsResponse = await fetch('/api/auth/login-options', {
     method: 'POST',
     credentials: 'include',
@@ -77,15 +126,20 @@ async function performLogin(): Promise<boolean> {
   if (!optionsResponse.ok) throw new Error('Failed to get authentication options');
   const options = await optionsResponse.json();
 
+  // Prepare allowCredentials with proper transports
+  const allowCredentials = options.allowCredentials?.map(
+    (c: { id: string; transports?: string[] }) => ({
+      id: c.id,
+      transports: c.transports || ['internal', 'hybrid'],
+    })
+  );
+
   // Use @passwordless-id/webauthn client to authenticate
   const authentication = await client.authenticate({
     challenge: options.challenge,
-    allowCredentials: options.allowCredentials?.map((c: { id: string; transports?: string[] }) => ({
-      id: c.id,
-      transports: c.transports || [],
-    })),
-    userVerification: options.userVerification,
-    timeout: options.timeout,
+    allowCredentials,
+    userVerification: options.userVerification || 'preferred',
+    timeout: options.timeout || 60000,
   });
 
   const verifyResponse = await fetch('/api/auth/login-verify', {
@@ -132,24 +186,31 @@ export function useAuth() {
         await checkSession();
         return true;
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Registration failed';
-        Sentry.captureException(error, { tags: { flow: 'register' } });
-        console.error('Registration error:', message);
+        const message = getAuthErrorMessage(error);
+        Sentry.captureException(error, {
+          tags: { flow: 'register' },
+          extra: { errorName: error instanceof Error ? error.name : 'unknown' },
+        });
+        console.error('Registration error:', message, error);
         return message;
       }
     },
     [checkSession]
   );
 
-  const login = useCallback(async () => {
+  const login = useCallback(async (): Promise<true | string> => {
     try {
       await performLogin();
       await checkSession();
       return true;
     } catch (error) {
-      Sentry.captureException(error, { tags: { flow: 'login' } });
-      console.error('Authentication error:', error);
-      return false;
+      const message = getAuthErrorMessage(error);
+      Sentry.captureException(error, {
+        tags: { flow: 'login' },
+        extra: { errorName: error instanceof Error ? error.name : 'unknown' },
+      });
+      console.error('Authentication error:', message, error);
+      return message;
     }
   }, [checkSession]);
 

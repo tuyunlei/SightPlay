@@ -12,10 +12,10 @@ export function RegisterScreen() {
     setIsLoading(true);
     setError(null);
 
-    const success = await register();
+    const result = await register();
 
-    if (!success) {
-      setError('Registration failed. Please try again.');
+    if (result !== true) {
+      setError(result);
       setIsLoading(false);
     }
   };
@@ -53,7 +53,7 @@ export function RegisterScreen() {
         <button
           onClick={handleRegister}
           disabled={isLoading}
-          className="w-full rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 px-6 py-3 font-medium text-white shadow-lg transition-all hover:from-indigo-600 hover:to-purple-600 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 px-6 py-3 font-medium text-white shadow-lg transition-all hover:from-indigo-600 hover:to-purple-600 hover:shadow-xl active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading ? (
             <span className="flex items-center justify-center gap-2">
