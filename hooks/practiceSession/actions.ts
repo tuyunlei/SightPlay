@@ -2,29 +2,37 @@ import { useCallback, useEffect } from 'react';
 
 import { buildChallengeNotes } from '../../domain/challenge';
 import { createInitialQueue, createChallengeQueue, DEFAULT_QUEUE_SIZE } from '../../domain/queue';
-import { ClefType, GeneratedChallenge, Note } from '../../types';
+import { ClefType, GeneratedChallenge, HandPracticeMode, Note } from '../../types';
 
 import type { PracticeActions, PracticeRefs, PracticeStoreState } from './slices';
 
 export const useQueueInitialization = ({
   clef,
   practiceRange,
+  handMode,
   challengeSequenceLength,
   setNoteQueue,
   lastHitTime,
 }: {
   clef: ClefType;
   practiceRange: PracticeStoreState['practiceRange'];
+  handMode: HandPracticeMode;
   challengeSequenceLength: number;
   setNoteQueue: PracticeActions['setNoteQueue'];
   lastHitTime: PracticeRefs['lastHitTime'];
 }) => {
   const initializeQueue = useCallback(
-    (overrideClef?: ClefType) => {
-      const nextQueue = createInitialQueue(overrideClef ?? clef, DEFAULT_QUEUE_SIZE, practiceRange);
+    (overrideClef?: ClefType, overrideHandMode?: HandPracticeMode) => {
+      const nextQueue = createInitialQueue(
+        overrideClef ?? clef,
+        DEFAULT_QUEUE_SIZE,
+        practiceRange,
+        false,
+        overrideHandMode ?? handMode
+      );
       setNoteQueue(nextQueue);
     },
-    [clef, practiceRange, setNoteQueue]
+    [clef, practiceRange, handMode, setNoteQueue]
   );
 
   useEffect(() => {
@@ -34,9 +42,9 @@ export const useQueueInitialization = ({
 
   useEffect(() => {
     if (challengeSequenceLength === 0) {
-      initializeQueue(clef);
+      initializeQueue(clef, handMode);
     }
-  }, [clef, challengeSequenceLength, initializeQueue]);
+  }, [clef, handMode, challengeSequenceLength, initializeQueue]);
 };
 
 export const useToggleMic = (isListening: boolean, startMic: () => void, stopMic: () => void) =>

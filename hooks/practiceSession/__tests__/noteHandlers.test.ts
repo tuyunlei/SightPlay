@@ -25,6 +25,7 @@ const makeRefs = (): PracticeRefs => ({
 const makeActions = (): PracticeActions => ({
   setClef: vi.fn(),
   setPracticeRange: vi.fn(),
+  setHandMode: vi.fn(),
   setIsListening: vi.fn(),
   setIsMidiConnected: vi.fn(),
   setNoteQueue: vi.fn(),

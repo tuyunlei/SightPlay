@@ -6,6 +6,7 @@ export const mockOnChallengeComplete = vi.fn();
 export const mockActions = {
   setClef: vi.fn(),
   setPracticeRange: vi.fn(),
+  setHandMode: vi.fn(),
   setIsListening: vi.fn(),
   setIsMidiConnected: vi.fn(),
   setNoteQueue: vi.fn(),
@@ -26,6 +27,7 @@ export const defaultMockState = {
   sessionStats: { totalAttempts: 0, cleanHits: 0, bpm: 0 },
   clef: 'treble' as any,
   practiceRange: 'combined' as const,
+  handMode: 'right-hand' as const,
   exitingNotes: [],
   detectedNote: null,
   status: 'waiting' as any,

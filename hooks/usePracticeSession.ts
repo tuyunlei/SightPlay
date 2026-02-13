@@ -28,6 +28,26 @@ import { useMidiInput } from './useMidiInput';
 
 export type { UsePracticeSessionOptions };
 
+const useNoteHandlers = (
+  actions: ReturnType<typeof usePracticeActionsSlice>,
+  refs: ReturnType<typeof usePracticeRefs>,
+  pressedKeysState: ReturnType<typeof usePressedKeysState>,
+  onChallengeComplete?: () => void
+) => {
+  const updateDetectedNote = useDetectedNoteUpdater(actions.setDetectedNote);
+  const handleCorrectNote = useHandleCorrectNote(actions, refs, onChallengeComplete);
+  const handleMicNote = useMicNoteHandler(updateDetectedNote, handleCorrectNote, refs);
+  const { handleMidiNoteOn, handleMidiNoteOff } = useMidiNoteHandlers(
+    actions.setDetectedNote,
+    pressedKeysState.addPressedKey,
+    pressedKeysState.removePressedKey,
+    pressedKeysState.pressedKeysRef,
+    handleCorrectNote,
+    refs
+  );
+  return { handleMicNote, handleMidiNoteOn, handleMidiNoteOff };
+};
+
 export const usePracticeSession = ({
   onMicError,
   onChallengeComplete,
@@ -35,7 +55,7 @@ export const usePracticeSession = ({
   const state = usePracticeStateSlice();
   const actions = usePracticeActionsSlice();
   const refs = usePracticeRefs();
-  const { pressedKeys, pressedKeysRef, addPressedKey, removePressedKey } = usePressedKeysState();
+  const pressedKeysState = usePressedKeysState();
 
   const targetNote = state.noteQueue.length > 0 ? state.noteQueue[0] : null;
   const accuracy = useMemo(() => computeAccuracy(state.sessionStats), [state.sessionStats]);
@@ -43,21 +63,17 @@ export const usePracticeSession = ({
   useQueueInitialization({
     clef: state.clef,
     practiceRange: state.practiceRange,
+    handMode: state.handMode,
     challengeSequenceLength: state.challengeSequence.length,
     setNoteQueue: actions.setNoteQueue,
     lastHitTime: refs.lastHitTime,
   });
 
-  const updateDetectedNote = useDetectedNoteUpdater(actions.setDetectedNote);
-  const handleCorrectNote = useHandleCorrectNote(actions, refs, onChallengeComplete);
-  const handleMicNote = useMicNoteHandler(updateDetectedNote, handleCorrectNote, refs);
-  const { handleMidiNoteOn, handleMidiNoteOff } = useMidiNoteHandlers(
-    actions.setDetectedNote,
-    addPressedKey,
-    removePressedKey,
-    pressedKeysRef,
-    handleCorrectNote,
-    refs
+  const { handleMicNote, handleMidiNoteOn, handleMidiNoteOff } = useNoteHandlers(
+    actions,
+    refs,
+    pressedKeysState,
+    onChallengeComplete
   );
 
   useMidiInput({
@@ -92,6 +108,7 @@ export const usePracticeSession = ({
     resetSessionStats,
     loadChallenge,
     setPracticeRange: actions.setPracticeRange,
+    setHandMode: actions.setHandMode,
     setDetectedNote: actions.setDetectedNote,
     setIsListening: actions.setIsListening,
     setStatus: actions.setStatus,
@@ -102,18 +119,11 @@ export const usePracticeSession = ({
     state,
     derived: { targetNote, accuracy },
     actions: sessionActions,
-    pressedKeys,
+    pressedKeys: pressedKeysState.pressedKeys,
   };
 
-  // Expose test handlers in test/dev mode for E2E testing
   if (import.meta.env.MODE === 'test' || import.meta.env.DEV) {
-    return {
-      ...result,
-      __testHandlers: {
-        handleMidiNoteOn,
-        handleMidiNoteOff,
-      },
-    };
+    return { ...result, __testHandlers: { handleMidiNoteOn, handleMidiNoteOff } };
   }
 
   return result;

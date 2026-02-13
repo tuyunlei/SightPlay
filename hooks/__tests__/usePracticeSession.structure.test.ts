@@ -84,6 +84,7 @@ describe('usePracticeSession - Returned Structure', () => {
         sessionStats: { totalAttempts: 5, cleanHits: 4, bpm: 120 },
         clef: 'bass' as any,
         practiceRange: 'central' as const,
+        handMode: 'right-hand' as const,
         exitingNotes: [],
         detectedNote: {
           id: 'note-2',

@@ -100,7 +100,15 @@ const handleChallengeProgress = ({
     setTimeout(() => {
       setChallengeSequence([]);
       setChallengeInfo(null);
-      setNoteQueue(createInitialQueue(state.clef, DEFAULT_QUEUE_SIZE, state.practiceRange));
+      setNoteQueue(
+        createInitialQueue(
+          state.clef,
+          DEFAULT_QUEUE_SIZE,
+          state.practiceRange,
+          false,
+          state.handMode
+        )
+      );
     }, TIMINGS.CHALLENGE_COMPLETE_DELAY_MS);
   }
 };
@@ -130,7 +138,18 @@ export const useHandleCorrectNote = (
     if (!currentNote) return;
 
     lockProcessing(isProcessingRef);
-    enqueueExitAnimation(currentNote, state.exitingNotes, setExitingNotes);
+
+    // For both-hands mode, animate both notes exiting
+    if (state.handMode === 'both-hands') {
+      const secondNote = state.noteQueue[1];
+      if (secondNote) {
+        enqueueExitAnimation(currentNote, state.exitingNotes, setExitingNotes);
+        enqueueExitAnimation(secondNote, state.exitingNotes, setExitingNotes);
+      }
+    } else {
+      enqueueExitAnimation(currentNote, state.exitingNotes, setExitingNotes);
+    }
+
     updateScoreAndStats({
       state,
       lastHitTime,
@@ -147,6 +166,7 @@ export const useHandleCorrectNote = (
       challengeIndex: state.challengeIndex,
       practiceRange: state.practiceRange,
       queueSize: DEFAULT_QUEUE_SIZE,
+      handMode: state.handMode,
     });
 
     setNoteQueue(nextQueue);
@@ -228,6 +248,25 @@ export const useMicNoteHandler = (
   );
 };
 
+// Helper: check if both hands are correctly pressed
+const checkBothHandsCorrect = (
+  rightTarget: Note | undefined,
+  leftTarget: Note | undefined,
+  pressedKeys: PressedKeys
+): boolean => {
+  if (!rightTarget || !leftTarget) return false;
+  const rightPressed = pressedKeys.has(rightTarget.midi);
+  const leftPressed = pressedKeys.has(leftTarget.midi);
+  if (!rightPressed && !leftPressed) return false;
+
+  const currentPressed = Array.from(pressedKeys.values());
+  const rightIsCorrect = currentPressed.some(
+    (p) => p.note.midi === rightTarget.midi && p.isCorrect
+  );
+  const leftIsCorrect = currentPressed.some((p) => p.note.midi === leftTarget.midi && p.isCorrect);
+  return rightIsCorrect && leftIsCorrect;
+};
+
 export const useMidiNoteHandlers = (
   setDetectedNote: PracticeActions['setDetectedNote'],
   addPressedKey: (
@@ -250,13 +289,24 @@ export const useMidiNoteHandlers = (
       const note = createNoteFromMidi(midiNumber, -1);
       setDetectedNote(note);
 
-      const target = usePracticeStore.getState().noteQueue[0];
-      const isCorrect = target ? midiNumber === target.midi : false;
+      const state = usePracticeStore.getState();
+      const handMode = state.handMode;
 
-      addPressedKey(midiNumber, note, isCorrect, target?.id ?? null);
+      if (handMode === 'both-hands') {
+        const rightTarget = state.noteQueue[0];
+        const leftTarget = state.noteQueue[1];
+        const matchesRight = rightTarget && midiNumber === rightTarget.midi;
+        const matchesLeft = leftTarget && midiNumber === leftTarget.midi;
+        const isCorrect = matchesRight || matchesLeft;
+        const targetId = matchesRight ? rightTarget.id : matchesLeft ? leftTarget.id : null;
 
-      if (target && !isCorrect) {
-        hasMistakeForCurrent.current = true;
+        addPressedKey(midiNumber, note, isCorrect, targetId);
+        if (!isCorrect) hasMistakeForCurrent.current = true;
+      } else {
+        const target = state.noteQueue[0];
+        const isCorrect = target ? midiNumber === target.midi : false;
+        addPressedKey(midiNumber, note, isCorrect, target?.id ?? null);
+        if (target && !isCorrect) hasMistakeForCurrent.current = true;
       }
     },
     [addPressedKey, hasMistakeForCurrent, setDetectedNote]
@@ -270,10 +320,21 @@ export const useMidiNoteHandlers = (
       setDetectedNote(lastPressed);
 
       if (pressedInfo?.isCorrect && !isProcessingRef.current) {
-        const target = usePracticeStore.getState().noteQueue[0];
-        const isSameTarget = !pressedInfo.targetId || target?.id === pressedInfo.targetId;
-        if (isSameTarget && target && target.midi === midiNumber) {
-          handleCorrectNote();
+        const state = usePracticeStore.getState();
+        const handMode = state.handMode;
+
+        if (handMode === 'both-hands') {
+          const rightTarget = state.noteQueue[0];
+          const leftTarget = state.noteQueue[1];
+          if (checkBothHandsCorrect(rightTarget, leftTarget, pressedKeysRef.current)) {
+            handleCorrectNote();
+          }
+        } else {
+          const target = state.noteQueue[0];
+          const isSameTarget = !pressedInfo.targetId || target?.id === pressedInfo.targetId;
+          if (isSameTarget && target && target.midi === midiNumber) {
+            handleCorrectNote();
+          }
         }
       }
     },
