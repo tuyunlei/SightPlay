@@ -4,11 +4,15 @@ import { CLEF_CENTER_MIDI, TIME_SIGNATURES } from '../config/music';
 import { ClefType, Note, TimeSignature } from '../types';
 
 import { DetectedGhost } from './staff/DetectedGhost';
+import { ExitingNotes } from './staff/ExitingNotes';
+import { GrandStaffCanvas } from './staff/GrandStaffCanvas';
 import { StaffHeader } from './staff/StaffHeader';
-import { createStaffLayout, FALLBACK_VIEWPORT_WIDTH, StaffLayout } from './staff/staffLayout';
-import { StaffNote } from './staff/StaffNote';
+import { createStaffLayout, FALLBACK_VIEWPORT_WIDTH } from './staff/staffLayout';
+import { StaffLines } from './staff/StaffLines';
+import { NoteLayout, StaffNotes } from './staff/StaffNotes';
 
 interface StaffDisplayProps {
+  mode?: 'single' | 'grand';
   clef: ClefType;
   noteQueue: Note[];
   exitingNotes: Note[];
@@ -16,104 +20,6 @@ interface StaffDisplayProps {
   status: 'waiting' | 'listening' | 'correct' | 'incorrect';
   micLabel: string;
 }
-
-const StaffLines: React.FC<{ layout: StaffLayout; contentWidth: number }> = ({
-  layout,
-  contentWidth,
-}) => (
-  <>
-    {[-2, -1, 0, 1, 2].map((i) => {
-      const y = layout.STAFF_CENTER_Y + i * layout.STAFF_SPACE;
-      return (
-        <line
-          key={`staff-line-${i}`}
-          x1={layout.STAFF_SPACE * 0.5}
-          y1={y}
-          x2={contentWidth - layout.STAFF_SPACE * 0.5}
-          y2={y}
-          stroke="#cbd5e1"
-          strokeWidth={layout.STAFF_LINE_THICKNESS}
-        />
-      );
-    })}
-  </>
-);
-
-type NoteLayout = {
-  note: Note;
-  index: number;
-  x: number;
-};
-
-type StaffNotesProps = {
-  layoutNotes: NoteLayout[];
-  noteQueue: Note[];
-  detectedNote: Note | null;
-  activeNote: Note | undefined;
-  centerMidi: number;
-  layout: StaffLayout;
-  timeSignature: TimeSignature;
-};
-
-const StaffNotes: React.FC<StaffNotesProps> = ({
-  layoutNotes,
-  noteQueue,
-  detectedNote,
-  activeNote,
-  centerMidi,
-  layout,
-  timeSignature,
-}) => (
-  <>
-    {layoutNotes.map(({ note, index, x }) => (
-      <StaffNote
-        key={note.id}
-        note={note}
-        index={index}
-        x={x}
-        isExiting={false}
-        detectedNote={detectedNote}
-        activeNote={activeNote}
-        centerMidi={centerMidi}
-        layout={layout}
-        noteQueue={noteQueue}
-        timeSignature={timeSignature}
-      />
-    ))}
-  </>
-);
-
-type ExitingNotesProps = {
-  exitingNotes: Note[];
-  centerMidi: number;
-  layout: StaffLayout;
-  timeSignature: TimeSignature;
-};
-
-const ExitingNotes: React.FC<ExitingNotesProps> = ({
-  exitingNotes,
-  centerMidi,
-  layout,
-  timeSignature,
-}) => (
-  <>
-    {exitingNotes.map((note) => (
-      <StaffNote
-        key={`exit-${note.id}`}
-        note={note}
-        index={0}
-        x={layout.START_X}
-        isExiting
-        detectedNote={null}
-        activeNote={undefined}
-        centerMidi={centerMidi}
-        layout={layout}
-        noteQueue={[note]}
-        timeSignature={timeSignature}
-      />
-    ))}
-  </>
-);
 
 type StaffCanvasProps = {
   clef: ClefType;
@@ -140,7 +46,7 @@ const StaffCanvas: React.FC<StaffCanvasProps> = ({
   const contentWidth =
     layout.START_X + Math.max(visibleCount - 1, 0) * layout.NOTE_SPACING + layout.RIGHT_PADDING;
 
-  const layoutNotes = useMemo(
+  const layoutNotes: NoteLayout[] = useMemo(
     () =>
       noteQueue.slice(0, visibleCount).map((note, index) => ({
         note,
@@ -195,6 +101,7 @@ const StaffCanvas: React.FC<StaffCanvasProps> = ({
 };
 
 const StaffDisplay: React.FC<StaffDisplayProps> = ({
+  mode = 'single',
   clef,
   noteQueue,
   exitingNotes,
@@ -230,14 +137,24 @@ const StaffDisplay: React.FC<StaffDisplayProps> = ({
       data-testid="staff-display"
       className="w-full bg-white dark:bg-slate-50 rounded-xl relative overflow-hidden select-none border border-slate-200 dark:border-slate-800 shadow-sm"
     >
-      <StaffCanvas
-        clef={clef}
-        noteQueue={noteQueue}
-        exitingNotes={exitingNotes}
-        detectedNote={detectedNote}
-        viewportWidth={viewportWidth}
-        timeSignature={timeSignature}
-      />
+      {mode === 'grand' ? (
+        <GrandStaffCanvas
+          noteQueue={noteQueue}
+          exitingNotes={exitingNotes}
+          detectedNote={detectedNote}
+          viewportWidth={viewportWidth}
+          timeSignature={timeSignature}
+        />
+      ) : (
+        <StaffCanvas
+          clef={clef}
+          noteQueue={noteQueue}
+          exitingNotes={exitingNotes}
+          detectedNote={detectedNote}
+          viewportWidth={viewportWidth}
+          timeSignature={timeSignature}
+        />
+      )}
       {status === 'listening' && (
         <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-slate-100 px-2 py-1 rounded-full border border-slate-200">
           <span className="relative flex h-2 w-2">

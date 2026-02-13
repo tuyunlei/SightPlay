@@ -85,3 +85,44 @@ export const createStaffLayout = (viewportWidth: number): StaffLayout => {
     HIGHLIGHT_WIDTH,
   };
 };
+
+export type GrandStaffLayout = {
+  treble: StaffLayout;
+  bass: StaffLayout;
+  TOTAL_HEIGHT: number;
+  STAFF_GAP: number;
+  BRACE_X: number;
+  BRACE_TOP_Y: number;
+  BRACE_BOTTOM_Y: number;
+};
+
+export const createGrandStaffLayout = (viewportWidth: number): GrandStaffLayout => {
+  const treble = createStaffLayout(viewportWidth);
+  const STAFF_GAP = treble.STAFF_SPACE * 2.5;
+  const yOffset = treble.SVG_HEIGHT + STAFF_GAP;
+
+  const bass: StaffLayout = {
+    ...treble,
+    SVG_HEIGHT: treble.SVG_HEIGHT,
+    STAFF_CENTER_Y: treble.STAFF_CENTER_Y + yOffset,
+    STAFF_TOP_Y: treble.STAFF_TOP_Y + yOffset,
+    STAFF_BOTTOM_Y: treble.STAFF_BOTTOM_Y + yOffset,
+    TREBLE_CLEF_Y: treble.TREBLE_CLEF_Y + yOffset,
+    BASS_CLEF_Y: treble.BASS_CLEF_Y + yOffset,
+  };
+
+  const TOTAL_HEIGHT = treble.SVG_HEIGHT + STAFF_GAP + bass.SVG_HEIGHT;
+  const BRACE_X = treble.STAFF_SPACE * 0.3;
+  const BRACE_TOP_Y = treble.STAFF_TOP_Y;
+  const BRACE_BOTTOM_Y = bass.STAFF_BOTTOM_Y;
+
+  return {
+    treble,
+    bass,
+    TOTAL_HEIGHT,
+    STAFF_GAP,
+    BRACE_X,
+    BRACE_TOP_Y,
+    BRACE_BOTTOM_Y,
+  };
+};
