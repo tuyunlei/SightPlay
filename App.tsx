@@ -55,7 +55,7 @@ type MainAppContentProps = {
   chatHistory: Array<{ role: 'user' | 'ai'; text: string; hasAction?: boolean }>;
   isLoadingAi: boolean;
   sendMessage: (message: string) => void;
-  chatEndRef: React.RefObject<HTMLDivElement>;
+  chatEndRef: React.RefObject<HTMLDivElement | null>;
   showPasskeyManagement: boolean;
   setShowPasskeyManagement: (show: boolean) => void;
 };
