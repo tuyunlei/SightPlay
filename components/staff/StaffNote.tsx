@@ -4,7 +4,7 @@ import { Duration, Note, TimeSignature } from '../../types';
 
 import { shouldShowBarLine } from './barLine';
 import { StaffLayout } from './staffLayout';
-import { buildLedgers, getNoteColor, getNoteY, isSharp } from './staffUtils';
+import { buildLedgers, getNoteColor, getNoteY, isFlat, isSharp } from './staffUtils';
 
 export type StaffNoteProps = {
   note: Note;
@@ -90,6 +90,18 @@ const NoteGlyph: React.FC<NoteGlyphProps> = ({ note, y, color, isStemUp, layout 
           ♯
         </text>
       )}
+      {isFlat(note) && (
+        <text
+          x={-layout.STAFF_SPACE * 1.2}
+          y={y + layout.STAFF_SPACE * 0.4}
+          fontSize={layout.ACCIDENTAL_SIZE}
+          fill={color}
+          fontFamily="serif"
+          fontWeight="normal"
+        >
+          ♭
+        </text>
+      )}
       {hasStem && (
         <line
           x1={stemX}
@@ -126,7 +138,7 @@ export const StaffNote: React.FC<StaffNoteProps> = ({
   noteQueue,
   timeSignature,
 }) => {
-  const y = getNoteY(note.midi, centerMidi, layout);
+  const y = getNoteY(note, centerMidi, layout);
   const color = getNoteColor({ isExiting, index, detectedNote, activeNote });
   const isStemUp = y > layout.STAFF_CENTER_Y;
   const ledgers = buildLedgers(y, layout);
