@@ -1,4 +1,5 @@
 export type NoteName = 'C' | 'C#' | 'D' | 'D#' | 'E' | 'F' | 'F#' | 'G' | 'G#' | 'A' | 'A#' | 'B';
+export type Duration = 'whole' | 'half' | 'quarter' | 'eighth' | 'sixteenth';
 
 export interface Note {
   id: string; // Unique ID for React keys and animation
@@ -7,6 +8,7 @@ export interface Note {
   frequency: number;
   midi: number;
   globalIndex: number; // Position in the overall sequence (0, 1, 2, 3...) used for bar lines
+  duration?: Duration;
 }
 
 export enum ClefType {

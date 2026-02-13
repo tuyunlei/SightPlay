@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Note } from '../../types';
+import { Duration, Note } from '../../types';
 
 import { StaffLayout } from './staffLayout';
 import { buildLedgers, getNoteColor, getNoteY, isSharp } from './staffUtils';
@@ -14,6 +14,101 @@ export type StaffNoteProps = {
   activeNote: Note | undefined;
   centerMidi: number;
   layout: StaffLayout;
+};
+
+type DurationRenderInfo = {
+  isHollowHead: boolean;
+  hasStem: boolean;
+  flagCount: number;
+};
+
+type NoteGlyphProps = {
+  note: Note;
+  y: number;
+  color: string;
+  isStemUp: boolean;
+  layout: StaffLayout;
+};
+
+const getDurationRenderInfo = (duration?: Duration): DurationRenderInfo => {
+  const effectiveDuration = duration ?? 'quarter';
+
+  return {
+    isHollowHead: effectiveDuration === 'whole' || effectiveDuration === 'half',
+    hasStem: effectiveDuration !== 'whole',
+    flagCount: effectiveDuration === 'eighth' ? 1 : effectiveDuration === 'sixteenth' ? 2 : 0,
+  };
+};
+
+const getFlagPath = (
+  flagIndex: number,
+  stemX: number,
+  stemEndY: number,
+  isStemUp: boolean,
+  layout: StaffLayout
+) => {
+  const flagSpacing = layout.STAFF_HALF_SPACE * 0.8;
+  const direction = isStemUp ? 1 : -1;
+  const flagStartY = stemEndY + flagIndex * flagSpacing * direction;
+  const flagControlX = stemX + layout.STAFF_SPACE * 1.1 * direction;
+  const flagEndX = stemX + layout.STAFF_SPACE * 0.6 * direction;
+  const flagControlY = flagStartY + layout.STAFF_SPACE * 0.7 * direction;
+  const flagEndY = flagStartY + layout.STAFF_SPACE * 1.1 * direction;
+
+  return `M ${stemX} ${flagStartY} Q ${flagControlX} ${flagControlY} ${flagEndX} ${flagEndY}`;
+};
+
+const NoteGlyph: React.FC<NoteGlyphProps> = ({ note, y, color, isStemUp, layout }) => {
+  const { isHollowHead, hasStem, flagCount } = getDurationRenderInfo(note.duration);
+  const stemX = isStemUp ? layout.STEM_OFFSET : -layout.STEM_OFFSET;
+  const stemEndY = isStemUp ? y - layout.STEM_LENGTH : y + layout.STEM_LENGTH;
+
+  return (
+    <g>
+      <ellipse
+        cx="0"
+        cy={y}
+        rx={layout.NOTE_HEAD_RX}
+        ry={layout.NOTE_HEAD_RY}
+        fill={isHollowHead ? '#ffffff' : color}
+        stroke={color}
+        strokeWidth={layout.STAFF_LINE_THICKNESS}
+        transform={`rotate(-15, 0, ${y})`}
+      />
+      {isSharp(note) && (
+        <text
+          x={-layout.STAFF_SPACE * 1.2}
+          y={y + layout.STAFF_SPACE * 0.4}
+          fontSize={layout.ACCIDENTAL_SIZE}
+          fill={color}
+          fontFamily="serif"
+          fontWeight="normal"
+        >
+          ♯
+        </text>
+      )}
+      {hasStem && (
+        <line
+          x1={stemX}
+          y1={y}
+          x2={stemX}
+          y2={stemEndY}
+          stroke={color}
+          strokeWidth={layout.STAFF_LINE_THICKNESS}
+        />
+      )}
+      {Array.from({ length: flagCount }, (_, flagIndex) => (
+        <path
+          key={`${note.id}-flag-${flagIndex}`}
+          d={getFlagPath(flagIndex, stemX, stemEndY, isStemUp, layout)}
+          fill="none"
+          stroke={color}
+          strokeWidth={layout.STAFF_LINE_THICKNESS}
+          strokeLinecap="round"
+        />
+      ))}
+    </g>
+  );
 };
 
 export const StaffNote: React.FC<StaffNoteProps> = ({
@@ -63,36 +158,7 @@ export const StaffNote: React.FC<StaffNoteProps> = ({
           strokeWidth={layout.STAFF_LINE_THICKNESS}
         />
       ))}
-      <g>
-        <ellipse
-          cx="0"
-          cy={y}
-          rx={layout.NOTE_HEAD_RX}
-          ry={layout.NOTE_HEAD_RY}
-          fill={color}
-          transform={`rotate(-15, 0, ${y})`}
-        />
-        {isSharp(note) && (
-          <text
-            x={-layout.STAFF_SPACE * 1.2}
-            y={y + layout.STAFF_SPACE * 0.4}
-            fontSize={layout.ACCIDENTAL_SIZE}
-            fill={color}
-            fontFamily="serif"
-            fontWeight="normal"
-          >
-            ♯
-          </text>
-        )}
-        <line
-          x1={isStemUp ? layout.STEM_OFFSET : -layout.STEM_OFFSET}
-          y1={y}
-          x2={isStemUp ? layout.STEM_OFFSET : -layout.STEM_OFFSET}
-          y2={isStemUp ? y - layout.STEM_LENGTH : y + layout.STEM_LENGTH}
-          stroke={color}
-          strokeWidth={layout.STAFF_LINE_THICKNESS}
-        />
-      </g>
+      <NoteGlyph note={note} y={y} color={color} isStemUp={isStemUp} layout={layout} />
     </g>
   );
 };
