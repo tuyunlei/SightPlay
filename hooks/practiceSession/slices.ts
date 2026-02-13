@@ -22,6 +22,7 @@ export type PracticeRefs = {
 export const usePracticeStateSlice = () => {
   const clef = usePracticeStore((state) => state.clef);
   const practiceRange = usePracticeStore((state) => state.practiceRange);
+  const handMode = usePracticeStore((state) => state.handMode);
   const noteQueue = usePracticeStore((state) => state.noteQueue);
   const exitingNotes = usePracticeStore((state) => state.exitingNotes);
   const detectedNote = usePracticeStore((state) => state.detectedNote);
@@ -38,6 +39,7 @@ export const usePracticeStateSlice = () => {
   return {
     clef,
     practiceRange,
+    handMode,
     noteQueue,
     exitingNotes,
     detectedNote,
@@ -58,6 +60,7 @@ export const usePracticeActionsSlice = () => {
   const setIsListening = usePracticeStore((state) => state.setIsListening);
   const setIsMidiConnected = usePracticeStore((state) => state.setIsMidiConnected);
   const setPracticeRange = usePracticeStore((state) => state.setPracticeRange);
+  const setHandMode = usePracticeStore((state) => state.setHandMode);
   const setNoteQueue = usePracticeStore((state) => state.setNoteQueue);
   const setExitingNotes = usePracticeStore((state) => state.setExitingNotes);
   const setDetectedNote = usePracticeStore((state) => state.setDetectedNote);
@@ -73,6 +76,7 @@ export const usePracticeActionsSlice = () => {
   return {
     setClef,
     setPracticeRange,
+    setHandMode,
     setIsListening,
     setIsMidiConnected,
     setNoteQueue,

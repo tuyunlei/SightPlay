@@ -45,6 +45,9 @@ export const translations = {
     practiceRangeCentral: 'Middle Octave',
     practiceRangeUpper: 'Upper Octave',
     practiceRangeCombined: 'Middle + Upper',
+    rightHand: 'Right Hand',
+    leftHand: 'Left Hand',
+    bothHands: 'Both Hands',
     aiError: "Sorry, I'm having trouble connecting. Try again?",
   },
   zh: {
@@ -91,6 +94,9 @@ export const translations = {
     practiceRangeCentral: '中央八度',
     practiceRangeUpper: '高一八度',
     practiceRangeCombined: '中央 + 高',
+    rightHand: '右手',
+    leftHand: '左手',
+    bothHands: '双手',
     aiError: '抱歉，连接出现问题，请重试。',
   },
 };

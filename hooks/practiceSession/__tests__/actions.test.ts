@@ -213,6 +213,7 @@ describe('useQueueInitialization', () => {
       useQueueInitialization({
         clef: ClefType.TREBLE,
         practiceRange: 'combined',
+        handMode: 'right-hand',
         challengeSequenceLength: 0,
         setNoteQueue,
         lastHitTime,
@@ -235,6 +236,7 @@ describe('useQueueInitialization', () => {
         useQueueInitialization({
           clef,
           practiceRange: 'combined',
+          handMode: 'right-hand',
           challengeSequenceLength: 0,
           setNoteQueue,
           lastHitTime,
@@ -258,6 +260,7 @@ describe('useQueueInitialization', () => {
         useQueueInitialization({
           clef,
           practiceRange: 'combined',
+          handMode: 'right-hand',
           challengeSequenceLength: 5,
           setNoteQueue,
           lastHitTime,

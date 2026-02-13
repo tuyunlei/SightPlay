@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import { ClefType, GeneratedChallenge, Note, PracticeRangeMode } from '../types';
+import { ClefType, GeneratedChallenge, HandPracticeMode, Note, PracticeRangeMode } from '../types';
 import { SessionStats } from '../types/session';
 
 export type PracticeStatus = 'waiting' | 'listening' | 'correct' | 'incorrect';
@@ -8,6 +8,7 @@ export type PracticeStatus = 'waiting' | 'listening' | 'correct' | 'incorrect';
 export interface PracticeState {
   clef: ClefType;
   practiceRange: PracticeRangeMode;
+  handMode: HandPracticeMode;
   isListening: boolean;
   isMidiConnected: boolean;
   noteQueue: Note[];
@@ -25,6 +26,7 @@ export interface PracticeState {
 interface PracticeActions {
   setClef: (clef: ClefType) => void;
   setPracticeRange: (practiceRange: PracticeRangeMode) => void;
+  setHandMode: (handMode: HandPracticeMode) => void;
   setIsListening: (isListening: boolean) => void;
   setIsMidiConnected: (isMidiConnected: boolean) => void;
   setNoteQueue: (noteQueue: Note[]) => void;
@@ -49,6 +51,7 @@ const initialStats: SessionStats = {
 export const usePracticeStore = create<PracticeState & PracticeActions>((set) => ({
   clef: ClefType.TREBLE,
   practiceRange: 'combined',
+  handMode: 'right-hand',
   isListening: false,
   isMidiConnected: false,
   noteQueue: [],
@@ -63,6 +66,7 @@ export const usePracticeStore = create<PracticeState & PracticeActions>((set) =>
   challengeInfo: null,
   setClef: (clef) => set({ clef }),
   setPracticeRange: (practiceRange) => set({ practiceRange }),
+  setHandMode: (handMode) => set({ handMode }),
   setIsListening: (isListening) => set({ isListening }),
   setIsMidiConnected: (isMidiConnected) => set({ isMidiConnected }),
   setNoteQueue: (noteQueue) => set({ noteQueue }),

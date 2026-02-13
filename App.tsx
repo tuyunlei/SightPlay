@@ -43,6 +43,89 @@ function InvitePage({ token }: { token: string }) {
   );
 }
 
+type MainAppContentProps = {
+  state: ReturnType<typeof usePracticeSession>['state'];
+  derived: ReturnType<typeof usePracticeSession>['derived'];
+  actions: ReturnType<typeof usePracticeSession>['actions'];
+  pressedKeys: ReturnType<typeof usePracticeSession>['pressedKeys'];
+  t: typeof translations.en;
+  toggleLang: () => void;
+  chatInput: string;
+  setChatInput: (input: string) => void;
+  chatHistory: Array<{ role: 'user' | 'ai'; text: string; hasAction?: boolean }>;
+  isLoadingAi: boolean;
+  sendMessage: (message: string) => void;
+  chatEndRef: React.RefObject<HTMLDivElement | null>;
+  showPasskeyManagement: boolean;
+  setShowPasskeyManagement: (show: boolean) => void;
+};
+
+const MainAppContent: React.FC<MainAppContentProps> = ({
+  state,
+  derived,
+  actions,
+  pressedKeys,
+  t,
+  toggleLang,
+  chatInput,
+  setChatInput,
+  chatHistory,
+  isLoadingAi,
+  sendMessage,
+  chatEndRef,
+  showPasskeyManagement,
+  setShowPasskeyManagement,
+}) => (
+  <>
+    <BackgroundDecor />
+    <PasskeyButton onClick={() => setShowPasskeyManagement(true)} />
+    {showPasskeyManagement && <PasskeyManagement onClose={() => setShowPasskeyManagement(false)} />}
+    <TopBar
+      isListening={state.isListening}
+      clef={state.clef}
+      score={state.score}
+      bpm={state.sessionStats.bpm}
+      accuracy={derived.accuracy}
+      onToggleMic={actions.toggleMic}
+      onToggleClef={actions.toggleClef}
+      onToggleLang={toggleLang}
+      onResetStats={actions.resetSessionStats}
+      t={t}
+    />
+    <main className="relative z-10 flex-1 w-full max-w-7xl mx-auto p-3 sm:p-4 gap-4 sm:gap-6 grid grid-cols-1 md:grid-cols-3">
+      <PracticeArea
+        clef={state.clef}
+        practiceRange={state.practiceRange}
+        handMode={state.handMode}
+        noteQueue={state.noteQueue}
+        exitingNotes={state.exitingNotes}
+        detectedNote={state.detectedNote}
+        status={state.status}
+        targetNote={derived.targetNote}
+        pressedKeys={pressedKeys}
+        challengeSequence={state.challengeSequence}
+        challengeIndex={state.challengeIndex}
+        challengeInfo={state.challengeInfo}
+        t={t}
+        isMidiConnected={state.isMidiConnected}
+        onPracticeRangeChange={actions.setPracticeRange}
+        onHandModeChange={actions.setHandMode}
+      />
+      <AiCoachPanel
+        clef={state.clef}
+        targetNote={derived.targetNote}
+        t={t}
+        chatHistory={chatHistory}
+        chatInput={chatInput}
+        isLoadingAi={isLoadingAi}
+        onChatInputChange={setChatInput}
+        onSendMessage={sendMessage}
+        chatEndRef={chatEndRef}
+      />
+    </main>
+  </>
+);
+
 const MainApp = () => {
   const lang = useUiStore((state) => state.lang);
   const toggleLang = useUiStore((state) => state.toggleLang);
@@ -56,8 +139,6 @@ const MainApp = () => {
   });
 
   const { state, derived, actions, pressedKeys } = practiceSession;
-
-  // Register test API for E2E tests
   useTestAPI(practiceSession);
 
   const { chatInput, setChatInput, chatHistory, isLoadingAi, sendMessage, chatEndRef } = useAiCoach(
@@ -80,57 +161,22 @@ const MainApp = () => {
         className="bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-900 dark:text-slate-100"
         style={{ minHeight: '100dvh' }}
       >
-        <BackgroundDecor />
-
-        <PasskeyButton onClick={() => setShowPasskeyManagement(true)} />
-
-        {showPasskeyManagement && (
-          <PasskeyManagement onClose={() => setShowPasskeyManagement(false)} />
-        )}
-
-        <TopBar
-          isListening={state.isListening}
-          clef={state.clef}
-          score={state.score}
-          bpm={state.sessionStats.bpm}
-          accuracy={derived.accuracy}
-          onToggleMic={actions.toggleMic}
-          onToggleClef={actions.toggleClef}
-          onToggleLang={toggleLang}
-          onResetStats={actions.resetSessionStats}
+        <MainAppContent
+          state={state}
+          derived={derived}
+          actions={actions}
+          pressedKeys={pressedKeys}
           t={t}
+          toggleLang={toggleLang}
+          chatInput={chatInput}
+          setChatInput={setChatInput}
+          chatHistory={chatHistory}
+          isLoadingAi={isLoadingAi}
+          sendMessage={sendMessage}
+          chatEndRef={chatEndRef}
+          showPasskeyManagement={showPasskeyManagement}
+          setShowPasskeyManagement={setShowPasskeyManagement}
         />
-
-        <main className="relative z-10 flex-1 w-full max-w-7xl mx-auto p-3 sm:p-4 gap-4 sm:gap-6 grid grid-cols-1 md:grid-cols-3">
-          <PracticeArea
-            clef={state.clef}
-            practiceRange={state.practiceRange}
-            noteQueue={state.noteQueue}
-            exitingNotes={state.exitingNotes}
-            detectedNote={state.detectedNote}
-            status={state.status}
-            targetNote={derived.targetNote}
-            pressedKeys={pressedKeys}
-            challengeSequence={state.challengeSequence}
-            challengeIndex={state.challengeIndex}
-            challengeInfo={state.challengeInfo}
-            t={t}
-            isMidiConnected={state.isMidiConnected}
-            onPracticeRangeChange={actions.setPracticeRange}
-          />
-
-          <AiCoachPanel
-            clef={state.clef}
-            targetNote={derived.targetNote}
-            t={t}
-            chatHistory={chatHistory}
-            chatInput={chatInput}
-            isLoadingAi={isLoadingAi}
-            onChatInputChange={setChatInput}
-            onSendMessage={sendMessage}
-            chatEndRef={chatEndRef}
-          />
-        </main>
       </div>
     </AuthGate>
   );

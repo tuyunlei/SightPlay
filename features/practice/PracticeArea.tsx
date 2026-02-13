@@ -5,15 +5,23 @@ import PianoDisplay from '../../components/PianoDisplay';
 import StaffDisplay from '../../components/StaffDisplay';
 import { translations } from '../../i18n';
 import { PracticeStatus } from '../../store/practiceStore';
-import { ClefType, GeneratedChallenge, Note, PracticeRangeMode } from '../../types';
+import {
+  ClefType,
+  GeneratedChallenge,
+  HandPracticeMode,
+  Note,
+  PracticeRangeMode,
+} from '../../types';
 
 import { ChallengeProgress } from './ChallengeProgress';
+import { HandModeSelector } from './HandModeSelector';
 import { PracticeRangeSelector } from './PracticeRangeSelector';
 import { TargetInfo } from './TargetInfo';
 
 interface PracticeAreaProps {
   clef: ClefType;
   practiceRange: PracticeRangeMode;
+  handMode: HandPracticeMode;
   noteQueue: Note[];
   exitingNotes: Note[];
   detectedNote: Note | null;
@@ -26,6 +34,7 @@ interface PracticeAreaProps {
   t: typeof translations.en;
   isMidiConnected: boolean;
   onPracticeRangeChange: (mode: PracticeRangeMode) => void;
+  onHandModeChange: (mode: HandPracticeMode) => void;
 }
 
 type FooterBarProps = {
@@ -55,6 +64,7 @@ const FooterBar: React.FC<FooterBarProps> = ({ targetNote, t, showPiano, onToggl
 type PracticeMainPanelProps = {
   clef: ClefType;
   practiceRange: PracticeRangeMode;
+  handMode: HandPracticeMode;
   noteQueue: Note[];
   exitingNotes: Note[];
   detectedNote: Note | null;
@@ -65,11 +75,13 @@ type PracticeMainPanelProps = {
   isMidiConnected: boolean;
   isChallengeActive: boolean;
   onPracticeRangeChange: (mode: PracticeRangeMode) => void;
+  onHandModeChange: (mode: HandPracticeMode) => void;
 };
 
 const PracticeMainPanel: React.FC<PracticeMainPanelProps> = ({
   clef,
   practiceRange,
+  handMode,
   noteQueue,
   exitingNotes,
   detectedNote,
@@ -80,8 +92,12 @@ const PracticeMainPanel: React.FC<PracticeMainPanelProps> = ({
   isMidiConnected,
   isChallengeActive,
   onPracticeRangeChange,
+  onHandModeChange,
 }) => {
   const [showPiano, setShowPiano] = useState(true);
+
+  // Determine staff display mode based on hand mode
+  const staffMode = handMode === 'both-hands' ? 'grand' : 'single';
 
   return (
     <div className="w-full relative group">
@@ -92,14 +108,23 @@ const PracticeMainPanel: React.FC<PracticeMainPanelProps> = ({
       )}
 
       <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-slate-950/50 border border-slate-100 dark:border-slate-800 overflow-hidden">
-        <PracticeRangeSelector
-          value={practiceRange}
-          onChange={onPracticeRangeChange}
-          t={t}
-          disabled={isChallengeActive}
-        />
+        <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-slate-100 dark:border-slate-800">
+          <HandModeSelector
+            value={handMode}
+            onChange={onHandModeChange}
+            t={t}
+            disabled={isChallengeActive}
+          />
+          <PracticeRangeSelector
+            value={practiceRange}
+            onChange={onPracticeRangeChange}
+            t={t}
+            disabled={isChallengeActive}
+          />
+        </div>
         <div className="p-1 min-h-[180px] sm:min-h-[220px]">
           <StaffDisplay
+            mode={staffMode}
             clef={clef}
             noteQueue={noteQueue}
             exitingNotes={exitingNotes}
@@ -133,6 +158,7 @@ const PracticeMainPanel: React.FC<PracticeMainPanelProps> = ({
 const PracticeArea: React.FC<PracticeAreaProps> = ({
   clef,
   practiceRange,
+  handMode,
   noteQueue,
   exitingNotes,
   detectedNote,
@@ -145,6 +171,7 @@ const PracticeArea: React.FC<PracticeAreaProps> = ({
   t,
   isMidiConnected,
   onPracticeRangeChange,
+  onHandModeChange,
 }) => {
   const isChallengeActive = challengeSequence.length > 0;
 
@@ -153,6 +180,7 @@ const PracticeArea: React.FC<PracticeAreaProps> = ({
       <PracticeMainPanel
         clef={clef}
         practiceRange={practiceRange}
+        handMode={handMode}
         noteQueue={noteQueue}
         exitingNotes={exitingNotes}
         detectedNote={detectedNote}
@@ -163,6 +191,7 @@ const PracticeArea: React.FC<PracticeAreaProps> = ({
         isMidiConnected={isMidiConnected}
         isChallengeActive={isChallengeActive}
         onPracticeRangeChange={onPracticeRangeChange}
+        onHandModeChange={onHandModeChange}
       />
       <ChallengeProgress
         challengeSequence={challengeSequence}
