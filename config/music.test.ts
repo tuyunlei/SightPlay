@@ -1,8 +1,20 @@
 import { describe, expect, it } from 'vitest';
 
-import { getNoteLabels, NOTE_NAMES, SOLFEGE_MAP, NUMBER_MAP } from './music';
+import { DURATION_BEATS, getNoteLabels, NOTE_NAMES, SOLFEGE_MAP, NUMBER_MAP } from './music';
 
 describe('music config', () => {
+  describe('DURATION_BEATS', () => {
+    it('maps note durations to beat counts', () => {
+      expect(DURATION_BEATS).toEqual({
+        whole: 4,
+        half: 2,
+        quarter: 1,
+        eighth: 0.5,
+        sixteenth: 0.25,
+      });
+    });
+  });
+
   describe('getNoteLabels', () => {
     it('returns solfege and number for C', () => {
       expect(getNoteLabels('C')).toEqual({ solfege: 'Do', number: '1' });
