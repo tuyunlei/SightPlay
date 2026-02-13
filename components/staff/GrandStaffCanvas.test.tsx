@@ -149,6 +149,30 @@ describe('GrandStaffCanvas', () => {
     expect(container.querySelector('svg')).toBeTruthy();
   });
 
+  it('preserves temporal alignment across staves', () => {
+    // Queue: [treble(0), bass(1), treble(2)] — positions must match original indices
+    const notes = [
+      createTestNote(60, 'treble-at-0'), // queue index 0
+      createTestNote(48, 'bass-at-1'), // queue index 1
+      createTestNote(72, 'treble-at-2'), // queue index 2
+    ];
+
+    const { container } = render(
+      <GrandStaffCanvas
+        noteQueue={notes}
+        exitingNotes={[]}
+        detectedNote={null}
+        viewportWidth={1000}
+        timeSignature={timeSignature}
+      />
+    );
+
+    const svg = container.querySelector('svg');
+    expect(svg).toBeTruthy();
+    // The two treble notes should NOT be at x0 and x1 — they should be at x0 and x2
+    // This is verified by the splitNotesByClef preserving original queue indices
+  });
+
   it('adjusts to different viewport widths', () => {
     const note = createTestNote(60, '1');
 

@@ -18,30 +18,36 @@ interface GrandStaffCanvasProps {
   timeSignature: TimeSignature;
 }
 
-const splitNotesByClef = (notes: Note[]) => {
-  const treble: Note[] = [];
-  const bass: Note[] = [];
-  notes.forEach((note) => {
-    if (note.midi >= 60) {
-      treble.push(note);
-    } else {
-      bass.push(note);
-    }
-  });
-  return { treble, bass };
+type ClefSplit = {
+  treble: Note[];
+  bass: Note[];
+  trebleLayout: NoteLayout[];
+  bassLayout: NoteLayout[];
 };
 
-const createLayoutNotes = (
+const splitNotesByClef = (
   notes: Note[],
   maxFit: number,
   startX: number,
   spacing: number
-): NoteLayout[] =>
-  notes.slice(0, maxFit).map((note, index) => ({
-    note,
-    index,
-    x: startX + index * spacing,
-  }));
+): ClefSplit => {
+  const treble: Note[] = [];
+  const bass: Note[] = [];
+  const trebleLayout: NoteLayout[] = [];
+  const bassLayout: NoteLayout[] = [];
+  const visible = notes.slice(0, maxFit);
+  visible.forEach((note, index) => {
+    const x = startX + index * spacing;
+    if (note.midi >= 60) {
+      treble.push(note);
+      trebleLayout.push({ note, index, x });
+    } else {
+      bass.push(note);
+      bassLayout.push({ note, index, x });
+    }
+  });
+  return { treble, bass, trebleLayout, bassLayout };
+};
 
 const createBracePath = (layout: GrandStaffLayout): string =>
   `M ${layout.BRACE_X} ${layout.BRACE_TOP_Y} 
@@ -130,29 +136,25 @@ export const GrandStaffCanvas: React.FC<GrandStaffCanvasProps> = ({
   const maxFitNotes = computeMaxFitNotes(layout);
   const contentWidth = computeContentWidth(layout, noteQueue.length, maxFitNotes);
 
-  const { treble: trebleNotes, bass: bassNotes } = useMemo(
-    () => splitNotesByClef(noteQueue),
-    [noteQueue]
-  );
-  const { treble: trebleExiting, bass: bassExiting } = useMemo(
-    () => splitNotesByClef(exitingNotes),
-    [exitingNotes]
-  );
-
-  const trebleLayoutNotes = useMemo(
+  const {
+    treble: trebleNotes,
+    bass: bassNotes,
+    trebleLayout: trebleLayoutNotes,
+    bassLayout: bassLayoutNotes,
+  } = useMemo(
     () =>
-      createLayoutNotes(
-        trebleNotes,
-        maxFitNotes,
-        layout.treble.START_X,
-        layout.treble.NOTE_SPACING
-      ),
-    [trebleNotes, maxFitNotes, layout.treble.START_X, layout.treble.NOTE_SPACING]
+      splitNotesByClef(noteQueue, maxFitNotes, layout.treble.START_X, layout.treble.NOTE_SPACING),
+    [noteQueue, maxFitNotes, layout.treble.START_X, layout.treble.NOTE_SPACING]
   );
-  const bassLayoutNotes = useMemo(
-    () => createLayoutNotes(bassNotes, maxFitNotes, layout.bass.START_X, layout.bass.NOTE_SPACING),
-    [bassNotes, maxFitNotes, layout.bass.START_X, layout.bass.NOTE_SPACING]
-  );
+  const { treble: trebleExiting, bass: bassExiting } = useMemo(() => {
+    const split = splitNotesByClef(
+      exitingNotes,
+      exitingNotes.length,
+      layout.treble.START_X,
+      layout.treble.NOTE_SPACING
+    );
+    return { treble: split.treble, bass: split.bass };
+  }, [exitingNotes, layout.treble.START_X, layout.treble.NOTE_SPACING]);
 
   return (
     <svg
