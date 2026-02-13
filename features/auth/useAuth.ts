@@ -55,29 +55,6 @@ async function performRegister(name?: string, inviteToken?: string): Promise<boo
   if (!optionsResponse.ok) throw new Error('Failed to get registration options');
   const options = await optionsResponse.json();
 
-  // Prepare excludeCredentials with proper transports
-  const excludeCredentials = options.excludeCredentials?.map(
-    (c: { id: string; type: string; transports?: string[] }) => ({
-      id: c.id,
-      type: c.type as 'public-key',
-      transports: c.transports || ['internal', 'hybrid'],
-    })
-  );
-
-  // Build customProperties with mobile-friendly WebAuthn options
-  const customProperties: Record<string, unknown> = {
-    rp: options.rp,
-    pubKeyCredParams: options.pubKeyCredParams,
-    excludeCredentials,
-    // For mobile: prefer platform authenticators (Face ID, Touch ID, fingerprint)
-    authenticatorSelection: {
-      authenticatorAttachment: 'platform', // Platform authenticator for mobile biometrics
-      residentKey: options.authenticatorSelection?.residentKey || 'preferred',
-      requireResidentKey: false, // Don't strictly require, for compatibility
-      userVerification: options.authenticatorSelection?.userVerification || 'preferred',
-    },
-  };
-
   // Use @passwordless-id/webauthn client to create credential
   const registration = await client.register({
     challenge: options.challenge,
@@ -86,14 +63,14 @@ async function performRegister(name?: string, inviteToken?: string): Promise<boo
       name: options.user.name,
       displayName: options.user.displayName,
     },
-    // Discoverable credentials (resident keys) for better mobile UX
-    discoverable: options.authenticatorSelection?.residentKey || 'preferred',
-    // User verification: preferred for biometric authentication
-    userVerification: options.authenticatorSelection?.userVerification || 'preferred',
-    timeout: options.timeout || 60000,
-    attestation: options.attestation !== 'none',
-    hints: ['security-key', 'client-device', 'hybrid'],
-    customProperties,
+    discoverable: options.authenticatorSelection?.residentKey,
+    userVerification: options.authenticatorSelection?.userVerification,
+    customProperties: {
+      rp: options.rp,
+      pubKeyCredParams: options.pubKeyCredParams,
+      excludeCredentials: options.excludeCredentials,
+      timeout: options.timeout,
+    },
   });
 
   const verifyResponse = await fetch('/api/auth/register-verify', {
@@ -126,20 +103,15 @@ async function performLogin(): Promise<boolean> {
   if (!optionsResponse.ok) throw new Error('Failed to get authentication options');
   const options = await optionsResponse.json();
 
-  // Prepare allowCredentials with proper transports
-  const allowCredentials = options.allowCredentials?.map(
-    (c: { id: string; transports?: string[] }) => ({
-      id: c.id,
-      transports: c.transports || ['internal', 'hybrid'],
-    })
-  );
-
   // Use @passwordless-id/webauthn client to authenticate
   const authentication = await client.authenticate({
     challenge: options.challenge,
-    allowCredentials,
-    userVerification: options.userVerification || 'preferred',
-    timeout: options.timeout || 60000,
+    allowCredentials: options.allowCredentials?.map((c: { id: string; transports?: string[] }) => ({
+      id: c.id,
+      transports: c.transports || [],
+    })),
+    userVerification: options.userVerification,
+    timeout: options.timeout,
   });
 
   const verifyResponse = await fetch('/api/auth/login-verify', {

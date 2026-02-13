@@ -78,6 +78,41 @@ describe('note', () => {
         expect(note.name).toBe(noteNames[i]);
       }
     });
+
+    it('creates flat notes when preferFlat is true', () => {
+      const dFlat = createNoteFromMidi(61, 0, undefined, true);
+      expect(dFlat.name).toBe('Db');
+      expect(dFlat.octave).toBe(4);
+      expect(dFlat.midi).toBe(61);
+
+      const eFlat = createNoteFromMidi(63, 0, undefined, true);
+      expect(eFlat.name).toBe('Eb');
+
+      const gFlat = createNoteFromMidi(66, 0, undefined, true);
+      expect(gFlat.name).toBe('Gb');
+
+      const aFlat = createNoteFromMidi(68, 0, undefined, true);
+      expect(aFlat.name).toBe('Ab');
+
+      const bFlat = createNoteFromMidi(70, 0, undefined, true);
+      expect(bFlat.name).toBe('Bb');
+    });
+
+    it('creates sharp notes when preferFlat is false (default)', () => {
+      const cSharp = createNoteFromMidi(61, 0, undefined, false);
+      expect(cSharp.name).toBe('C#');
+
+      const cSharpDefault = createNoteFromMidi(61, 0);
+      expect(cSharpDefault.name).toBe('C#');
+    });
+
+    it('creates natural notes regardless of preferFlat', () => {
+      const cNatural = createNoteFromMidi(60, 0, undefined, true);
+      expect(cNatural.name).toBe('C');
+
+      const eNatural = createNoteFromMidi(64, 0, undefined, true);
+      expect(eNatural.name).toBe('E');
+    });
   });
 
   describe('noteStringToMidi', () => {

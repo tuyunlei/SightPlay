@@ -1,4 +1,4 @@
-import { NOTE_NAMES } from '../config/music';
+import { FLAT_NOTE_NAMES, NOTE_NAMES } from '../config/music';
 import { Duration, Note } from '../types';
 
 const A4_FREQ = 440;
@@ -7,11 +7,12 @@ const A4_MIDI = 69;
 export const createNoteFromMidi = (
   midi: number,
   globalIndex: number = 0,
-  duration?: Duration
+  duration?: Duration,
+  preferFlat: boolean = false
 ): Note => {
   const frequency = A4_FREQ * Math.pow(2, (midi - A4_MIDI) / 12);
   const noteNameIndex = midi % 12;
-  const name = NOTE_NAMES[noteNameIndex];
+  const name = preferFlat ? FLAT_NOTE_NAMES[noteNameIndex] : NOTE_NAMES[noteNameIndex];
   const octave = Math.floor(midi / 12) - 1;
 
   return {

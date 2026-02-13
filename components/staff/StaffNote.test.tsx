@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
+import { TIME_SIGNATURES } from '../../config/music';
 import { Note } from '../../types';
 
 import { createStaffLayout } from './staffLayout';
@@ -30,6 +31,8 @@ const renderStaffNote = (note: Note) =>
         activeNote={undefined}
         centerMidi={71}
         layout={layout}
+        noteQueue={[note]}
+        timeSignature={TIME_SIGNATURES['4/4']}
       />
     </svg>
   );

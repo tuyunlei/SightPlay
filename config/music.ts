@@ -1,4 +1,4 @@
-import { ClefType, Duration, NoteName } from '../types';
+import { ClefType, Duration, NoteName, TimeSignature } from '../types';
 
 export const NOTE_NAMES: NoteName[] = [
   'C',
@@ -15,6 +15,21 @@ export const NOTE_NAMES: NoteName[] = [
   'B',
 ];
 
+export const FLAT_NOTE_NAMES: NoteName[] = [
+  'C',
+  'Db',
+  'D',
+  'Eb',
+  'E',
+  'F',
+  'Gb',
+  'G',
+  'Ab',
+  'A',
+  'Bb',
+  'B',
+];
+
 export const TREBLE_RANGE = { min: 60, max: 79 }; // C4 to G5
 export const BASS_RANGE = { min: 40, max: 60 }; // E2 to C4
 
@@ -24,6 +39,13 @@ export const DURATION_BEATS: Record<Duration, number> = {
   quarter: 1,
   eighth: 0.5,
   sixteenth: 0.25,
+};
+
+export const TIME_SIGNATURES: Record<'4/4' | '3/4' | '2/4' | '6/8', TimeSignature> = {
+  '4/4': { beats: 4, beatUnit: 4 },
+  '3/4': { beats: 3, beatUnit: 4 },
+  '2/4': { beats: 2, beatUnit: 4 },
+  '6/8': { beats: 6, beatUnit: 8 },
 };
 
 export const CLEF_CENTER_MIDI: Record<ClefType, number> = {
@@ -47,11 +69,38 @@ export const SOLFEGE_MAP = [
 ];
 export const NUMBER_MAP = ['1', '1♯', '2', '2♯', '3', '4', '4♯', '5', '5♯', '6', '6♯', '7'];
 
+export const SOLFEGE_MAP_FLAT = [
+  'Do',
+  'Re♭',
+  'Re',
+  'Mi♭',
+  'Mi',
+  'Fa',
+  'Sol♭',
+  'Sol',
+  'La♭',
+  'La',
+  'Si♭',
+  'Si',
+];
+export const NUMBER_MAP_FLAT = ['1', '2♭', '2', '3♭', '3', '4', '5♭', '5', '6♭', '6', '7♭', '7'];
+
 export const getNoteLabels = (noteName: NoteName) => {
-  const idx = NOTE_NAMES.indexOf(noteName);
-  if (idx === -1) return { solfege: '', number: '' };
-  return {
-    solfege: SOLFEGE_MAP[idx],
-    number: NUMBER_MAP[idx],
-  };
+  // Try sharp names first
+  const sharpIdx = NOTE_NAMES.indexOf(noteName);
+  if (sharpIdx !== -1) {
+    return {
+      solfege: SOLFEGE_MAP[sharpIdx],
+      number: NUMBER_MAP[sharpIdx],
+    };
+  }
+  // Try flat names
+  const flatIdx = FLAT_NOTE_NAMES.indexOf(noteName);
+  if (flatIdx !== -1) {
+    return {
+      solfege: SOLFEGE_MAP_FLAT[flatIdx],
+      number: NUMBER_MAP_FLAT[flatIdx],
+    };
+  }
+  return { solfege: '', number: '' };
 };
