@@ -3,7 +3,7 @@ import React from 'react';
 import { Note } from '../../types';
 
 import { StaffLayout } from './staffLayout';
-import { getNoteY, isSharp } from './staffUtils';
+import { getNoteY, isFlat, isSharp } from './staffUtils';
 
 export type DetectedGhostProps = {
   detectedNote: Note | null;
@@ -19,7 +19,7 @@ export const DetectedGhost: React.FC<DetectedGhostProps> = ({
   layout,
 }) => {
   if (!detectedNote || detectedNote.midi === activeNote?.midi) return null;
-  const y = getNoteY(detectedNote.midi, centerMidi, layout);
+  const y = getNoteY(detectedNote, centerMidi, layout);
   const isStemUp = y > layout.STAFF_CENTER_Y;
 
   return (
@@ -49,6 +49,17 @@ export const DetectedGhost: React.FC<DetectedGhostProps> = ({
           fontFamily="serif"
         >
           ♯
+        </text>
+      )}
+      {isFlat(detectedNote) && (
+        <text
+          x={-layout.STAFF_SPACE * 1.2}
+          y={y + layout.STAFF_SPACE * 0.4}
+          fontSize={layout.ACCIDENTAL_SIZE}
+          fill="#f43f5e"
+          fontFamily="serif"
+        >
+          ♭
         </text>
       )}
     </g>

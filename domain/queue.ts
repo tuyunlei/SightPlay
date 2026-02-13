@@ -9,7 +9,8 @@ export const DEFAULT_QUEUE_SIZE = 20;
 export const generateRandomNoteData = (
   clef: ClefType,
   globalIdx: number,
-  practiceRange?: PracticeRangeMode
+  practiceRange?: PracticeRangeMode,
+  includeAccidentals: boolean = false
 ): Note => {
   const range = practiceRange
     ? getPracticeMidiRange(clef, practiceRange)
@@ -17,21 +18,30 @@ export const generateRandomNoteData = (
       ? TREBLE_RANGE
       : BASS_RANGE;
 
-  // Prefer white keys for basic practice
-  const whiteKeyMidi = (() => {
-    const m = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
-    const isBlack = [1, 3, 6, 8, 10].includes(m % 12);
-    return isBlack ? m - 1 : m;
-  })();
+  const midi = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
 
-  return createNoteFromMidi(whiteKeyMidi, globalIdx);
+  if (!includeAccidentals) {
+    // Prefer white keys for basic practice
+    const isBlack = [1, 3, 6, 8, 10].includes(midi % 12);
+    const whiteKeyMidi = isBlack ? midi - 1 : midi;
+    return createNoteFromMidi(whiteKeyMidi, globalIdx);
+  }
+
+  // Include black keys - randomly choose sharp or flat representation
+  const isBlack = [1, 3, 6, 8, 10].includes(midi % 12);
+  const preferFlat = isBlack && Math.random() < 0.5;
+  return createNoteFromMidi(midi, globalIdx, undefined, preferFlat);
 };
 
 export const createInitialQueue = (
   clef: ClefType,
   size: number = DEFAULT_QUEUE_SIZE,
-  practiceRange?: PracticeRangeMode
-): Note[] => Array.from({ length: size }, (_, i) => generateRandomNoteData(clef, i, practiceRange));
+  practiceRange?: PracticeRangeMode,
+  includeAccidentals: boolean = false
+): Note[] =>
+  Array.from({ length: size }, (_, i) =>
+    generateRandomNoteData(clef, i, practiceRange, includeAccidentals)
+  );
 
 export const createChallengeQueue = (
   challengeNotes: Note[],
@@ -45,6 +55,7 @@ type AdvanceQueueParams = {
   challengeIndex: number;
   practiceRange?: PracticeRangeMode;
   queueSize?: number;
+  includeAccidentals?: boolean;
 };
 
 export const advanceQueue = ({
@@ -54,6 +65,7 @@ export const advanceQueue = ({
   challengeIndex,
   practiceRange,
   queueSize = DEFAULT_QUEUE_SIZE,
+  includeAccidentals = false,
 }: AdvanceQueueParams) => {
   const [, ...rest] = queue;
   const lastNote = rest[rest.length - 1];
@@ -67,7 +79,7 @@ export const advanceQueue = ({
       nextNote = challengeSequence[nextSeqIndex];
     }
   } else {
-    nextNote = generateRandomNoteData(clef, nextGlobalIndex, practiceRange);
+    nextNote = generateRandomNoteData(clef, nextGlobalIndex, practiceRange, includeAccidentals);
   }
 
   return {

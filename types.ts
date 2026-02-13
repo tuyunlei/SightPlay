@@ -1,4 +1,21 @@
-export type NoteName = 'C' | 'C#' | 'D' | 'D#' | 'E' | 'F' | 'F#' | 'G' | 'G#' | 'A' | 'A#' | 'B';
+export type NoteName =
+  | 'C'
+  | 'C#'
+  | 'D'
+  | 'D#'
+  | 'E'
+  | 'F'
+  | 'F#'
+  | 'G'
+  | 'G#'
+  | 'A'
+  | 'A#'
+  | 'B'
+  | 'Db'
+  | 'Eb'
+  | 'Gb'
+  | 'Ab'
+  | 'Bb';
 export type Duration = 'whole' | 'half' | 'quarter' | 'eighth' | 'sixteenth';
 
 export type TimeSignature = {
