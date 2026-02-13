@@ -1,7 +1,8 @@
 import React from 'react';
 
-import { Duration, Note } from '../../types';
+import { Duration, Note, TimeSignature } from '../../types';
 
+import { shouldShowBarLine } from './barLine';
 import { StaffLayout } from './staffLayout';
 import { buildLedgers, getNoteColor, getNoteY, isSharp } from './staffUtils';
 
@@ -14,6 +15,8 @@ export type StaffNoteProps = {
   activeNote: Note | undefined;
   centerMidi: number;
   layout: StaffLayout;
+  noteQueue: Note[];
+  timeSignature: TimeSignature;
 };
 
 type DurationRenderInfo = {
@@ -120,13 +123,14 @@ export const StaffNote: React.FC<StaffNoteProps> = ({
   activeNote,
   centerMidi,
   layout,
+  noteQueue,
+  timeSignature,
 }) => {
   const y = getNoteY(note.midi, centerMidi, layout);
   const color = getNoteColor({ isExiting, index, detectedNote, activeNote });
   const isStemUp = y > layout.STAFF_CENTER_Y;
   const ledgers = buildLedgers(y, layout);
-  const showBarLine =
-    !isExiting && note.globalIndex > 0 && note.globalIndex % layout.BAR_INTERVAL === 0;
+  const showBarLine = !isExiting && shouldShowBarLine(noteQueue, index, timeSignature);
 
   return (
     <g

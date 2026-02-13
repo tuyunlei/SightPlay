@@ -1,15 +1,16 @@
 import React from 'react';
 
-import { ClefType } from '../../types';
+import { ClefType, TimeSignature } from '../../types';
 
 import { StaffLayout } from './staffLayout';
 
 export type StaffHeaderProps = {
   clef: ClefType;
   layout: StaffLayout;
+  timeSignature: TimeSignature;
 };
 
-export const StaffHeader: React.FC<StaffHeaderProps> = ({ clef, layout }) => (
+export const StaffHeader: React.FC<StaffHeaderProps> = ({ clef, layout, timeSignature }) => (
   <>
     {clef === ClefType.TREBLE ? (
       <text
@@ -40,7 +41,7 @@ export const StaffHeader: React.FC<StaffHeaderProps> = ({ clef, layout }) => (
       fontWeight="bold"
       fill="#0f172a"
     >
-      4
+      {timeSignature.beats}
     </text>
     <text
       x={layout.TIME_SIG_X}
@@ -50,7 +51,7 @@ export const StaffHeader: React.FC<StaffHeaderProps> = ({ clef, layout }) => (
       fontWeight="bold"
       fill="#0f172a"
     >
-      4
+      {timeSignature.beatUnit}
     </text>
   </>
 );

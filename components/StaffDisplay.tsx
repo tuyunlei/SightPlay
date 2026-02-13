@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
-import { CLEF_CENTER_MIDI } from '../config/music';
-import { ClefType, Note } from '../types';
+import { CLEF_CENTER_MIDI, TIME_SIGNATURES } from '../config/music';
+import { ClefType, Note, TimeSignature } from '../types';
 
 import { StaffHeader } from './staff/StaffHeader';
 import { createStaffLayout, FALLBACK_VIEWPORT_WIDTH, StaffLayout } from './staff/staffLayout';
@@ -47,18 +47,22 @@ type NoteLayout = {
 
 type StaffNotesProps = {
   layoutNotes: NoteLayout[];
+  noteQueue: Note[];
   detectedNote: Note | null;
   activeNote: Note | undefined;
   centerMidi: number;
   layout: StaffLayout;
+  timeSignature: TimeSignature;
 };
 
 const StaffNotes: React.FC<StaffNotesProps> = ({
   layoutNotes,
+  noteQueue,
   detectedNote,
   activeNote,
   centerMidi,
   layout,
+  timeSignature,
 }) => (
   <>
     {layoutNotes.map(({ note, index, x }) => (
@@ -72,6 +76,8 @@ const StaffNotes: React.FC<StaffNotesProps> = ({
         activeNote={activeNote}
         centerMidi={centerMidi}
         layout={layout}
+        noteQueue={noteQueue}
+        timeSignature={timeSignature}
       />
     ))}
   </>
@@ -81,9 +87,15 @@ type ExitingNotesProps = {
   exitingNotes: Note[];
   centerMidi: number;
   layout: StaffLayout;
+  timeSignature: TimeSignature;
 };
 
-const ExitingNotes: React.FC<ExitingNotesProps> = ({ exitingNotes, centerMidi, layout }) => (
+const ExitingNotes: React.FC<ExitingNotesProps> = ({
+  exitingNotes,
+  centerMidi,
+  layout,
+  timeSignature,
+}) => (
   <>
     {exitingNotes.map((note) => (
       <StaffNote
@@ -96,6 +108,8 @@ const ExitingNotes: React.FC<ExitingNotesProps> = ({ exitingNotes, centerMidi, l
         activeNote={undefined}
         centerMidi={centerMidi}
         layout={layout}
+        noteQueue={[note]}
+        timeSignature={timeSignature}
       />
     ))}
   </>
@@ -157,6 +171,7 @@ type StaffCanvasProps = {
   exitingNotes: Note[];
   detectedNote: Note | null;
   viewportWidth: number;
+  timeSignature: TimeSignature;
 };
 
 const StaffCanvas: React.FC<StaffCanvasProps> = ({
@@ -165,6 +180,7 @@ const StaffCanvas: React.FC<StaffCanvasProps> = ({
   exitingNotes,
   detectedNote,
   viewportWidth,
+  timeSignature,
 }) => {
   const layout = useMemo(() => createStaffLayout(viewportWidth), [viewportWidth]);
   const centerMidi = CLEF_CENTER_MIDI[clef];
@@ -201,16 +217,23 @@ const StaffCanvas: React.FC<StaffCanvasProps> = ({
         fill="#f1f5f9"
         rx="8"
       />
-      <StaffHeader clef={clef} layout={layout} />
+      <StaffHeader clef={clef} layout={layout} timeSignature={timeSignature} />
       <StaffLines layout={layout} contentWidth={contentWidth} />
       <StaffNotes
         layoutNotes={layoutNotes}
+        noteQueue={noteQueue}
         detectedNote={detectedNote}
         activeNote={noteQueue[0]}
         centerMidi={centerMidi}
         layout={layout}
+        timeSignature={timeSignature}
       />
-      <ExitingNotes exitingNotes={exitingNotes} centerMidi={centerMidi} layout={layout} />
+      <ExitingNotes
+        exitingNotes={exitingNotes}
+        centerMidi={centerMidi}
+        layout={layout}
+        timeSignature={timeSignature}
+      />
       <DetectedGhost
         detectedNote={detectedNote}
         activeNote={noteQueue[0]}
@@ -249,6 +272,7 @@ const StaffDisplay: React.FC<StaffDisplayProps> = ({
   }, []);
 
   const viewportWidth = containerWidth || FALLBACK_VIEWPORT_WIDTH;
+  const timeSignature = TIME_SIGNATURES['4/4'];
 
   return (
     <div
@@ -262,6 +286,7 @@ const StaffDisplay: React.FC<StaffDisplayProps> = ({
         exitingNotes={exitingNotes}
         detectedNote={detectedNote}
         viewportWidth={viewportWidth}
+        timeSignature={timeSignature}
       />
       {status === 'listening' && (
         <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-slate-100 px-2 py-1 rounded-full border border-slate-200">

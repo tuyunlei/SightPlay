@@ -148,12 +148,6 @@ describe('staffLayout', () => {
       expect(layout.STAFF_CENTER_Y).toBeLessThan(layout.STAFF_BOTTOM_Y);
     });
 
-    it('should have bar interval as integer', () => {
-      const layout = createStaffLayout(1000);
-      expect(layout.BAR_INTERVAL).toBe(4);
-      expect(Number.isInteger(layout.BAR_INTERVAL)).toBe(true);
-    });
-
     it('should have stem offset relative to note head', () => {
       const layout = createStaffLayout(1000);
 
