@@ -5,7 +5,7 @@ import { PasskeyButton } from '../components/layout/PasskeyButton';
 import { NavigationTabs, ViewMode } from '../components/navigation/NavigationTabs';
 import { PasskeyManagement } from '../features/auth/PasskeyManagement';
 import { usePracticeSession } from '../hooks/usePracticeSession';
-import { translations } from '../i18n';
+import { Language, translations } from '../i18n';
 
 import { ContentView } from './ContentView';
 
@@ -22,6 +22,7 @@ type MainAppContentProps = {
   isLoadingAi: boolean;
   sendMessage: (message: string) => void;
   chatEndRef: React.RefObject<HTMLDivElement | null>;
+  lang: Language;
   showPasskeyManagement: boolean;
   setShowPasskeyManagement: (show: boolean) => void;
   viewMode: ViewMode;

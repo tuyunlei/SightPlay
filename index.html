@@ -42,6 +42,13 @@
             animation: {
               'bounce-short': 'bounce 0.5s infinite',
               'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'fade-in': 'fadeIn 0.3s ease-out',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0', transform: 'translate(-50%, -8px)' },
+                '100%': { opacity: '1', transform: 'translate(-50%, 0)' },
+              },
             },
           },
         },

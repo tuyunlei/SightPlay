@@ -34,13 +34,18 @@ async function mockChatApi(page: Page) {
   });
 }
 
-function aiInput(page: Page) {
-  return page.getByPlaceholder(/Ask theory or request a song|问乐理问题或生成乐谱/);
+function chatDrawerInput(page: Page) {
+  return page.getByTestId('chat-drawer-input');
+}
+
+async function openChatDrawer(page: Page) {
+  await page.getByTestId('open-chat-button').click();
+  await expect(chatDrawerInput(page)).toBeVisible();
 }
 
 async function sendMessage(page: Page, message: string) {
-  await aiInput(page).fill(message);
-  await aiInput(page).press('Enter');
+  await chatDrawerInput(page).fill(message);
+  await chatDrawerInput(page).press('Enter');
 }
 
 test.describe('AI conversation E2E', () => {
@@ -50,7 +55,8 @@ test.describe('AI conversation E2E', () => {
     await page.goto('/');
 
     await expect(page.getByText('SightPlay')).toBeVisible();
-    await expect(aiInput(page)).toBeVisible();
+    // Open the chat drawer
+    await openChatDrawer(page);
   });
 
   test('should show user and AI messages in correct order across multiple rounds', async ({
@@ -71,7 +77,8 @@ test.describe('AI conversation E2E', () => {
     await expect(page.getByText(userRound2, { exact: true })).toBeVisible();
     await expect(page.getByText(aiRound2, { exact: true })).toBeVisible();
 
-    const conversationText = await page.locator('main').innerText();
+    const drawer = page.locator('[data-testid="chat-drawer-input"]').locator('..');
+    const conversationText = await drawer.locator('..').innerText();
     expect(conversationText.indexOf(userRound1)).toBeGreaterThan(-1);
     expect(conversationText.indexOf(aiRound1)).toBeGreaterThan(
       conversationText.indexOf(userRound1)
