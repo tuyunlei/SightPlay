@@ -2,11 +2,19 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { translations, Language } from '../i18n';
 import { chatWithAiCoach } from '../services/geminiService';
+import { NoteName } from '../types';
+
+import { createMistakeTracker, MistakePattern } from './useMistakeTracker';
 
 const RATE_LIMIT_MS = 30_000;
 const HINT_DISPLAY_MS = 5_000;
 const MISTAKE_THRESHOLD = 3;
 const STREAK_THRESHOLD = 5;
+
+export interface MistakeInfo {
+  expected?: NoteName;
+  played?: NoteName;
+}
 
 export interface Hint {
   id: number;
@@ -19,6 +27,33 @@ const getLocalHints = (t: typeof translations.en) => ({
   tip: [t.hintTrySlower, t.hintKeepGoing, t.hintPracticeRange],
 });
 
+function getPatternHint(pattern: MistakePattern, t: typeof translations.en): string | null {
+  switch (pattern.kind) {
+    case 'accidentals':
+      return t.hintAccidentals;
+    case 'adjacent':
+      return t.hintAdjacentNotes;
+    case 'note-pair':
+      return t.hintNotePairConfusion
+        .replace('{noteA}', pattern.noteA)
+        .replace('{noteB}', pattern.noteB);
+    default:
+      return null;
+  }
+}
+
+function buildAiContext(pattern: MistakePattern | null): string {
+  if (!pattern) return 'is struggling with mistakes';
+  switch (pattern.kind) {
+    case 'accidentals':
+      return 'keeps confusing sharps and flats';
+    case 'adjacent':
+      return 'keeps mixing up adjacent notes on the staff';
+    case 'note-pair':
+      return `keeps confusing ${pattern.noteA} and ${pattern.noteB}`;
+  }
+}
+
 export const useContextualHints = (lang: Language, clef: string) => {
   const [currentHint, setCurrentHint] = useState<Hint | null>(null);
   const lastHintTime = useRef(0);
@@ -26,6 +61,7 @@ export const useContextualHints = (lang: Language, clef: string) => {
   const dismissTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const prevStreak = useRef(0);
   const consecutiveMistakes = useRef(0);
+  const trackerRef = useRef(createMistakeTracker());
   const t = translations[lang];
 
   const showHint = useCallback((text: string, type: Hint['type']) => {
@@ -72,13 +108,22 @@ export const useContextualHints = (lang: Language, clef: string) => {
     [clef, lang, showHint, showLocalHint]
   );
 
+  const handleMistakeThreshold = useCallback(() => {
+    const pattern = trackerRef.current.detectPatterns();
+    const patternHint = pattern ? getPatternHint(pattern, t) : null;
+    if (patternHint) showHint(patternHint, 'tip');
+    else void fetchAiHint(buildAiContext(pattern), 'tip');
+  }, [fetchAiHint, showHint, t]);
+
   const onPracticeUpdate = useCallback(
-    (streak: number, hasMistake: boolean) => {
-      if (hasMistake) {
+    (streak: number, mistakeInfo: MistakeInfo | null) => {
+      if (mistakeInfo) {
+        if (mistakeInfo.expected && mistakeInfo.played)
+          trackerRef.current.addMistake(mistakeInfo.expected, mistakeInfo.played);
         consecutiveMistakes.current += 1;
         if (consecutiveMistakes.current >= MISTAKE_THRESHOLD) {
           consecutiveMistakes.current = 0;
-          void fetchAiHint('is struggling with mistakes', 'tip');
+          handleMistakeThreshold();
         }
       }
 
@@ -87,14 +132,10 @@ export const useContextualHints = (lang: Language, clef: string) => {
         void fetchAiHint(`has a ${streak}-note streak`, 'encouragement');
       }
 
-      if (streak < prevStreak.current) {
-        // streak was reset (wrong note)
-        consecutiveMistakes.current += 1;
-      }
-
+      if (streak < prevStreak.current) consecutiveMistakes.current += 1;
       prevStreak.current = streak;
     },
-    [fetchAiHint]
+    [fetchAiHint, handleMistakeThreshold]
   );
 
   useEffect(() => {
@@ -103,5 +144,5 @@ export const useContextualHints = (lang: Language, clef: string) => {
     };
   }, []);
 
-  return { currentHint, dismissHint, onPracticeUpdate };
+  return { currentHint, dismissHint, onPracticeUpdate, tracker: trackerRef.current };
 };

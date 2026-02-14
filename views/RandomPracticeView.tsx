@@ -30,16 +30,32 @@ type RandomPracticeViewProps = {
 const usePracticeHints = (lang: Language, clef: string) => {
   const streak = usePracticeStore((s) => s.streak);
   const sessionStats = usePracticeStore((s) => s.sessionStats);
+  const detectedNote = usePracticeStore((s) => s.detectedNote);
+  const status = usePracticeStore((s) => s.status);
   const hints = useContextualHints(lang, clef);
   const prevAttempts = React.useRef(sessionStats.totalAttempts);
+  const lastTarget =
+    React.useRef<ReturnType<typeof usePracticeStore.getState>['detectedNote']>(null);
+
+  // Track the target note before it changes on correct answer
+  useEffect(() => {
+    const unsub = usePracticeStore.subscribe((state) => {
+      if (state.noteQueue[0]) lastTarget.current = state.noteQueue[0];
+    });
+    return unsub;
+  }, []);
 
   useEffect(() => {
     if (sessionStats.totalAttempts > prevAttempts.current) {
       const hasMistake = sessionStats.totalAttempts > sessionStats.cleanHits;
-      hints.onPracticeUpdate(streak, hasMistake);
+      const mistakeInfo =
+        hasMistake && detectedNote && lastTarget.current
+          ? { expected: lastTarget.current.name, played: detectedNote.name }
+          : null;
+      hints.onPracticeUpdate(streak, mistakeInfo);
     }
     prevAttempts.current = sessionStats.totalAttempts;
-  }, [streak, sessionStats, hints]);
+  }, [streak, sessionStats, hints, detectedNote, status]);
 
   return hints;
 };

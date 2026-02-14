@@ -54,6 +54,10 @@ export const translations = {
     hintKeepGoing: "Don't give up! Focus on the note position on the staff.",
     hintAwesome: 'Awesome! You nailed that one! 🎯',
     hintPracticeRange: 'Try narrowing your practice range to build confidence.',
+    hintAccidentals: 'Remember: sharps go up a half step, flats go down!',
+    hintAdjacentNotes: 'Try saying the note names out loud as you play.',
+    hintNotePairConfusion:
+      "You're mixing up {noteA} and {noteB} — look at the staff position carefully.",
     openAiChat: 'AI Coach',
     closeChat: 'Close',
     // Song Library
@@ -133,6 +137,9 @@ export const translations = {
     hintKeepGoing: '别放弃！注意音符在五线谱上的位置。',
     hintAwesome: '太棒了！完美命中！🎯',
     hintPracticeRange: '试试缩小练习范围来建立信心。',
+    hintAccidentals: '记住：升号升高半音，降号降低半音！',
+    hintAdjacentNotes: '试试边弹边说出音名。',
+    hintNotePairConfusion: '你总是混淆 {noteA} 和 {noteB}——仔细看五线谱上的位置。',
     openAiChat: 'AI 教练',
     closeChat: '关闭',
     // Song Library
