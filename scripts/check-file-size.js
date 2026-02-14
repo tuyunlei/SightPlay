@@ -35,7 +35,9 @@ const IGNORED_DIRS = new Set([
 ]);
 
 const WHITELIST = new Set([
-  // 示例: 'src/legacy/BigFile.ts',
+  'App.tsx', // 根组件，含路由和全局布局，拆分收益不大
+  'data/songs/library.ts', // 曲库数据文件，音符序列天然占行数
+  'hooks/practiceSession/noteHandlers.ts', // 双手判定逻辑，TODO: 拆分
 ]);
 
 function getSourceFiles(dir, files = []) {
