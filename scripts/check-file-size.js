@@ -34,11 +34,32 @@ const IGNORED_DIRS = new Set([
   'scripts',
 ]);
 
-const WHITELIST = new Set([
-  'App.tsx', // 根组件，含路由和全局布局，拆分收益不大
-  'data/songs/library.ts', // 曲库数据文件，音符序列天然占行数
-  'hooks/practiceSession/noteHandlers.ts', // 双手判定逻辑，TODO: 拆分
-]);
+/**
+ * 白名单豁免机制
+ *
+ * 每个条目必须包含完整的审批信息，缺字段会导致检查直接失败。
+ * 添加新条目前必须经过项目负责人审批。
+ *
+ * 格式: { file, reason, approvedBy, approvedAt }
+ */
+const WHITELIST_ENTRIES = [
+  // 示例:
+  // { file: 'path/to/file.ts', reason: '...', approvedBy: 'tuyunlei', approvedAt: '2026-02-14' },
+];
+
+// 校验白名单条目格式
+const REQUIRED_FIELDS = ['file', 'reason', 'approvedBy', 'approvedAt'];
+for (const entry of WHITELIST_ENTRIES) {
+  const missing = REQUIRED_FIELDS.filter((f) => !entry[f]);
+  if (missing.length > 0) {
+    console.error(
+      `\n❌ 白名单条目格式错误: ${JSON.stringify(entry)}\n   缺少字段: ${missing.join(', ')}\n`
+    );
+    process.exit(1);
+  }
+}
+
+const WHITELIST = new Set(WHITELIST_ENTRIES.map((e) => e.file));
 
 function getSourceFiles(dir, files = []) {
   if (!fs.existsSync(dir)) {
@@ -89,7 +110,7 @@ function main() {
       console.error(`  ${file}: ${lines} 行`);
     }
     console.error(
-      `\n如需添加白名单，请编辑 scripts/check-file-size.js 中的 WHITELIST\n`
+      `\n豁免流程：拆分代码使其低于阈值；确实无法避免时，提交豁免申请经负责人审批后添加到 WHITELIST_ENTRIES\n`
     );
     process.exit(1);
   }
