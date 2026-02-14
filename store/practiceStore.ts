@@ -4,6 +4,7 @@ import { ClefType, GeneratedChallenge, HandPracticeMode, Note, PracticeRangeMode
 import { SessionStats } from '../types/session';
 
 export type PracticeStatus = 'waiting' | 'listening' | 'correct' | 'incorrect';
+export type PracticeMode = 'random' | 'song';
 
 export interface PracticeState {
   clef: ClefType;
@@ -21,6 +22,11 @@ export interface PracticeState {
   challengeSequence: Note[];
   challengeIndex: number;
   challengeInfo: GeneratedChallenge | null;
+  practiceMode: PracticeMode;
+  currentSongId: string | null;
+  songProgress: number;
+  songTotalNotes: number;
+  songStartTime: number | null;
 }
 
 interface PracticeActions {
@@ -39,6 +45,11 @@ interface PracticeActions {
   setChallengeSequence: (challengeSequence: Note[]) => void;
   setChallengeIndex: (challengeIndex: number) => void;
   setChallengeInfo: (challengeInfo: GeneratedChallenge | null) => void;
+  setPracticeMode: (practiceMode: PracticeMode) => void;
+  setCurrentSongId: (currentSongId: string | null) => void;
+  setSongProgress: (songProgress: number) => void;
+  setSongTotalNotes: (songTotalNotes: number) => void;
+  setSongStartTime: (songStartTime: number | null) => void;
   resetStats: () => void;
 }
 
@@ -64,6 +75,11 @@ export const usePracticeStore = create<PracticeState & PracticeActions>((set) =>
   challengeSequence: [],
   challengeIndex: 0,
   challengeInfo: null,
+  practiceMode: 'random',
+  currentSongId: null,
+  songProgress: 0,
+  songTotalNotes: 0,
+  songStartTime: null,
   setClef: (clef) => set({ clef }),
   setPracticeRange: (practiceRange) => set({ practiceRange }),
   setHandMode: (handMode) => set({ handMode }),
@@ -79,5 +95,17 @@ export const usePracticeStore = create<PracticeState & PracticeActions>((set) =>
   setChallengeSequence: (challengeSequence) => set({ challengeSequence }),
   setChallengeIndex: (challengeIndex) => set({ challengeIndex }),
   setChallengeInfo: (challengeInfo) => set({ challengeInfo }),
-  resetStats: () => set({ score: 0, streak: 0, sessionStats: initialStats }),
+  setPracticeMode: (practiceMode) => set({ practiceMode }),
+  setCurrentSongId: (currentSongId) => set({ currentSongId }),
+  setSongProgress: (songProgress) => set({ songProgress }),
+  setSongTotalNotes: (songTotalNotes) => set({ songTotalNotes }),
+  setSongStartTime: (songStartTime) => set({ songStartTime }),
+  resetStats: () =>
+    set({
+      score: 0,
+      streak: 0,
+      sessionStats: initialStats,
+      songProgress: 0,
+      songStartTime: null,
+    }),
 }));
