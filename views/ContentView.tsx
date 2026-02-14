@@ -2,15 +2,15 @@ import React from 'react';
 
 import { ViewMode } from '../components/navigation/NavigationTabs';
 import { getSongById } from '../data/songs';
-import { computeAccuracy } from '../domain/scoring';
-import { SongComplete } from '../features/library/SongComplete';
+import type { Recommendation } from '../domain/recommendations';
 import { SongLibrary } from '../features/library/SongLibrary';
-import { SongPractice } from '../features/library/SongPractice';
 import { usePracticeSession } from '../hooks/usePracticeSession';
+import { useRecommendations } from '../hooks/useRecommendations';
 import { Language, translations } from '../i18n';
-import { usePracticeStore } from '../store/practiceStore';
+import { ChatMessage } from '../types';
 
 import { RandomPracticeView } from './RandomPracticeView';
+import { SongPracticeSection } from './SongPracticeSection';
 
 type ContentViewProps = {
   viewMode: ViewMode;
@@ -27,42 +27,66 @@ type ContentViewProps = {
   toggleLang: () => void;
   chatInput: string;
   setChatInput: (input: string) => void;
-  chatHistory: Array<{ role: 'user' | 'ai'; text: string; hasAction?: boolean }>;
+  chatHistory: ChatMessage[];
   isLoadingAi: boolean;
   sendMessage: (message: string) => void;
   chatEndRef: React.RefObject<HTMLDivElement | null>;
   lang: Language;
 };
 
-export const ContentView: React.FC<ContentViewProps> = ({
-  viewMode,
-  selectedSongId,
-  showSongComplete,
-  setSelectedSongId,
-  setViewMode,
-  setShowSongComplete,
-  state,
-  derived,
-  actions,
-  pressedKeys,
-  t,
-  toggleLang,
-  chatInput,
-  setChatInput,
-  chatHistory,
-  isLoadingAi,
-  sendMessage,
-  chatEndRef,
-  lang,
-}) => {
-  const sessionStats = usePracticeStore((s) => s.sessionStats);
-  const songStartTime = usePracticeStore((s) => s.songStartTime);
+const useContentRecommendations = (
+  actions: ContentViewProps['actions'],
+  setViewMode: ContentViewProps['setViewMode'],
+  setSelectedSongId: ContentViewProps['setSelectedSongId']
+) => {
+  const recs = useRecommendations();
+  const cbs = { toggleClef: actions.toggleClef, setPracticeRange: actions.setPracticeRange };
+  const applyRec = (rec: Recommendation) => {
+    recs.applyAction(rec, cbs);
+    if (rec.action?.kind === 'navigateDifficulty') setViewMode('library');
+    if (rec.action?.kind === 'navigateSong') setSelectedSongId(rec.action.songId);
+  };
+  return { ...recs, applyRec };
+};
+
+export const ContentView: React.FC<ContentViewProps> = (props) => {
+  const {
+    viewMode,
+    selectedSongId,
+    showSongComplete,
+    setSelectedSongId,
+    setViewMode,
+    setShowSongComplete,
+    actions,
+    lang,
+    t,
+    ...rest
+  } = props;
+  const { recommendations, onSongComplete, dismiss, applyRec } = useContentRecommendations(
+    actions,
+    setViewMode,
+    setSelectedSongId
+  );
+
+  const exitSong = () => {
+    setViewMode('library');
+    setSelectedSongId(null);
+  };
+  const completeSong = () => {
+    setShowSongComplete(true);
+    const song = selectedSongId ? getSongById(selectedSongId) : undefined;
+    if (song) onSongComplete(song.difficulty);
+  };
+  const backToLib = () => {
+    setShowSongComplete(false);
+    exitSong();
+  };
 
   if (viewMode === 'library') {
     return (
       <SongLibrary
-        onSongSelect={(songId) => {
-          setSelectedSongId(songId);
+        onSongSelect={(id) => {
+          setSelectedSongId(id);
           setViewMode('song-practice');
         }}
       />
@@ -71,48 +95,35 @@ export const ContentView: React.FC<ContentViewProps> = ({
 
   if (viewMode === 'song-practice' && selectedSongId) {
     return (
-      <>
-        <SongPractice
-          songId={selectedSongId}
-          onExit={() => {
-            setViewMode('library');
-            setSelectedSongId(null);
-          }}
-          onComplete={() => setShowSongComplete(true)}
-        />
-        {showSongComplete && (
-          <SongComplete
-            songTitle={getSongById(selectedSongId)?.title || ''}
-            accuracy={computeAccuracy(sessionStats)}
-            totalAttempts={sessionStats.totalAttempts}
-            correctNotes={sessionStats.cleanHits}
-            timeElapsed={songStartTime}
-            onRetry={() => setShowSongComplete(false)}
-            onBackToLibrary={() => {
-              setShowSongComplete(false);
-              setViewMode('library');
-              setSelectedSongId(null);
-            }}
-          />
-        )}
-      </>
+      <SongPracticeSection
+        songId={selectedSongId}
+        showComplete={showSongComplete}
+        recommendations={recommendations}
+        t={t}
+        onExit={exitSong}
+        onComplete={completeSong}
+        onRetry={() => setShowSongComplete(false)}
+        onBackToLibrary={backToLib}
+        onApplyRec={applyRec}
+        onDismissRec={dismiss}
+      />
     );
   }
 
   return (
     <RandomPracticeView
-      state={state}
-      derived={derived}
+      state={rest.state}
+      derived={rest.derived}
       actions={actions}
-      pressedKeys={pressedKeys}
+      pressedKeys={rest.pressedKeys}
       t={t}
-      toggleLang={toggleLang}
-      chatInput={chatInput}
-      setChatInput={setChatInput}
-      chatHistory={chatHistory}
-      isLoadingAi={isLoadingAi}
-      sendMessage={sendMessage}
-      chatEndRef={chatEndRef}
+      toggleLang={rest.toggleLang}
+      chatInput={rest.chatInput}
+      setChatInput={rest.setChatInput}
+      chatHistory={rest.chatHistory}
+      isLoadingAi={rest.isLoadingAi}
+      sendMessage={rest.sendMessage}
+      chatEndRef={rest.chatEndRef}
       lang={lang}
     />
   );
