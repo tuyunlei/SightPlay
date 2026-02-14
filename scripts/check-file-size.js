@@ -22,6 +22,8 @@ const getArg = (name, defaultValue) => {
 };
 
 const MAX_LINES = parseInt(getArg('max-lines', '300'), 10);
+const WARN_LINES = parseInt(getArg('warn-lines', '250'), 10);
+const WARN_ONLY = args.includes('--warn');
 const SRC_DIR = getArg('src', '.');
 const SRC = path.join(ROOT, SRC_DIR);
 
@@ -34,9 +36,32 @@ const IGNORED_DIRS = new Set([
   'scripts',
 ]);
 
-const WHITELIST = new Set([
-  // 示例: 'src/legacy/BigFile.ts',
-]);
+/**
+ * 白名单豁免机制
+ *
+ * 每个条目必须包含完整的审批信息，缺字段会导致检查直接失败。
+ * 添加新条目前必须经过项目负责人审批。
+ *
+ * 格式: { file, reason, approvedBy, approvedAt }
+ */
+const WHITELIST_ENTRIES = [
+  // 示例:
+  // { file: 'path/to/file.ts', reason: '...', approvedBy: 'tuyunlei', approvedAt: '2026-02-14' },
+];
+
+// 校验白名单条目格式
+const REQUIRED_FIELDS = ['file', 'reason', 'approvedBy', 'approvedAt'];
+for (const entry of WHITELIST_ENTRIES) {
+  const missing = REQUIRED_FIELDS.filter((f) => !entry[f]);
+  if (missing.length > 0) {
+    console.error(
+      `\n❌ 白名单条目格式错误: ${JSON.stringify(entry)}\n   缺少字段: ${missing.join(', ')}\n`
+    );
+    process.exit(1);
+  }
+}
+
+const WHITELIST = new Set(WHITELIST_ENTRIES.map((e) => e.file));
 
 function getSourceFiles(dir, files = []) {
   if (!fs.existsSync(dir)) {
@@ -71,6 +96,7 @@ function countLines(filePath) {
 function main() {
   const files = getSourceFiles(SRC);
   const violations = [];
+  const warnings = [];
 
   for (const file of files) {
     const relativePath = path.relative(ROOT, file).replace(/\\/g, '/');
@@ -78,7 +104,30 @@ function main() {
 
     if (lines > MAX_LINES && !WHITELIST.has(relativePath)) {
       violations.push({ file: relativePath, lines });
+    } else if (lines > WARN_LINES && !WHITELIST.has(relativePath)) {
+      warnings.push({ file: relativePath, lines });
     }
+  }
+
+  // Warning 模式：只提醒，不阻断
+  if (warnings.length > 0) {
+    console.warn(`\n⚠️  以下文件接近 ${MAX_LINES} 行限制（>${WARN_LINES} 行），建议拆分：\n`);
+    for (const { file, lines } of warnings) {
+      console.warn(`  ${file}: ${lines} 行（距上限还剩 ${MAX_LINES - lines} 行）`);
+    }
+    console.warn('');
+  }
+
+  if (WARN_ONLY) {
+    // --warn 模式：只输出 warning，不检查 violations，永远成功退出
+    if (violations.length > 0) {
+      console.warn(`⚠️  以下文件已超过 ${MAX_LINES} 行限制：\n`);
+      for (const { file, lines } of violations) {
+        console.warn(`  ${file}: ${lines} 行（超出 ${lines - MAX_LINES} 行）`);
+      }
+      console.warn('');
+    }
+    process.exit(0);
   }
 
   if (violations.length > 0) {
@@ -87,7 +136,7 @@ function main() {
       console.error(`  ${file}: ${lines} 行`);
     }
     console.error(
-      `\n如需添加白名单，请编辑 scripts/check-file-size.js 中的 WHITELIST\n`
+      `\n豁免流程：拆分代码使其低于阈值；确实无法避免时，提交豁免申请经负责人审批后添加到 WHITELIST_ENTRIES\n`
     );
     process.exit(1);
   }
