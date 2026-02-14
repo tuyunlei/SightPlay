@@ -1,5 +1,5 @@
-import { ChevronDown, ChevronUp, Send, Wand2 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { Send, Wand2, X } from 'lucide-react';
+import React from 'react';
 
 import { translations } from '../../i18n';
 import { ChatMessage, ClefType, Note } from '../../types';
@@ -7,7 +7,9 @@ import { ChatMessage, ClefType, Note } from '../../types';
 import { ChatMessageList } from './ChatMessageList';
 import { QuickActions } from './QuickActions';
 
-interface AiCoachPanelProps {
+interface AiChatDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
   clef: ClefType;
   targetNote: Note | null;
   t: typeof translations.en;
@@ -19,7 +21,9 @@ interface AiCoachPanelProps {
   chatEndRef: React.RefObject<HTMLDivElement | null>;
 }
 
-const AiCoachPanel: React.FC<AiCoachPanelProps> = ({
+export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({
+  isOpen,
+  onClose,
   clef,
   targetNote,
   t,
@@ -30,44 +34,34 @@ const AiCoachPanel: React.FC<AiCoachPanelProps> = ({
   onSendMessage,
   chatEndRef,
 }) => {
-  const [showAiPanel, setShowAiPanel] = useState(true);
-
-  useEffect(() => {
-    if (showAiPanel && chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [chatHistory, showAiPanel, chatEndRef]);
+  if (!isOpen) return null;
 
   const handleSend = (text: string) => {
     if (!text.trim() || isLoadingAi) return;
-    setShowAiPanel(true);
     onSendMessage(text);
   };
 
   return (
-    <div className="md:col-span-1 flex flex-col h-full min-h-[320px] md:min-h-[400px]">
-      <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col gap-3 shadow-sm h-full overflow-hidden">
-        <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative w-full sm:max-w-lg h-[70vh] sm:h-[60vh] bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden">
+        <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 p-4">
           <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
             <div className="p-1.5 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
               <Wand2 size={18} />
             </div>
-            <div>
-              <span className="font-bold text-sm block leading-none">{t.aiCoach}</span>
-              <span className="text-[10px] text-slate-400 font-medium">Assistant</span>
-            </div>
+            <span className="font-bold text-sm">{t.aiCoach}</span>
           </div>
           <button
-            onClick={() => setShowAiPanel(!showAiPanel)}
-            className="md:hidden p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
+            onClick={onClose}
+            data-testid="close-chat-drawer"
+            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
           >
-            {showAiPanel ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+            <X size={18} />
           </button>
         </div>
 
-        <div
-          className={`flex-1 flex flex-col gap-3 overflow-hidden transition-all duration-300 ${showAiPanel ? 'opacity-100' : 'opacity-0 md:opacity-100 h-0 md:h-auto'}`}
-        >
+        <div className="flex-1 flex flex-col gap-3 overflow-hidden p-4">
           <ChatMessageList
             chatHistory={chatHistory}
             isLoadingAi={isLoadingAi}
@@ -82,6 +76,7 @@ const AiCoachPanel: React.FC<AiCoachPanelProps> = ({
               onChange={(e) => onChatInputChange(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend(chatInput)}
               placeholder={t.inputPlaceholder}
+              data-testid="chat-drawer-input"
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl py-3 pl-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-shadow"
             />
             <button
@@ -97,5 +92,3 @@ const AiCoachPanel: React.FC<AiCoachPanelProps> = ({
     </div>
   );
 };
-
-export default AiCoachPanel;

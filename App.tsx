@@ -61,6 +61,7 @@ const MainApp = () => {
           isLoadingAi={isLoadingAi}
           sendMessage={sendMessage}
           chatEndRef={chatEndRef}
+          lang={lang}
           showPasskeyManagement={showPasskeyManagement}
           setShowPasskeyManagement={setShowPasskeyManagement}
           viewMode={viewMode}
