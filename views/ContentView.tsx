@@ -7,7 +7,7 @@ import { SongComplete } from '../features/library/SongComplete';
 import { SongLibrary } from '../features/library/SongLibrary';
 import { SongPractice } from '../features/library/SongPractice';
 import { usePracticeSession } from '../hooks/usePracticeSession';
-import { translations } from '../i18n';
+import { Language, translations } from '../i18n';
 import { usePracticeStore } from '../store/practiceStore';
 
 import { RandomPracticeView } from './RandomPracticeView';
@@ -31,6 +31,7 @@ type ContentViewProps = {
   isLoadingAi: boolean;
   sendMessage: (message: string) => void;
   chatEndRef: React.RefObject<HTMLDivElement | null>;
+  lang: Language;
 };
 
 export const ContentView: React.FC<ContentViewProps> = ({
@@ -52,6 +53,7 @@ export const ContentView: React.FC<ContentViewProps> = ({
   isLoadingAi,
   sendMessage,
   chatEndRef,
+  lang,
 }) => {
   const sessionStats = usePracticeStore((s) => s.sessionStats);
   const songStartTime = usePracticeStore((s) => s.songStartTime);
@@ -111,6 +113,7 @@ export const ContentView: React.FC<ContentViewProps> = ({
       isLoadingAi={isLoadingAi}
       sendMessage={sendMessage}
       chatEndRef={chatEndRef}
+      lang={lang}
     />
   );
 };
