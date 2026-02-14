@@ -78,6 +78,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
         transports: pk.transports as AuthenticatorTransport[] | undefined,
       })),
       authenticatorSelection: {
+        authenticatorAttachment: 'platform' as const,
         residentKey: 'preferred' as const,
         userVerification: 'preferred' as const,
       },
