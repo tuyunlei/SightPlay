@@ -22,6 +22,8 @@ const getArg = (name, defaultValue) => {
 };
 
 const MAX_LINES = parseInt(getArg('max-lines', '300'), 10);
+const WARN_LINES = parseInt(getArg('warn-lines', '250'), 10);
+const WARN_ONLY = args.includes('--warn');
 const SRC_DIR = getArg('src', '.');
 const SRC = path.join(ROOT, SRC_DIR);
 
@@ -94,6 +96,7 @@ function countLines(filePath) {
 function main() {
   const files = getSourceFiles(SRC);
   const violations = [];
+  const warnings = [];
 
   for (const file of files) {
     const relativePath = path.relative(ROOT, file).replace(/\\/g, '/');
@@ -101,7 +104,30 @@ function main() {
 
     if (lines > MAX_LINES && !WHITELIST.has(relativePath)) {
       violations.push({ file: relativePath, lines });
+    } else if (lines > WARN_LINES && !WHITELIST.has(relativePath)) {
+      warnings.push({ file: relativePath, lines });
     }
+  }
+
+  // Warning 模式：只提醒，不阻断
+  if (warnings.length > 0) {
+    console.warn(`\n⚠️  以下文件接近 ${MAX_LINES} 行限制（>${WARN_LINES} 行），建议拆分：\n`);
+    for (const { file, lines } of warnings) {
+      console.warn(`  ${file}: ${lines} 行（距上限还剩 ${MAX_LINES - lines} 行）`);
+    }
+    console.warn('');
+  }
+
+  if (WARN_ONLY) {
+    // --warn 模式：只输出 warning，不检查 violations，永远成功退出
+    if (violations.length > 0) {
+      console.warn(`⚠️  以下文件已超过 ${MAX_LINES} 行限制：\n`);
+      for (const { file, lines } of violations) {
+        console.warn(`  ${file}: ${lines} 行（超出 ${lines - MAX_LINES} 行）`);
+      }
+      console.warn('');
+    }
+    process.exit(0);
   }
 
   if (violations.length > 0) {
