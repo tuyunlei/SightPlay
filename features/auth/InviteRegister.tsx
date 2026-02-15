@@ -128,11 +128,11 @@ export function InviteRegister({ token, onSuccess }: InviteRegisterProps) {
     setError(null);
 
     try {
-      const success = await register(undefined, token);
-      if (success) {
+      const result = await register(undefined, token);
+      if (result === true) {
         onSuccess();
       } else {
-        setError('Registration failed. Please try again.');
+        setError(typeof result === 'string' ? result : 'Registration failed. Please try again.');
       }
     } catch {
       setError('Registration failed. Please try again.');
