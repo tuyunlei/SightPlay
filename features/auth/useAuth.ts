@@ -45,6 +45,13 @@ async function performRegister(name?: string, inviteToken?: string): Promise<boo
     );
   }
 
+  Sentry.addBreadcrumb({
+    category: 'auth',
+    message: 'Registration starting',
+    level: 'info',
+    data: { hasName: !!name, hasInviteToken: !!inviteToken },
+  });
+
   const optionsResponse = await fetch('/api/auth/register-options', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -54,6 +61,13 @@ async function performRegister(name?: string, inviteToken?: string): Promise<boo
 
   if (!optionsResponse.ok) throw new Error('Failed to get registration options');
   const options = await optionsResponse.json();
+
+  Sentry.addBreadcrumb({
+    category: 'auth',
+    message: 'Register options received',
+    level: 'info',
+    data: { rpId: options.rp?.id, userId: options.user?.id },
+  });
 
   // Use @passwordless-id/webauthn client to create credential
   const registration = await client.register({
@@ -71,6 +85,12 @@ async function performRegister(name?: string, inviteToken?: string): Promise<boo
       excludeCredentials: options.excludeCredentials,
       timeout: options.timeout,
     },
+  });
+
+  Sentry.addBreadcrumb({
+    category: 'auth',
+    message: 'Registration credential created',
+    level: 'info',
   });
 
   const verifyResponse = await fetch('/api/auth/register-verify', {
@@ -95,6 +115,12 @@ async function performLogin(): Promise<boolean> {
     );
   }
 
+  Sentry.addBreadcrumb({
+    category: 'auth',
+    message: 'Login starting',
+    level: 'info',
+  });
+
   const optionsResponse = await fetch('/api/auth/login-options', {
     method: 'POST',
     credentials: 'include',
@@ -102,6 +128,27 @@ async function performLogin(): Promise<boolean> {
 
   if (!optionsResponse.ok) throw new Error('Failed to get authentication options');
   const options = await optionsResponse.json();
+
+  Sentry.addBreadcrumb({
+    category: 'auth',
+    message: 'Login options received',
+    level: 'info',
+    data: {
+      credentialCount: options.allowCredentials?.length,
+      transports: options.allowCredentials?.map((c: { transports?: string[] }) => c.transports),
+      hints: options.hints,
+    },
+  });
+
+  Sentry.setContext('webauthn_login_options', {
+    credentialCount: options.allowCredentials?.length,
+    transports: JSON.stringify(
+      options.allowCredentials?.map((c: { transports?: string[] }) => c.transports)
+    ),
+    hints: JSON.stringify(options.hints),
+    userVerification: options.userVerification,
+    timeout: options.timeout,
+  });
 
   // Use @passwordless-id/webauthn client to authenticate
   const authentication = await client.authenticate({
@@ -112,6 +159,13 @@ async function performLogin(): Promise<boolean> {
     })),
     userVerification: options.userVerification,
     timeout: options.timeout,
+  });
+
+  Sentry.addBreadcrumb({
+    category: 'auth',
+    message: 'Login credential received',
+    level: 'info',
+    data: { credentialId: authentication.id },
   });
 
   const verifyResponse = await fetch('/api/auth/login-verify', {
@@ -161,7 +215,10 @@ export function useAuth() {
         const message = getAuthErrorMessage(error);
         Sentry.captureException(error, {
           tags: { flow: 'register' },
-          extra: { errorName: error instanceof Error ? error.name : 'unknown' },
+          extra: {
+            errorName: error instanceof Error ? error.name : 'unknown',
+            userAgent: navigator.userAgent,
+          },
         });
         console.error('Registration error:', message, error);
         return message;
@@ -179,7 +236,10 @@ export function useAuth() {
       const message = getAuthErrorMessage(error);
       Sentry.captureException(error, {
         tags: { flow: 'login' },
-        extra: { errorName: error instanceof Error ? error.name : 'unknown' },
+        extra: {
+          errorName: error instanceof Error ? error.name : 'unknown',
+          userAgent: navigator.userAgent,
+        },
       });
       console.error('Authentication error:', message, error);
       return message;
