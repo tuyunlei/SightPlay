@@ -82,8 +82,9 @@ async function performRegister(name?: string, inviteToken?: string): Promise<boo
     customProperties: {
       rp: options.rp,
       pubKeyCredParams: options.pubKeyCredParams,
-      excludeCredentials: options.excludeCredentials,
       timeout: options.timeout,
+      // Note: excludeCredentials omitted — the library passes base64url strings
+      // but the browser expects ArrayBuffer, causing TypeError on mobile browsers.
     },
   });
 
