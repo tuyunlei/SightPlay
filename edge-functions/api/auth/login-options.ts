@@ -39,8 +39,9 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
       allowCredentials: passkeys.map((pk) => ({
         id: pk.id,
         type: 'public-key' as const,
-        transports: pk.transports as AuthenticatorTransport[] | undefined,
+        transports: ['internal'] as AuthenticatorTransport[],
       })),
+      hints: ['client-device'],
       userVerification: 'preferred' as const,
       timeout: 60000,
     };
