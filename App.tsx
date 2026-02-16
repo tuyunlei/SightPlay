@@ -19,6 +19,11 @@ const App = () => {
   const [showSongComplete, setShowSongComplete] = useState(false);
   const challengeCompleteRef = useRef<() => void>(() => {});
 
+  const pathname = window.location.pathname;
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialAuthView = pathname === '/register' ? 'register' : 'login';
+  const inviteCodeFromUrl = urlParams.get('code') ?? undefined;
+
   const practiceSession = usePracticeSession({
     onMicError: () => alert(t.micError),
     onChallengeComplete: () => challengeCompleteRef.current(),
@@ -42,7 +47,7 @@ const App = () => {
   }, [sendMessage]);
 
   return (
-    <AuthGate>
+    <AuthGate initialAuthView={initialAuthView} initialInviteCode={inviteCodeFromUrl}>
       <div
         className="bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-900 dark:text-slate-100"
         style={{ minHeight: '100dvh' }}

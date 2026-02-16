@@ -12,7 +12,9 @@ async function mockAuthenticatedSession(page: Page) {
 
 test.describe('Practice Flow', () => {
   test.describe('Unauthenticated State', () => {
-    test('should show register screen when no passkeys exist', async ({ page }) => {
+    test('should show login screen with register entry when no passkeys exist', async ({
+      page,
+    }) => {
       // Mock the session API to indicate no authentication and no passkeys
       await page.route('**/api/auth/session', (route) => {
         route.fulfill({
@@ -24,10 +26,12 @@ test.describe('Practice Flow', () => {
 
       await page.goto('/');
 
-      // Should show the register screen
-      await expect(page.getByTestId('register-screen')).toBeVisible();
-      await expect(page.getByRole('heading', { name: /SightPlay/ })).toBeVisible();
-      await expect(page.getByLabel(/Invite Code|邀请码/i)).toBeVisible();
+      // Should show the login screen with register link
+      await expect(page.getByTestId('login-screen')).toBeVisible();
+      await expect(page.getByRole('heading', { name: /Welcome Back|欢迎回来/i })).toBeVisible();
+      await expect(
+        page.getByRole('button', { name: /register with invite code|使用邀请码注册/i })
+      ).toBeVisible();
     });
 
     test('should show login screen when passkeys exist but not authenticated', async ({ page }) => {
