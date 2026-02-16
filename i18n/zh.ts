@@ -133,6 +133,7 @@ export const zh = {
   authErrorLoginOptionsFailed: '获取登录选项失败',
   authErrorLoginVerificationFailed: '登录验证失败',
   challengeStatusComplete: '完成！',
+  midiActive: 'MIDI 已连接',
   challengeStatusActive: '进行中',
   aiQuickChallengePrompt: '请为 {{clef}} 谱号生成一个简单的视奏挑战。',
   aiQuickHintPromptWithNote: '我该怎么弹 {{note}}？',

@@ -103,7 +103,7 @@ const PracticeMainPanel: React.FC<PracticeMainPanelProps> = ({
     <div className="w-full relative group">
       {isMidiConnected && (
         <div className="absolute -top-3 left-4 z-20 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 shadow-sm">
-          <Piano size={10} /> MIDI ACTIVE
+          <Piano size={10} /> {t.midiActive}
         </div>
       )}
 

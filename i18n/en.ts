@@ -134,6 +134,7 @@ export const en = {
   authErrorLoginOptionsFailed: 'Failed to get authentication options',
   authErrorLoginVerificationFailed: 'Authentication verification failed',
   challengeStatusComplete: 'Complete!',
+  midiActive: 'MIDI ACTIVE',
   challengeStatusActive: 'Active',
   aiQuickChallengePrompt: 'Generate a simple sight-reading challenge for {{clef}} clef.',
   aiQuickHintPromptWithNote: 'How do I play {{note}}?',
