@@ -1,0 +1,60 @@
+:root {
+  color-scheme: light dark;
+  --color-bg-primary: #f8fafc;
+  --color-bg-secondary: #ffffff;
+  --color-bg-elevated: #ffffff;
+  --color-bg-auth-from: #e2e8f0;
+  --color-bg-auth-to: #cbd5e1;
+  --color-bg-overlay: rgba(15, 23, 42, 0.5);
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748b;
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+  --color-staff-highlight: #f1f5f9;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg-primary: #020617;
+    --color-bg-secondary: #0f172a;
+    --color-bg-elevated: #1e293b;
+    --color-bg-auth-from: #0f172a;
+    --color-bg-auth-to: #1e293b;
+    --color-bg-overlay: rgba(2, 6, 23, 0.65);
+    --color-text-primary: #f1f5f9;
+    --color-text-secondary: #cbd5e1;
+    --color-text-muted: #94a3b8;
+    --color-border: #334155;
+    --color-border-strong: #475569;
+    --color-staff-highlight: #e2e8f0;
+  }
+}
+
+/* Hide scrollbar for clean UI */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Mobile safe-area handling */
+html,
+body {
+  min-height: 100dvh;
+  background-color: var(--color-bg-primary);
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+
+/* Ensure root container fills viewport */
+#root {
+  min-height: 100dvh;
+}
