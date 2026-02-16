@@ -6,7 +6,7 @@ pages_build_output_dir = "dist"
 # Example: wrangler kv namespace create AUTH_STORE
 [[kv_namespaces]]
 binding = "AUTH_STORE"
-id = "placeholder-will-be-set-after-kv-creation"
+id = "3f7ca5a5081a495283be07c91c610434"
 
 # Configure runtime secrets (not in source control):
 # wrangler secret put JWT_SECRET
