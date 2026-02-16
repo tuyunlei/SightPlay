@@ -3,7 +3,7 @@ import {
   type EdgeOneRequestContext,
   type PlatformContext,
 } from '../../platform';
-import { CORS_HEADERS, getAuthenticatedUser, requireEnv } from '../_auth-helpers';
+import { CORS_HEADERS, getAuthenticatedUser, requireEnv, timingSafeEqual } from '../_auth-helpers';
 
 import {
   consumeInviteValidationRateLimit,
@@ -80,7 +80,7 @@ export async function handlePostInviteAdmin(platform: PlatformContext): Promise<
   try {
     const adminSecret = platform.env('ADMIN_SECRET');
     const provided = platform.request.headers.get('X-Admin-Secret');
-    if (!adminSecret || provided !== adminSecret) {
+    if (!adminSecret || !provided || !timingSafeEqual(provided, adminSecret)) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
