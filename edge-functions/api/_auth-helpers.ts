@@ -22,16 +22,20 @@ export function resolveOrigin(context: PlatformContext): { origin: string; hostn
   const originHeader = context.request.headers.get('Origin');
   if (originHeader) {
     const url = new URL(originHeader);
-    return { origin: originHeader, hostname: url.hostname };
+    // Use WEBAUTHN_RP_ID env var if set (keeps passkeys stable across preview deploys)
+    const rpId = context.env('WEBAUTHN_RP_ID') || url.hostname;
+    return { origin: originHeader, hostname: rpId };
   }
   const referer = context.request.headers.get('Referer');
   if (referer) {
     const url = new URL(referer);
-    return { origin: url.origin, hostname: url.hostname };
+    const rpId = context.env('WEBAUTHN_RP_ID') || url.hostname;
+    return { origin: url.origin, hostname: rpId };
   }
   // Fallback to request URL (works in production and npm run dev)
   const url = new URL(context.request.url);
-  return { origin: url.origin, hostname: url.hostname };
+  const rpId = context.env('WEBAUTHN_RP_ID') || url.hostname;
+  return { origin: url.origin, hostname: rpId };
 }
 
 export const CORS_HEADERS = {
