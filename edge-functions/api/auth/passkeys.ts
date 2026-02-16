@@ -1,4 +1,8 @@
-import { createEdgeOneContext, type EdgeOneRequestContext } from '../../platform';
+import {
+  createEdgeOneContext,
+  type EdgeOneRequestContext,
+  type PlatformContext,
+} from '../../platform';
 import { CORS_HEADERS, getAuthenticatedUser, requireEnv } from '../_auth-helpers';
 
 interface Passkey {
@@ -14,10 +18,8 @@ export function onRequestOptions(): Response {
   return new Response(null, { headers: CORS_HEADERS });
 }
 
-export async function onRequestGet(context: EdgeOneRequestContext): Promise<Response> {
+export async function handleGetPasskeys(platform: PlatformContext): Promise<Response> {
   try {
-    const platform = createEdgeOneContext(context);
-    // Require authentication
     const user = await getAuthenticatedUser(platform.request, requireEnv(platform, 'JWT_SECRET'));
     if (!user) {
       return new Response(JSON.stringify({ error: 'Authentication required' }), {
@@ -26,7 +28,6 @@ export async function onRequestGet(context: EdgeOneRequestContext): Promise<Resp
       });
     }
 
-    // Get passkeys (exclude sensitive data)
     const passkeysData = await platform.kv.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
@@ -48,10 +49,12 @@ export async function onRequestGet(context: EdgeOneRequestContext): Promise<Resp
   }
 }
 
-export async function onRequestDelete(context: EdgeOneRequestContext): Promise<Response> {
+export async function onRequestGet(context: EdgeOneRequestContext): Promise<Response> {
+  return handleGetPasskeys(createEdgeOneContext(context));
+}
+
+export async function handleDeletePasskey(platform: PlatformContext): Promise<Response> {
   try {
-    const platform = createEdgeOneContext(context);
-    // Require authentication
     const user = await getAuthenticatedUser(platform.request, requireEnv(platform, 'JWT_SECRET'));
     if (!user) {
       return new Response(JSON.stringify({ error: 'Authentication required' }), {
@@ -60,7 +63,6 @@ export async function onRequestDelete(context: EdgeOneRequestContext): Promise<R
       });
     }
 
-    // Get passkey ID from query params
     const url = new URL(platform.request.url);
     const passkeyId = url.searchParams.get('id');
 
@@ -71,11 +73,9 @@ export async function onRequestDelete(context: EdgeOneRequestContext): Promise<R
       });
     }
 
-    // Get passkeys
     const passkeysData = await platform.kv.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
-    // Prevent removing the last passkey
     if (passkeys.length === 1) {
       return new Response(JSON.stringify({ error: 'Cannot remove the last passkey' }), {
         status: 400,
@@ -83,7 +83,6 @@ export async function onRequestDelete(context: EdgeOneRequestContext): Promise<R
       });
     }
 
-    // Remove the passkey
     const updatedPasskeys = passkeys.filter((pk) => pk.id !== passkeyId);
 
     if (updatedPasskeys.length === passkeys.length) {
@@ -105,4 +104,8 @@ export async function onRequestDelete(context: EdgeOneRequestContext): Promise<R
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
+}
+
+export async function onRequestDelete(context: EdgeOneRequestContext): Promise<Response> {
+  return handleDeletePasskey(createEdgeOneContext(context));
 }

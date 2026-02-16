@@ -1,4 +1,8 @@
-import { createEdgeOneContext, type EdgeOneRequestContext } from '../../platform';
+import {
+  createEdgeOneContext,
+  type EdgeOneRequestContext,
+  type PlatformContext,
+} from '../../platform';
 import { CORS_HEADERS, getAuthenticatedUser, requireEnv } from '../_auth-helpers';
 
 interface Passkey {
@@ -14,13 +18,10 @@ export function onRequestOptions(): Response {
   return new Response(null, { headers: CORS_HEADERS });
 }
 
-export async function onRequestGet(context: EdgeOneRequestContext): Promise<Response> {
+export async function handleGetSession(platform: PlatformContext): Promise<Response> {
   try {
-    const platform = createEdgeOneContext(context);
-    // Check authentication
     const user = await getAuthenticatedUser(platform.request, requireEnv(platform, 'JWT_SECRET'));
 
-    // Check if passkeys exist
     const passkeysData = await platform.kv.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
@@ -40,4 +41,8 @@ export async function onRequestGet(context: EdgeOneRequestContext): Promise<Resp
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
+}
+
+export async function onRequestGet(context: EdgeOneRequestContext): Promise<Response> {
+  return handleGetSession(createEdgeOneContext(context));
 }

@@ -1,7 +1,11 @@
 import { server } from '@passwordless-id/webauthn';
 import type { AuthenticationJSON, CredentialInfo } from '@passwordless-id/webauthn/dist/esm/types';
 
-import { createEdgeOneContext, type EdgeOneRequestContext } from '../../platform';
+import {
+  createEdgeOneContext,
+  type EdgeOneRequestContext,
+  type PlatformContext,
+} from '../../platform';
 import { CORS_HEADERS, signJWT, createCookie, requireEnv, resolveOrigin } from '../_auth-helpers';
 
 interface Passkey {
@@ -18,20 +22,17 @@ export function onRequestOptions(): Response {
   return new Response(null, { headers: CORS_HEADERS });
 }
 
-export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
+export async function handlePostLoginVerify(platform: PlatformContext): Promise<Response> {
   try {
-    const platform = createEdgeOneContext(context);
     const body = (await platform.request.json()) as {
       response: AuthenticationJSON;
     };
 
-    // Decode clientDataJSON to get the challenge
     const clientDataJSON = JSON.parse(
       atob(body.response.response.clientDataJSON.replace(/-/g, '+').replace(/_/g, '/'))
     );
     const challenge = clientDataJSON.challenge;
 
-    // Verify the challenge exists
     const storedChallenge = await platform.kv.get(`challenge:${challenge}`);
     if (!storedChallenge) {
       return new Response(JSON.stringify({ error: 'Invalid or expired challenge' }), {
@@ -40,11 +41,9 @@ export async function onRequestPost(context: EdgeOneRequestContext): Promise<Res
       });
     }
 
-    // Get stored credentials
     const passkeysData = await platform.kv.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
-    // Find the credential that was used
     const credential = passkeys.find((pk) => pk.id === body.response.id);
     if (!credential) {
       return new Response(JSON.stringify({ error: 'Credential not found' }), {
@@ -55,7 +54,6 @@ export async function onRequestPost(context: EdgeOneRequestContext): Promise<Res
 
     const { origin } = resolveOrigin(platform);
 
-    // Build CredentialInfo for verification
     const credentialInfo: CredentialInfo = {
       id: credential.id,
       publicKey: credential.publicKey,
@@ -63,7 +61,6 @@ export async function onRequestPost(context: EdgeOneRequestContext): Promise<Res
       transports: (credential.transports || []) as CredentialInfo['transports'],
     };
 
-    // Verify the authentication response
     const authInfo = await server.verifyAuthentication(body.response, credentialInfo, {
       challenge,
       origin,
@@ -71,16 +68,13 @@ export async function onRequestPost(context: EdgeOneRequestContext): Promise<Res
       counter: credential.counter,
     });
 
-    // Update counter
     const updatedPasskeys = passkeys.map((pk) =>
       pk.id === credential.id ? { ...pk, counter: authInfo.counter } : pk
     );
     await platform.kv.put('passkeys', JSON.stringify(updatedPasskeys));
 
-    // Delete the used challenge
     await platform.kv.delete(`challenge:${challenge}`);
 
-    // Create JWT token (7 day expiry)
     const now = Math.floor(Date.now() / 1000);
     const token = await signJWT(
       {
@@ -91,7 +85,6 @@ export async function onRequestPost(context: EdgeOneRequestContext): Promise<Res
       requireEnv(platform, 'JWT_SECRET')
     );
 
-    // Set cookie
     const cookie = createCookie('auth_token', token, {
       maxAge: 7 * 24 * 60 * 60,
       httpOnly: true,
@@ -114,4 +107,8 @@ export async function onRequestPost(context: EdgeOneRequestContext): Promise<Res
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
+}
+
+export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
+  return handlePostLoginVerify(createEdgeOneContext(context));
 }
