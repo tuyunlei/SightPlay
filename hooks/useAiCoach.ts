@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 
-import { translations, Language } from '../i18n';
+import { Language, translations } from '../i18n';
 import { chatWithAiCoach } from '../services/geminiService';
 import { ChatMessage, GeneratedChallenge } from '../types';
 
@@ -9,6 +9,12 @@ interface UseAiCoachOptions {
   lang: Language;
   onLoadChallenge: (challenge: GeneratedChallenge) => number;
 }
+
+const formatTemplate = (template: string, values: Record<string, string | number>) =>
+  Object.entries(values).reduce(
+    (result, [key, value]) => result.replaceAll(`{{${key}}}`, String(value)),
+    template
+  );
 
 export const useAiCoach = ({ clef, lang, onLoadChallenge }: UseAiCoachOptions) => {
   const [isLoadingAi, setIsLoadingAi] = useState(false);
@@ -49,7 +55,12 @@ export const useAiCoach = ({ clef, lang, onLoadChallenge }: UseAiCoachOptions) =
               ...prev,
               {
                 role: 'ai',
-                text: `${t.challenge}: ${response.challengeData!.title} (${noteCount} notes) loaded!`,
+                text: formatTemplate(t.aiChallengeLoaded, {
+                  challenge: t.challenge,
+                  title: response.challengeData!.title,
+                  count: noteCount,
+                  notes: t.notes,
+                }),
                 hasAction: true,
               },
             ]);
@@ -57,7 +68,10 @@ export const useAiCoach = ({ clef, lang, onLoadChallenge }: UseAiCoachOptions) =
         }
       } catch (error) {
         console.error(error);
-        setChatHistory((prev) => [...prev, { role: 'ai', text: 'Error connecting to AI.' }]);
+        setChatHistory((prev) => [
+          ...prev,
+          { role: 'ai', text: translations[lang].aiConnectionErrorMessage },
+        ]);
       } finally {
         setIsLoadingAi(false);
       }
