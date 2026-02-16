@@ -1,7 +1,10 @@
-import { createEdgeOneContext, type EdgeOneRequestContext } from '../../platform';
+import {
+  createEdgeOneContext,
+  type EdgeOneRequestContext,
+  type PlatformContext,
+} from '../../platform';
 import { CORS_HEADERS, getAuthenticatedUser, requireEnv } from '../_auth-helpers';
 
-// Convert Uint8Array to hex string
 function uint8ArrayToHex(bytes: Uint8Array): string {
   return Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, '0'))
@@ -12,10 +15,8 @@ export function onRequestOptions(): Response {
   return new Response(null, { headers: CORS_HEADERS });
 }
 
-export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
+export async function handlePostInvite(platform: PlatformContext): Promise<Response> {
   try {
-    const platform = createEdgeOneContext(context);
-    // Require authentication
     const user = await getAuthenticatedUser(platform.request, requireEnv(platform, 'JWT_SECRET'));
     if (!user) {
       return new Response(JSON.stringify({ error: 'Authentication required' }), {
@@ -24,12 +25,10 @@ export async function onRequestPost(context: EdgeOneRequestContext): Promise<Res
       });
     }
 
-    // Generate random token (32 bytes = 64 hex chars)
     const tokenBytes = new Uint8Array(32);
     crypto.getRandomValues(tokenBytes);
     const token = uint8ArrayToHex(tokenBytes);
 
-    // Store token in KV with 30 minute expiry
     const inviteKey = `invite:${token}`;
     await platform.kv.put(inviteKey, 'valid', { expirationTtl: 1800 });
 
@@ -45,10 +44,12 @@ export async function onRequestPost(context: EdgeOneRequestContext): Promise<Res
   }
 }
 
-export async function onRequestGet(context: EdgeOneRequestContext): Promise<Response> {
+export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
+  return handlePostInvite(createEdgeOneContext(context));
+}
+
+export async function handleGetInvite(platform: PlatformContext): Promise<Response> {
   try {
-    const platform = createEdgeOneContext(context);
-    // Get token from query params
     const url = new URL(platform.request.url);
     const token = url.searchParams.get('token');
 
@@ -59,7 +60,6 @@ export async function onRequestGet(context: EdgeOneRequestContext): Promise<Resp
       });
     }
 
-    // Check if token exists in KV
     const inviteKey = `invite:${token}`;
     const inviteData = await platform.kv.get(inviteKey);
 
@@ -73,4 +73,8 @@ export async function onRequestGet(context: EdgeOneRequestContext): Promise<Resp
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
+}
+
+export async function onRequestGet(context: EdgeOneRequestContext): Promise<Response> {
+  return handleGetInvite(createEdgeOneContext(context));
 }

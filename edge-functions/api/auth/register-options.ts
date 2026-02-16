@@ -1,6 +1,10 @@
 import { server } from '@passwordless-id/webauthn';
 
-import { createEdgeOneContext, type EdgeOneRequestContext } from '../../platform';
+import {
+  createEdgeOneContext,
+  type EdgeOneRequestContext,
+  type PlatformContext,
+} from '../../platform';
 import { CORS_HEADERS, resolveOrigin } from '../_auth-helpers';
 
 interface Passkey {
@@ -16,14 +20,11 @@ export function onRequestOptions(): Response {
   return new Response(null, { headers: CORS_HEADERS });
 }
 
-export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
+export async function handlePostRegisterOptions(platform: PlatformContext): Promise<Response> {
   try {
-    const platform = createEdgeOneContext(context);
-    // Get existing passkeys
     const passkeysData = await platform.kv.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
-    // If passkeys exist, require valid invite token
     if (passkeys.length > 0) {
       const body = (await platform.request.json()) as { inviteToken?: string };
 
@@ -34,7 +35,6 @@ export async function onRequestPost(context: EdgeOneRequestContext): Promise<Res
         });
       }
 
-      // Verify invite token exists in KV
       const inviteKey = `invite:${body.inviteToken}`;
       const inviteData = await platform.kv.get(inviteKey);
 
@@ -44,14 +44,11 @@ export async function onRequestPost(context: EdgeOneRequestContext): Promise<Res
           headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
         });
       }
-      // Do NOT delete the token yet - delete after successful verification
     }
 
-    // Generate challenge
     const challenge = server.randomChallenge();
     const { hostname } = resolveOrigin(platform);
 
-    // Build PublicKeyCredentialCreationOptions manually
     const userIdBytes = new TextEncoder().encode('sightplay-user');
     const userIdBase64 = btoa(String.fromCharCode(...userIdBytes))
       .replace(/\+/g, '-')
@@ -86,7 +83,6 @@ export async function onRequestPost(context: EdgeOneRequestContext): Promise<Res
       timeout: 60000,
     };
 
-    // Store challenge in KV with 5min expiry
     const challengeKey = `challenge:${challenge}`;
     await platform.kv.put(challengeKey, challenge, { expirationTtl: 300 });
 
@@ -100,4 +96,8 @@ export async function onRequestPost(context: EdgeOneRequestContext): Promise<Res
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
+}
+
+export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
+  return handlePostRegisterOptions(createEdgeOneContext(context));
 }

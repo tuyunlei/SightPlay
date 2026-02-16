@@ -1,4 +1,8 @@
-import { createEdgeOneContext, type EdgeOneRequestContext } from '../platform';
+import {
+  createEdgeOneContext,
+  type EdgeOneRequestContext,
+  type PlatformContext,
+} from '../platform';
 
 import { CORS_HEADERS } from './_auth-helpers';
 
@@ -15,9 +19,8 @@ export function onRequestOptions(): Response {
   return new Response(null, { headers: CORS_HEADERS });
 }
 
-export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
+export async function handlePostErrorReport(platform: PlatformContext): Promise<Response> {
   try {
-    const platform = createEdgeOneContext(context);
     const body = (await platform.request.json()) as Partial<ErrorReport>;
 
     const report: ErrorReport = {
@@ -29,12 +32,10 @@ export async function onRequestPost(context: EdgeOneRequestContext): Promise<Res
       context: body.context,
     };
 
-    // Store in KV with timestamp key, keep last 50 errors
     const logsData = await platform.kv.get('error_logs');
     const logs: ErrorReport[] = logsData ? JSON.parse(logsData) : [];
     logs.push(report);
 
-    // Keep only last 50
     while (logs.length > 50) logs.shift();
     await platform.kv.put('error_logs', JSON.stringify(logs));
 
@@ -49,10 +50,12 @@ export async function onRequestPost(context: EdgeOneRequestContext): Promise<Res
   }
 }
 
-// GET to read error logs (requires auth)
-export async function onRequestGet(context: EdgeOneRequestContext): Promise<Response> {
+export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
+  return handlePostErrorReport(createEdgeOneContext(context));
+}
+
+export async function handleGetErrorReport(platform: PlatformContext): Promise<Response> {
   try {
-    const platform = createEdgeOneContext(context);
     const logsData = await platform.kv.get('error_logs');
     const logs = logsData ? JSON.parse(logsData) : [];
 
@@ -64,4 +67,8 @@ export async function onRequestGet(context: EdgeOneRequestContext): Promise<Resp
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
+}
+
+export async function onRequestGet(context: EdgeOneRequestContext): Promise<Response> {
+  return handleGetErrorReport(createEdgeOneContext(context));
 }
