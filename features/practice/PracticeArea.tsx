@@ -46,7 +46,7 @@ type FooterBarProps = {
 
 const FooterBar: React.FC<FooterBarProps> = ({ targetNote, t, showPiano, onTogglePiano }) => (
   <div className="px-2 sm:px-3 pb-2 sm:pb-3">
-    <div className="bg-slate-900/95 dark:bg-white/95 text-white dark:text-slate-900 px-3 sm:px-4 py-2 sm:py-3 rounded-xl shadow-lg backdrop-blur-md border border-slate-700/50">
+    <div className="bg-white/95 dark:bg-slate-900/95 text-slate-900 dark:text-white px-3 sm:px-4 py-2 sm:py-3 rounded-xl shadow-lg backdrop-blur-md border border-slate-200 dark:border-slate-700/50">
       <div className="flex flex-col gap-2 sm:gap-3 sm:grid sm:grid-cols-[1fr_auto] sm:items-center sm:gap-4">
         <TargetInfo targetNote={targetNote} t={t} />
         <button

@@ -70,7 +70,7 @@ const StaffCanvas: React.FC<StaffCanvasProps> = ({
         y={layout.STAFF_SPACE}
         width={layout.HIGHLIGHT_WIDTH}
         height={layout.SVG_HEIGHT - layout.STAFF_SPACE * 2}
-        fill="#f1f5f9"
+        fill="var(--color-staff-highlight)"
         rx="8"
       />
       <StaffHeader clef={clef} layout={layout} timeSignature={timeSignature} />
@@ -135,7 +135,7 @@ const StaffDisplay: React.FC<StaffDisplayProps> = ({
     <div
       ref={containerRef}
       data-testid="staff-display"
-      className="w-full bg-white dark:bg-slate-50 rounded-xl relative overflow-hidden select-none border border-slate-200 dark:border-slate-800 shadow-sm"
+      className="w-full bg-white dark:bg-slate-900 rounded-xl relative overflow-hidden select-none border border-slate-200 dark:border-slate-800 shadow-sm"
     >
       {mode === 'grand' ? (
         <GrandStaffCanvas
@@ -156,12 +156,12 @@ const StaffDisplay: React.FC<StaffDisplayProps> = ({
         />
       )}
       {status === 'listening' && (
-        <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-slate-100 px-2 py-1 rounded-full border border-slate-200">
+        <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-slate-100 px-2 py-1 rounded-full border border-slate-200 dark:bg-slate-800 dark:border-slate-700">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
           </span>
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wide">
+          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wide dark:text-slate-300">
             {micLabel}
           </span>
         </div>

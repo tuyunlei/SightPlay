@@ -17,7 +17,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
-        darkMode: 'class',
+        darkMode: 'media',
         theme: {
           extend: {
             fontFamily: {
@@ -54,34 +54,6 @@
         },
       };
     </script>
-    <style>
-      /* Hide scrollbar for clean UI */
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
-
-      /* Mobile safe-area handling */
-      html,
-      body {
-        min-height: 100dvh;
-        background-color: #020617; /* slate-950 */
-      }
-
-      body {
-        -webkit-tap-highlight-color: transparent;
-        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
-          env(safe-area-inset-left);
-      }
-
-      /* Ensure root container fills viewport */
-      #root {
-        min-height: 100dvh;
-      }
-    </style>
     <script type="importmap">
       {
         "imports": {
@@ -95,7 +67,7 @@
     <link rel="stylesheet" href="/index.css" />
   </head>
   <body
-    class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300 antialiased overflow-x-hidden"
+    class="bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] transition-colors duration-300 antialiased overflow-x-hidden"
   >
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>

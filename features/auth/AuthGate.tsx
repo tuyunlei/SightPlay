@@ -21,10 +21,16 @@ function AuthGateInner({ children, initialAuthView, initialInviteCode }: AuthGat
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+      <div
+        className="flex h-screen items-center justify-center"
+        style={{
+          backgroundImage:
+            'linear-gradient(to bottom right, var(--color-bg-auth-from), var(--color-bg-auth-to))',
+        }}
+      >
         <div className="flex flex-col items-center gap-4">
           <div className="h-12 w-12 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
-          <p className="text-slate-400">{t.authLoading}</p>
+          <p className="text-slate-600 dark:text-slate-400">{t.authLoading}</p>
         </div>
       </div>
     );

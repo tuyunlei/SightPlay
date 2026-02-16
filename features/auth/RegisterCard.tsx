@@ -46,20 +46,25 @@ function RegisterCardView({
   return (
     <div
       data-testid={dataTestId}
-      className={`w-full rounded-2xl bg-slate-800/50 p-8 shadow-2xl backdrop-blur-sm transition-all ${highlighted ? 'ring-2 ring-indigo-400/80 shadow-indigo-500/30' : ''}`}
+      className={`w-full rounded-2xl bg-white/90 p-8 shadow-2xl backdrop-blur-sm transition-all dark:bg-slate-800/50 ${highlighted ? 'ring-2 ring-indigo-400/80 shadow-indigo-500/30' : ''}`}
     >
       <div className="mb-8 flex flex-col items-center gap-4">
         <div className="rounded-full bg-indigo-500/10 p-4">
           <Fingerprint className="h-12 w-12 text-indigo-400" />
         </div>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white">{t.authRegisterTitle}</h1>
-          <p className="mt-2 text-slate-400">{t.authRegisterSubtitle}</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            {t.authRegisterTitle}
+          </h1>
+          <p className="mt-2 text-slate-600 dark:text-slate-400">{t.authRegisterSubtitle}</p>
         </div>
       </div>
 
       <div className="mb-4">
-        <label htmlFor="invite-code" className="mb-2 block text-sm font-medium text-slate-200">
+        <label
+          htmlFor="invite-code"
+          className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200"
+        >
           {t.authInviteCodeLabel}
         </label>
         <input
@@ -69,13 +74,13 @@ function RegisterCardView({
           placeholder={t.authInviteCodePlaceholder}
           autoComplete="off"
           spellCheck={false}
-          className="w-full rounded-lg border border-slate-600 bg-slate-900/60 px-4 py-3 font-mono tracking-widest text-white outline-none transition focus:border-indigo-400"
+          className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 font-mono tracking-widest text-slate-900 outline-none transition focus:border-indigo-400 dark:border-slate-600 dark:bg-slate-900/60 dark:text-white"
         />
       </div>
 
-      <div className="mb-6 rounded-lg bg-slate-700/50 p-4">
-        <h3 className="mb-2 font-medium text-white">{t.authPasskeyTitle}</h3>
-        <p className="text-sm text-slate-300">{t.authPasskeyDesc}</p>
+      <div className="mb-6 rounded-lg bg-slate-100 p-4 dark:bg-slate-700/50">
+        <h3 className="mb-2 font-medium text-slate-900 dark:text-white">{t.authPasskeyTitle}</h3>
+        <p className="text-sm text-slate-600 dark:text-slate-300">{t.authPasskeyDesc}</p>
       </div>
 
       {error && (

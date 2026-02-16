@@ -52,7 +52,7 @@ export const SongLibrary: React.FC<SongLibraryProps> = ({ onSongSelect }) => {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6 text-gray-900">{t.songLibrary}</h1>
+      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-slate-100">{t.songLibrary}</h1>
 
       {/* Difficulty Filter */}
       <div className="mb-6 flex gap-2 flex-wrap">
@@ -66,7 +66,7 @@ export const SongLibrary: React.FC<SongLibraryProps> = ({ onSongSelect }) => {
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 difficultyFilter === diff
                   ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
               }`}
             >
               {label}
@@ -85,7 +85,7 @@ export const SongLibrary: React.FC<SongLibraryProps> = ({ onSongSelect }) => {
 
             return (
               <div key={difficulty} className="mb-8">
-                <h2 className="text-xl font-semibold mb-3 text-gray-800">
+                <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-slate-200">
                   {t[`difficulty_${difficulty}` as keyof typeof t]}
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2">
@@ -107,7 +107,7 @@ export const SongLibrary: React.FC<SongLibraryProps> = ({ onSongSelect }) => {
       )}
 
       {filteredSongs.length === 0 && (
-        <div className="text-center py-12 text-gray-500">{t.noSongsFound}</div>
+        <div className="text-center py-12 text-gray-500 dark:text-slate-400">{t.noSongsFound}</div>
       )}
     </div>
   );

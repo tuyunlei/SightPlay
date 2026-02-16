@@ -49,7 +49,7 @@ const App = () => {
   return (
     <AuthGate initialAuthView={initialAuthView} initialInviteCode={inviteCodeFromUrl}>
       <div
-        className="bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-900 dark:text-slate-100"
+        className="bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] flex flex-col font-sans"
         style={{ minHeight: '100dvh' }}
       >
         <MainAppContent

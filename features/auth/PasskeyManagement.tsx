@@ -5,13 +5,11 @@ import { translations } from '../../i18n';
 import { useUiStore } from '../../store/uiStore';
 
 import { useAuthContext } from './useAuthContext';
-
 interface Passkey {
   id: string;
   name: string;
   createdAt: number;
 }
-
 interface PasskeyManagementProps {
   onClose: () => void;
 }
@@ -25,11 +23,11 @@ function ModalHeader({ onClose }: { onClose: () => void }) {
         <div className="rounded-lg bg-indigo-500/10 p-2">
           <KeyRound className="h-5 w-5 text-indigo-400" />
         </div>
-        <h2 className="text-xl font-bold text-white">{t.passkeyManageTitle}</h2>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t.passkeyManageTitle}</h2>
       </div>
       <button
         onClick={onClose}
-        className="rounded-lg p-2 text-slate-400 transition-all hover:bg-slate-700 hover:text-white active:scale-90"
+        className="rounded-lg p-2 text-slate-500 transition-all hover:bg-slate-200 hover:text-slate-900 active:scale-90 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white"
         aria-label={t.passkeyClose}
         title={t.passkeyClose}
       >
@@ -38,7 +36,6 @@ function ModalHeader({ onClose }: { onClose: () => void }) {
     </div>
   );
 }
-
 function InviteCodeDisplay({
   inviteCode,
   copied,
@@ -55,12 +52,16 @@ function InviteCodeDisplay({
 
   return (
     <div className="space-y-3">
-      <div className="rounded-lg bg-slate-700/50 p-4">
-        <div className="mb-2 text-sm font-medium text-slate-300">{t.inviteCodeLabel}</div>
-        <div className="mb-3 rounded bg-slate-900/50 p-3 text-center font-mono text-xl tracking-widest text-indigo-300">
+      <div className="rounded-lg bg-slate-100 p-4 dark:bg-slate-700/50">
+        <div className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+          {t.inviteCodeLabel}
+        </div>
+        <div className="mb-3 rounded bg-slate-200 p-3 text-center font-mono text-xl tracking-widest text-indigo-700 dark:bg-slate-900/50 dark:text-indigo-300">
           {inviteCode}
         </div>
-        <div className="mb-3 text-xs text-slate-400">{t.inviteCodeValidFor}</div>
+        <div className="mb-3 text-xs text-slate-600 dark:text-slate-400">
+          {t.inviteCodeValidFor}
+        </div>
         <div className="flex gap-2">
           <button
             onClick={onCopy}
@@ -80,7 +81,7 @@ function InviteCodeDisplay({
           </button>
           <button
             onClick={onClose}
-            className="rounded-lg bg-slate-700 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-slate-600 active:scale-95"
+            className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-medium text-slate-800 transition-all hover:bg-slate-300 active:scale-95 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600"
           >
             {t.passkeyClose}
           </button>
@@ -89,7 +90,6 @@ function InviteCodeDisplay({
     </div>
   );
 }
-
 function PasskeyList({
   passkeys,
   isLoading,
@@ -102,26 +102,31 @@ function PasskeyList({
   const lang = useUiStore((state) => state.lang);
   const t = translations[lang];
 
-  if (isLoading) return <div className="py-8 text-center text-slate-400">{t.passkeyLoading}</div>;
+  if (isLoading)
+    return (
+      <div className="py-8 text-center text-slate-600 dark:text-slate-400">{t.passkeyLoading}</div>
+    );
   if (passkeys.length === 0)
-    return <div className="py-8 text-center text-slate-400">{t.passkeyEmpty}</div>;
+    return (
+      <div className="py-8 text-center text-slate-600 dark:text-slate-400">{t.passkeyEmpty}</div>
+    );
 
   return (
     <>
       {passkeys.map((passkey) => (
         <div
           key={passkey.id}
-          className="flex items-center justify-between rounded-lg bg-slate-700/50 p-4"
+          className="flex items-center justify-between rounded-lg bg-slate-100 p-4 dark:bg-slate-700/50"
         >
           <div>
-            <div className="font-medium text-white">{passkey.name}</div>
-            <div className="text-sm text-slate-400">
+            <div className="font-medium text-slate-900 dark:text-white">{passkey.name}</div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">
               {t.passkeyAdded} {new Date(passkey.createdAt).toLocaleDateString()}
             </div>
           </div>
           <button
             onClick={() => onRemove(passkey.id)}
-            className="rounded-lg p-2 text-slate-400 transition-all hover:bg-red-500/10 hover:text-red-400 active:scale-90 disabled:opacity-30"
+            className="rounded-lg p-2 text-slate-500 transition-all hover:bg-red-500/10 hover:text-red-500 active:scale-90 disabled:opacity-30 dark:text-slate-400 dark:hover:text-red-400"
             disabled={passkeys.length === 1}
             title={passkeys.length === 1 ? t.passkeyCannotRemoveLast : t.passkeyRemove}
             aria-label={passkeys.length === 1 ? t.passkeyCannotRemoveLast : t.passkeyRemove}
@@ -133,7 +138,6 @@ function PasskeyList({
     </>
   );
 }
-
 function GenerateInviteButton({
   isGenerating,
   onClick,
@@ -164,12 +168,10 @@ function GenerateInviteButton({
     </button>
   );
 }
-
 async function loadPasskeysFromApi(): Promise<Passkey[]> {
   const response = await fetch('/api/auth/passkeys', { credentials: 'include' });
   return response.ok ? await response.json() : [];
 }
-
 async function generateInviteCode(): Promise<string> {
   const response = await fetch('/api/auth/invite', {
     method: 'POST',
@@ -181,7 +183,6 @@ async function generateInviteCode(): Promise<string> {
   const data = (await response.json()) as { codes: string[] };
   return data.codes[0];
 }
-
 async function deletePasskeyById(id: string): Promise<boolean> {
   const response = await fetch(`/api/auth/passkeys?id=${id}`, {
     method: 'DELETE',
@@ -189,7 +190,6 @@ async function deletePasskeyById(id: string): Promise<boolean> {
   });
   return response.ok;
 }
-
 function usePasskeyManagementState() {
   const { checkSession } = useAuthContext();
   const [passkeys, setPasskeys] = useState<Passkey[]>([]);
@@ -254,7 +254,6 @@ function usePasskeyManagementState() {
     },
   };
 }
-
 export function PasskeyManagement({ onClose }: PasskeyManagementProps) {
   const {
     passkeys,
@@ -270,8 +269,8 @@ export function PasskeyManagement({ onClose }: PasskeyManagementProps) {
   } = usePasskeyManagementState();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl bg-slate-800 p-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-bg-overlay)] p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-800">
         <ModalHeader onClose={onClose} />
 
         {error && (
