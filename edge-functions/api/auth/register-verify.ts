@@ -1,7 +1,11 @@
 import { server } from '@passwordless-id/webauthn';
 import type { RegistrationJSON } from '@passwordless-id/webauthn/dist/esm/types';
 
-import { createEdgeOneContext, type EdgeOneRequestContext } from '../../platform';
+import {
+  createEdgeOneContext,
+  type EdgeOneRequestContext,
+  type PlatformContext,
+} from '../../platform';
 import { CORS_HEADERS, signJWT, createCookie, requireEnv, resolveOrigin } from '../_auth-helpers';
 
 interface Passkey {
@@ -27,22 +31,19 @@ export function onRequestOptions(): Response {
   return new Response(null, { headers: CORS_HEADERS });
 }
 
-export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
+export async function handlePostRegisterVerify(platform: PlatformContext): Promise<Response> {
   try {
-    const platform = createEdgeOneContext(context);
     const body = (await platform.request.json()) as {
       response: RegistrationJSON;
       name?: string;
       inviteToken?: string;
     };
 
-    // Decode clientDataJSON to get the challenge
     const clientDataJSON = JSON.parse(
       atob(body.response.response.clientDataJSON.replace(/-/g, '+').replace(/_/g, '/'))
     );
     const challenge = clientDataJSON.challenge;
 
-    // Verify the challenge exists
     const storedChallenge = await platform.kv.get(`challenge:${challenge}`);
     if (!storedChallenge) {
       return new Response(JSON.stringify({ error: 'Invalid or expired challenge' }), {
@@ -53,20 +54,18 @@ export async function onRequestPost(context: EdgeOneRequestContext): Promise<Res
 
     const { origin } = resolveOrigin(platform);
 
-    // Verify the registration response
     const registrationInfo = await server.verifyRegistration(body.response, {
       challenge,
       origin,
     });
 
-    // Store the credential
     const { credential } = registrationInfo;
     const passkeysData = await platform.kv.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
     const newPasskey: Passkey = {
       id: credential.id,
-      publicKey: credential.publicKey, // Already base64url string
+      publicKey: credential.publicKey,
       counter: registrationInfo.authenticator.counter,
       name: body.name || formatPasskeyName(registrationInfo.authenticator.name),
       createdAt: Date.now(),
@@ -78,15 +77,12 @@ export async function onRequestPost(context: EdgeOneRequestContext): Promise<Res
     passkeys.push(newPasskey);
     await platform.kv.put('passkeys', JSON.stringify(passkeys));
 
-    // Delete the used challenge
     await platform.kv.delete(`challenge:${challenge}`);
 
-    // Delete invite token if provided (one-time use)
     if (body.inviteToken) {
       await platform.kv.delete(`invite:${body.inviteToken}`);
     }
 
-    // Auto-login: issue JWT after successful registration
     const now = Math.floor(Date.now() / 1000);
     const token = await signJWT(
       { sub: 'owner', iat: now, exp: now + 7 * 24 * 60 * 60 },
@@ -111,4 +107,8 @@ export async function onRequestPost(context: EdgeOneRequestContext): Promise<Res
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
+}
+
+export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
+  return handlePostRegisterVerify(createEdgeOneContext(context));
 }

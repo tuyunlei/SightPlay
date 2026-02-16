@@ -1,4 +1,8 @@
-import { createEdgeOneContext, type EdgeOneRequestContext } from '../platform';
+import {
+  createEdgeOneContext,
+  type EdgeOneRequestContext,
+  type PlatformContext,
+} from '../platform';
 
 import { CORS_HEADERS, getAuthenticatedUser, requireEnv } from './_auth-helpers';
 
@@ -116,8 +120,7 @@ export function onRequestOptions(): Response {
   return new Response(null, { headers: CORS_HEADERS });
 }
 
-export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
-  const platform = createEdgeOneContext(context);
+export async function handlePostChat(platform: PlatformContext): Promise<Response> {
   const user = await getAuthenticatedUser(platform.request, requireEnv(platform, 'JWT_SECRET'));
   if (!user) return jsonResponse({ error: 'Authentication required' }, 401);
 
@@ -132,4 +135,8 @@ export async function onRequestPost(context: EdgeOneRequestContext): Promise<Res
     console.error('Edge function error:', error);
     return jsonResponse({ error: 'Internal server error' }, 500);
   }
+}
+
+export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
+  return handlePostChat(createEdgeOneContext(context));
 }
