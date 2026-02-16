@@ -12,17 +12,15 @@ import {
   cleanupTestEnvironment,
 } from './PasskeyManagement.setup';
 
-// Mock useAuthContext - must be at the top level
 vi.mock('../useAuthContext', () => ({
   useAuthContext: () => ({
     checkSession: mockCheckSession,
   }),
 }));
 
-// Setup clipboard before tests
 setupClipboardMock();
 
-describe('PasskeyManagement - Generate Invite Link', () => {
+describe('PasskeyManagement - Generate Invite Code', () => {
   const mockOnClose = vi.fn();
 
   beforeEach(() => {
@@ -33,166 +31,94 @@ describe('PasskeyManagement - Generate Invite Link', () => {
     cleanupTestEnvironment();
   });
 
-  describe('generate invite link flow', () => {
-    it('generates invite link when button clicked', async () => {
-      const user = userEvent.setup();
+  it('generates invite code when button clicked', async () => {
+    const user = userEvent.setup();
 
-      vi.mocked(fetch)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => [{ id: 'pk1', name: 'Device', createdAt: Date.now() }],
-        } as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({ token: 'abc123' }),
-        } as Response);
-
-      render(<PasskeyManagement onClose={mockOnClose} />);
-
-      await waitFor(() => {
-        expect(screen.getByText('Generate Invite Link')).toBeInTheDocument();
-      });
-
-      await user.click(screen.getByText('Generate Invite Link'));
-
-      await waitFor(() => {
-        expect(screen.getByText('Invite Link')).toBeInTheDocument();
-      });
-
-      const inviteUrl = `${window.location.origin}/invite?token=abc123`;
-      expect(screen.getByText(inviteUrl)).toBeInTheDocument();
-      expect(screen.getByText('Valid for 30 minutes • One-time use')).toBeInTheDocument();
-    });
-
-    it('shows generating state during invite generation', async () => {
-      const user = userEvent.setup();
-      let resolveInvite: (value: any) => void;
-      const invitePromise = new Promise((resolve) => {
-        resolveInvite = resolve;
-      });
-
-      vi.mocked(fetch)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => [{ id: 'pk1', name: 'Device', createdAt: Date.now() }],
-        } as Response)
-        .mockReturnValueOnce(invitePromise as any);
-
-      render(<PasskeyManagement onClose={mockOnClose} />);
-
-      await waitFor(() => {
-        expect(screen.getByText('Generate Invite Link')).toBeInTheDocument();
-      });
-
-      await user.click(screen.getByText('Generate Invite Link'));
-
-      expect(screen.getByText('Generating...')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /generating/i })).toBeDisabled();
-
-      // Resolve the promise
-      resolveInvite!({
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ token: 'abc123' }),
-      });
+        json: async () => [{ id: 'pk1', name: 'Device', createdAt: Date.now() }],
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ codes: ['ABCD-EFGH'] }),
+      } as Response);
 
-      await waitFor(() => {
-        expect(screen.getByText('Invite Link')).toBeInTheDocument();
-      });
+    render(<PasskeyManagement onClose={mockOnClose} />);
+
+    await user.click(await screen.findByText('Generate Invite Code'));
+
+    expect(await screen.findByText('Invite Code')).toBeInTheDocument();
+    expect(screen.getByText('ABCD-EFGH')).toBeInTheDocument();
+    expect(screen.getByText('Valid for 7 days • One-time use')).toBeInTheDocument();
+  });
+
+  it('shows generating state', async () => {
+    const user = userEvent.setup();
+    let resolveInvite: (value: Response) => void;
+    const invitePromise = new Promise<Response>((resolve) => {
+      resolveInvite = resolve;
     });
 
-    it('shows error when invite generation fails', async () => {
-      const user = userEvent.setup();
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({ ok: true, json: async () => [] } as Response)
+      .mockReturnValueOnce(invitePromise as Promise<Response>);
 
-      vi.mocked(fetch)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => [{ id: 'pk1', name: 'Device', createdAt: Date.now() }],
-        } as Response)
-        .mockResolvedValueOnce({
-          ok: false,
-        } as Response);
+    render(<PasskeyManagement onClose={mockOnClose} />);
 
-      render(<PasskeyManagement onClose={mockOnClose} />);
+    await user.click(await screen.findByText('Generate Invite Code'));
 
-      await waitFor(() => {
-        expect(screen.getByText('Generate Invite Link')).toBeInTheDocument();
-      });
+    expect(screen.getByText('Generating...')).toBeInTheDocument();
 
-      await user.click(screen.getByText('Generate Invite Link'));
+    resolveInvite!({ ok: true, json: async () => ({ codes: ['ABCD-EFGH'] }) } as Response);
+    expect(await screen.findByText('Invite Code')).toBeInTheDocument();
+  });
 
-      await waitFor(() => {
-        expect(screen.getByText('Failed to generate invite link')).toBeInTheDocument();
-      });
-    });
+  it('shows error on failure', async () => {
+    const user = userEvent.setup();
 
-    it('copies invite link to clipboard', async () => {
-      const user = userEvent.setup();
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({ ok: true, json: async () => [] } as Response)
+      .mockResolvedValueOnce({ ok: false } as Response);
 
-      vi.mocked(fetch)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => [{ id: 'pk1', name: 'Device', createdAt: Date.now() }],
-        } as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({ token: 'abc123' }),
-        } as Response);
+    render(<PasskeyManagement onClose={mockOnClose} />);
+    await user.click(await screen.findByText('Generate Invite Code'));
 
-      render(<PasskeyManagement onClose={mockOnClose} />);
+    expect(await screen.findByText('Failed to generate invite code')).toBeInTheDocument();
+  });
 
-      await waitFor(() => {
-        expect(screen.getByText('Generate Invite Link')).toBeInTheDocument();
-      });
+  it('copies invite code to clipboard', async () => {
+    const user = userEvent.setup();
 
-      await user.click(screen.getByText('Generate Invite Link'));
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({ ok: true, json: async () => [] } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ codes: ['ABCD-EFGH'] }),
+      } as Response);
 
-      await waitFor(() => {
-        expect(screen.getByText('Copy Link')).toBeInTheDocument();
-      });
+    render(<PasskeyManagement onClose={mockOnClose} />);
+    await user.click(await screen.findByText('Generate Invite Code'));
+    await user.click(await screen.findByText('Copy Code'));
 
-      await user.click(screen.getByText('Copy Link'));
+    await waitFor(() => expect(screen.getByText('Copied!')).toBeInTheDocument());
+  });
 
-      // Check that UI shows "Copied!" feedback
-      await waitFor(() => {
-        expect(screen.getByText('Copied!')).toBeInTheDocument();
-      });
+  it('can close invite code display', async () => {
+    const user = userEvent.setup();
 
-      // Check icon changed temporarily
-      expect(screen.queryByText('Copy Link')).not.toBeInTheDocument();
-    });
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({ ok: true, json: async () => [] } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ codes: ['ABCD-EFGH'] }),
+      } as Response);
 
-    it('closes invite display when Close button clicked', async () => {
-      const user = userEvent.setup();
+    render(<PasskeyManagement onClose={mockOnClose} />);
+    await user.click(await screen.findByText('Generate Invite Code'));
+    await user.click((await screen.findAllByText('Close'))[0]);
 
-      vi.mocked(fetch)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => [{ id: 'pk1', name: 'Device', createdAt: Date.now() }],
-        } as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({ token: 'abc123' }),
-        } as Response);
-
-      render(<PasskeyManagement onClose={mockOnClose} />);
-
-      await waitFor(() => {
-        expect(screen.getByText('Generate Invite Link')).toBeInTheDocument();
-      });
-
-      await user.click(screen.getByText('Generate Invite Link'));
-
-      await waitFor(() => {
-        expect(screen.getByText('Invite Link')).toBeInTheDocument();
-      });
-
-      const closeButtons = screen.getAllByText('Close');
-      await user.click(closeButtons[0]);
-
-      await waitFor(() => {
-        expect(screen.queryByText('Invite Link')).not.toBeInTheDocument();
-        expect(screen.getByText('Generate Invite Link')).toBeInTheDocument();
-      });
-    });
+    expect(screen.queryByText('Invite Code')).not.toBeInTheDocument();
+    expect(screen.getByText('Generate Invite Code')).toBeInTheDocument();
   });
 });

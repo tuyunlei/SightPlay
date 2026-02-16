@@ -8,6 +8,14 @@ import {
 } from '../../platform';
 import { CORS_HEADERS, signJWT, createCookie, requireEnv, resolveOrigin } from '../_auth-helpers';
 
+import {
+  inviteKey,
+  isInviteCodeFormatValid,
+  isInviteRecordExpired,
+  parseInviteRecord,
+  toDisplayInviteCode,
+} from './invite-code';
+
 interface Passkey {
   id: string;
   publicKey: string;
@@ -22,13 +30,18 @@ interface Passkey {
 function formatPasskeyName(authenticatorName: string): string {
   const date = new Date();
   const month = date.toLocaleString('en-US', { month: 'short' });
-  const day = date.getDate();
-  const year = date.getFullYear();
-  return `${authenticatorName} · ${month} ${day}, ${year}`;
+  return `${authenticatorName} · ${month} ${date.getDate()}, ${date.getFullYear()}`;
 }
 
 export function onRequestOptions(): Response {
   return new Response(null, { headers: CORS_HEADERS });
+}
+
+function unauthorized(error: string): Response {
+  return new Response(JSON.stringify({ error }), {
+    status: 401,
+    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+  });
 }
 
 export async function handlePostRegisterVerify(platform: PlatformContext): Promise<Response> {
@@ -36,8 +49,20 @@ export async function handlePostRegisterVerify(platform: PlatformContext): Promi
     const body = (await platform.request.json()) as {
       response: RegistrationJSON;
       name?: string;
-      inviteToken?: string;
+      inviteCode?: string;
     };
+
+    if (!body.inviteCode || !isInviteCodeFormatValid(body.inviteCode)) {
+      return unauthorized('Invite code is invalid');
+    }
+
+    const normalizedCode = toDisplayInviteCode(body.inviteCode);
+    const inviteStorageKey = inviteKey(normalizedCode);
+    const invite = parseInviteRecord(await platform.kv.get(inviteStorageKey));
+
+    if (!invite) return unauthorized('Invite code is invalid');
+    if (invite.usedBy) return unauthorized('Invite code has already been used');
+    if (isInviteRecordExpired(invite)) return unauthorized('Invite code has expired');
 
     const clientDataJSON = JSON.parse(
       atob(body.response.response.clientDataJSON.replace(/-/g, '+').replace(/_/g, '/'))
@@ -53,17 +78,13 @@ export async function handlePostRegisterVerify(platform: PlatformContext): Promi
     }
 
     const { origin } = resolveOrigin(platform);
-
-    const registrationInfo = await server.verifyRegistration(body.response, {
-      challenge,
-      origin,
-    });
+    const registrationInfo = await server.verifyRegistration(body.response, { challenge, origin });
 
     const { credential } = registrationInfo;
     const passkeysData = await platform.kv.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
-    const newPasskey: Passkey = {
+    passkeys.push({
       id: credential.id,
       publicKey: credential.publicKey,
       counter: registrationInfo.authenticator.counter,
@@ -72,16 +93,17 @@ export async function handlePostRegisterVerify(platform: PlatformContext): Promi
       aaguid: registrationInfo.authenticator.aaguid,
       transports: credential.transports,
       algorithm: credential.algorithm,
-    };
+    });
 
-    passkeys.push(newPasskey);
     await platform.kv.put('passkeys', JSON.stringify(passkeys));
-
     await platform.kv.delete(`challenge:${challenge}`);
 
-    if (body.inviteToken) {
-      await platform.kv.delete(`invite:${body.inviteToken}`);
-    }
+    const usedAt = Date.now();
+    await platform.kv.put(
+      inviteStorageKey,
+      JSON.stringify({ ...invite, usedBy: credential.id, usedAt }),
+      { expirationTtl: Math.max(1, Math.ceil((invite.expiresAt - usedAt) / 1000)) }
+    );
 
     const now = Math.floor(Date.now() / 1000);
     const token = await signJWT(

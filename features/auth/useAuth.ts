@@ -2,6 +2,9 @@ import { client } from '@passwordless-id/webauthn';
 import * as Sentry from '@sentry/react';
 import { useState, useEffect, useCallback } from 'react';
 
+import { translations } from '../../i18n';
+import { useUiStore } from '../../store/uiStore';
+
 interface AuthState {
   isAuthenticated: boolean;
   hasPasskeys: boolean;
@@ -18,48 +21,63 @@ function isWebAuthnSupported(): boolean {
 }
 
 // Get user-friendly error message
-function getAuthErrorMessage(error: unknown): string {
+function getAuthErrorMessage(error: unknown, t: (typeof translations)['en']): string {
   if (error instanceof Error) {
     // User canceled biometric authentication
     if (error.name === 'NotAllowedError') {
-      return 'Authentication was canceled. Please try again.';
+      return t.authErrorCanceled;
     }
     // User doesn't have a compatible authenticator
     if (error.name === 'NotSupportedError') {
-      return 'Your device does not support passkeys. Please use a device with biometric authentication.';
+      return t.authErrorNotSupportedDevice;
     }
     // Network or timeout errors
     if (error.name === 'NetworkError' || error.name === 'AbortError') {
-      return 'Connection timeout. Please check your network and try again.';
+      return t.authErrorConnectionTimeout;
     }
-    return error.message;
+
+    switch (error.message) {
+      case 'authErrorPasskeysNotSupportedBrowser':
+        return t.authErrorPasskeysNotSupportedBrowser;
+      case 'authErrorRegisterOptionsFailed':
+        return t.authErrorRegisterOptionsFailed;
+      case 'authErrorRegisterVerificationFailed':
+        return t.authErrorRegisterVerificationFailed;
+      case 'authErrorLoginOptionsFailed':
+        return t.authErrorLoginOptionsFailed;
+      case 'authErrorLoginVerificationFailed':
+        return t.authErrorLoginVerificationFailed;
+      default:
+        return error.message;
+    }
   }
-  return 'An unknown error occurred';
+  return t.authErrorUnknown;
 }
 
-async function performRegister(name?: string, inviteToken?: string): Promise<boolean> {
+async function performRegister(name?: string, inviteCode?: string): Promise<boolean> {
   // Check WebAuthn support before attempting registration
   if (!isWebAuthnSupported()) {
-    throw new Error(
-      'Passkeys are not supported on this browser. Please use a modern browser with biometric authentication support.'
-    );
+    throw new Error('authErrorPasskeysNotSupportedBrowser');
   }
 
   Sentry.addBreadcrumb({
     category: 'auth',
     message: 'Registration starting',
     level: 'info',
-    data: { hasName: !!name, hasInviteToken: !!inviteToken },
+    data: { hasName: !!name, hasInviteCode: !!inviteCode },
   });
 
   const optionsResponse = await fetch('/api/auth/register-options', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ inviteToken }),
+    body: JSON.stringify({ inviteCode }),
   });
 
-  if (!optionsResponse.ok) throw new Error('Failed to get registration options');
+  if (!optionsResponse.ok) {
+    const data = await optionsResponse.json().catch(() => ({}));
+    throw new Error(data.error || 'authErrorRegisterOptionsFailed');
+  }
   const options = await optionsResponse.json();
 
   Sentry.addBreadcrumb({
@@ -98,12 +116,12 @@ async function performRegister(name?: string, inviteToken?: string): Promise<boo
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ response: registration, name, inviteToken }),
+    body: JSON.stringify({ response: registration, name, inviteCode }),
   });
 
   if (!verifyResponse.ok) {
     const data = await verifyResponse.json().catch(() => ({}));
-    throw new Error(data.error || 'Registration verification failed');
+    throw new Error(data.error || 'authErrorRegisterVerificationFailed');
   }
   return true;
 }
@@ -111,9 +129,7 @@ async function performRegister(name?: string, inviteToken?: string): Promise<boo
 async function performLogin(): Promise<boolean> {
   // Check WebAuthn support before attempting login
   if (!isWebAuthnSupported()) {
-    throw new Error(
-      'Passkeys are not supported on this browser. Please use a modern browser with biometric authentication support.'
-    );
+    throw new Error('authErrorPasskeysNotSupportedBrowser');
   }
 
   Sentry.addBreadcrumb({
@@ -127,7 +143,7 @@ async function performLogin(): Promise<boolean> {
     credentials: 'include',
   });
 
-  if (!optionsResponse.ok) throw new Error('Failed to get authentication options');
+  if (!optionsResponse.ok) throw new Error('authErrorLoginOptionsFailed');
   const options = await optionsResponse.json();
 
   Sentry.addBreadcrumb({
@@ -176,11 +192,14 @@ async function performLogin(): Promise<boolean> {
     body: JSON.stringify({ response: authentication }),
   });
 
-  if (!verifyResponse.ok) throw new Error('Authentication verification failed');
+  if (!verifyResponse.ok) throw new Error('authErrorLoginVerificationFailed');
   return true;
 }
 
 export function useAuth() {
+  const lang = useUiStore((store) => store.lang);
+  const t = translations[lang];
+
   const [state, setState] = useState<AuthState>({
     isAuthenticated: false,
     hasPasskeys: false,
@@ -207,13 +226,13 @@ export function useAuth() {
   }, [checkSession]);
 
   const register = useCallback(
-    async (name?: string, inviteToken?: string): Promise<true | string> => {
+    async (name?: string, inviteCode?: string): Promise<true | string> => {
       try {
-        await performRegister(name, inviteToken);
+        await performRegister(name, inviteCode);
         await checkSession();
         return true;
       } catch (error) {
-        const message = getAuthErrorMessage(error);
+        const message = getAuthErrorMessage(error, t);
         Sentry.captureException(error, {
           tags: { flow: 'register' },
           extra: {
@@ -225,7 +244,7 @@ export function useAuth() {
         return message;
       }
     },
-    [checkSession]
+    [checkSession, t]
   );
 
   const login = useCallback(async (): Promise<true | string> => {
@@ -234,7 +253,7 @@ export function useAuth() {
       await checkSession();
       return true;
     } catch (error) {
-      const message = getAuthErrorMessage(error);
+      const message = getAuthErrorMessage(error, t);
       Sentry.captureException(error, {
         tags: { flow: 'login' },
         extra: {
@@ -245,7 +264,7 @@ export function useAuth() {
       console.error('Authentication error:', message, error);
       return message;
     }
-  }, [checkSession]);
+  }, [checkSession, t]);
 
   const logout = useCallback(() => {
     document.cookie = 'auth_token=; Max-Age=0; path=/';
