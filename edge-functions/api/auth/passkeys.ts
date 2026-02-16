@@ -1,10 +1,5 @@
-import {
-  CORS_HEADERS,
-  getAuthenticatedUser,
-  RequestContext,
-  resolveKV,
-  resolveEnv,
-} from '../_auth-helpers';
+import { createEdgeOneContext, type EdgeOneRequestContext } from '../../platform';
+import { CORS_HEADERS, getAuthenticatedUser, requireEnv } from '../_auth-helpers';
 
 interface Passkey {
   id: string;
@@ -19,11 +14,11 @@ export function onRequestOptions(): Response {
   return new Response(null, { headers: CORS_HEADERS });
 }
 
-export async function onRequestGet(context: RequestContext): Promise<Response> {
+export async function onRequestGet(context: EdgeOneRequestContext): Promise<Response> {
   try {
-    const kv = resolveKV(context);
+    const platform = createEdgeOneContext(context);
     // Require authentication
-    const user = await getAuthenticatedUser(context.request, resolveEnv(context, 'JWT_SECRET'));
+    const user = await getAuthenticatedUser(platform.request, requireEnv(platform, 'JWT_SECRET'));
     if (!user) {
       return new Response(JSON.stringify({ error: 'Authentication required' }), {
         status: 401,
@@ -32,7 +27,7 @@ export async function onRequestGet(context: RequestContext): Promise<Response> {
     }
 
     // Get passkeys (exclude sensitive data)
-    const passkeysData = await kv.get('passkeys');
+    const passkeysData = await platform.kv.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
     const safePasskeys = passkeys.map((pk) => ({
@@ -53,11 +48,11 @@ export async function onRequestGet(context: RequestContext): Promise<Response> {
   }
 }
 
-export async function onRequestDelete(context: RequestContext): Promise<Response> {
+export async function onRequestDelete(context: EdgeOneRequestContext): Promise<Response> {
   try {
-    const kv = resolveKV(context);
+    const platform = createEdgeOneContext(context);
     // Require authentication
-    const user = await getAuthenticatedUser(context.request, resolveEnv(context, 'JWT_SECRET'));
+    const user = await getAuthenticatedUser(platform.request, requireEnv(platform, 'JWT_SECRET'));
     if (!user) {
       return new Response(JSON.stringify({ error: 'Authentication required' }), {
         status: 401,
@@ -66,7 +61,7 @@ export async function onRequestDelete(context: RequestContext): Promise<Response
     }
 
     // Get passkey ID from query params
-    const url = new URL(context.request.url);
+    const url = new URL(platform.request.url);
     const passkeyId = url.searchParams.get('id');
 
     if (!passkeyId) {
@@ -77,7 +72,7 @@ export async function onRequestDelete(context: RequestContext): Promise<Response
     }
 
     // Get passkeys
-    const passkeysData = await kv.get('passkeys');
+    const passkeysData = await platform.kv.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
     // Prevent removing the last passkey
@@ -98,7 +93,7 @@ export async function onRequestDelete(context: RequestContext): Promise<Response
       });
     }
 
-    await kv.put('passkeys', JSON.stringify(updatedPasskeys));
+    await platform.kv.put('passkeys', JSON.stringify(updatedPasskeys));
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },

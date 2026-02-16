@@ -1,15 +1,8 @@
 import { server } from '@passwordless-id/webauthn';
 import type { RegistrationJSON } from '@passwordless-id/webauthn/dist/esm/types';
 
-import {
-  CORS_HEADERS,
-  signJWT,
-  createCookie,
-  RequestContext,
-  resolveKV,
-  resolveEnv,
-  resolveOrigin,
-} from '../_auth-helpers';
+import { createEdgeOneContext, type EdgeOneRequestContext } from '../../platform';
+import { CORS_HEADERS, signJWT, createCookie, requireEnv, resolveOrigin } from '../_auth-helpers';
 
 interface Passkey {
   id: string;
@@ -34,10 +27,10 @@ export function onRequestOptions(): Response {
   return new Response(null, { headers: CORS_HEADERS });
 }
 
-export async function onRequestPost(context: RequestContext): Promise<Response> {
+export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
   try {
-    const kv = resolveKV(context);
-    const body = (await context.request.json()) as {
+    const platform = createEdgeOneContext(context);
+    const body = (await platform.request.json()) as {
       response: RegistrationJSON;
       name?: string;
       inviteToken?: string;
@@ -50,7 +43,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
     const challenge = clientDataJSON.challenge;
 
     // Verify the challenge exists
-    const storedChallenge = await kv.get(`challenge:${challenge}`);
+    const storedChallenge = await platform.kv.get(`challenge:${challenge}`);
     if (!storedChallenge) {
       return new Response(JSON.stringify({ error: 'Invalid or expired challenge' }), {
         status: 400,
@@ -58,7 +51,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
       });
     }
 
-    const { origin } = resolveOrigin(context);
+    const { origin } = resolveOrigin(platform);
 
     // Verify the registration response
     const registrationInfo = await server.verifyRegistration(body.response, {
@@ -68,7 +61,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
 
     // Store the credential
     const { credential } = registrationInfo;
-    const passkeysData = await kv.get('passkeys');
+    const passkeysData = await platform.kv.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
     const newPasskey: Passkey = {
@@ -83,21 +76,21 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
     };
 
     passkeys.push(newPasskey);
-    await kv.put('passkeys', JSON.stringify(passkeys));
+    await platform.kv.put('passkeys', JSON.stringify(passkeys));
 
     // Delete the used challenge
-    await kv.delete(`challenge:${challenge}`);
+    await platform.kv.delete(`challenge:${challenge}`);
 
     // Delete invite token if provided (one-time use)
     if (body.inviteToken) {
-      await kv.delete(`invite:${body.inviteToken}`);
+      await platform.kv.delete(`invite:${body.inviteToken}`);
     }
 
     // Auto-login: issue JWT after successful registration
     const now = Math.floor(Date.now() / 1000);
     const token = await signJWT(
       { sub: 'owner', iat: now, exp: now + 7 * 24 * 60 * 60 },
-      resolveEnv(context, 'JWT_SECRET')
+      requireEnv(platform, 'JWT_SECRET')
     );
     const cookie = createCookie('auth_token', token, {
       maxAge: 7 * 24 * 60 * 60,

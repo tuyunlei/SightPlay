@@ -1,15 +1,8 @@
 import { server } from '@passwordless-id/webauthn';
 import type { AuthenticationJSON, CredentialInfo } from '@passwordless-id/webauthn/dist/esm/types';
 
-import {
-  CORS_HEADERS,
-  signJWT,
-  createCookie,
-  RequestContext,
-  resolveKV,
-  resolveEnv,
-  resolveOrigin,
-} from '../_auth-helpers';
+import { createEdgeOneContext, type EdgeOneRequestContext } from '../../platform';
+import { CORS_HEADERS, signJWT, createCookie, requireEnv, resolveOrigin } from '../_auth-helpers';
 
 interface Passkey {
   id: string;
@@ -25,10 +18,10 @@ export function onRequestOptions(): Response {
   return new Response(null, { headers: CORS_HEADERS });
 }
 
-export async function onRequestPost(context: RequestContext): Promise<Response> {
+export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
   try {
-    const kv = resolveKV(context);
-    const body = (await context.request.json()) as {
+    const platform = createEdgeOneContext(context);
+    const body = (await platform.request.json()) as {
       response: AuthenticationJSON;
     };
 
@@ -39,7 +32,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
     const challenge = clientDataJSON.challenge;
 
     // Verify the challenge exists
-    const storedChallenge = await kv.get(`challenge:${challenge}`);
+    const storedChallenge = await platform.kv.get(`challenge:${challenge}`);
     if (!storedChallenge) {
       return new Response(JSON.stringify({ error: 'Invalid or expired challenge' }), {
         status: 400,
@@ -48,7 +41,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
     }
 
     // Get stored credentials
-    const passkeysData = await kv.get('passkeys');
+    const passkeysData = await platform.kv.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
     // Find the credential that was used
@@ -60,7 +53,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
       });
     }
 
-    const { origin } = resolveOrigin(context);
+    const { origin } = resolveOrigin(platform);
 
     // Build CredentialInfo for verification
     const credentialInfo: CredentialInfo = {
@@ -82,10 +75,10 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
     const updatedPasskeys = passkeys.map((pk) =>
       pk.id === credential.id ? { ...pk, counter: authInfo.counter } : pk
     );
-    await kv.put('passkeys', JSON.stringify(updatedPasskeys));
+    await platform.kv.put('passkeys', JSON.stringify(updatedPasskeys));
 
     // Delete the used challenge
-    await kv.delete(`challenge:${challenge}`);
+    await platform.kv.delete(`challenge:${challenge}`);
 
     // Create JWT token (7 day expiry)
     const now = Math.floor(Date.now() / 1000);
@@ -95,7 +88,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
         iat: now,
         exp: now + 7 * 24 * 60 * 60,
       },
-      resolveEnv(context, 'JWT_SECRET')
+      requireEnv(platform, 'JWT_SECRET')
     );
 
     // Set cookie

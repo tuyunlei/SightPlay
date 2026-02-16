@@ -1,4 +1,6 @@
-import { CORS_HEADERS, RequestContext, resolveKV } from './_auth-helpers';
+import { createEdgeOneContext, type EdgeOneRequestContext } from '../platform';
+
+import { CORS_HEADERS } from './_auth-helpers';
 
 interface ErrorReport {
   message: string;
@@ -13,28 +15,28 @@ export function onRequestOptions(): Response {
   return new Response(null, { headers: CORS_HEADERS });
 }
 
-export async function onRequestPost(context: RequestContext): Promise<Response> {
+export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
   try {
-    const kv = resolveKV(context);
-    const body = (await context.request.json()) as Partial<ErrorReport>;
+    const platform = createEdgeOneContext(context);
+    const body = (await platform.request.json()) as Partial<ErrorReport>;
 
     const report: ErrorReport = {
       message: body.message || 'Unknown error',
       stack: body.stack,
       url: body.url || '',
-      userAgent: context.request.headers.get('User-Agent') || '',
+      userAgent: platform.request.headers.get('User-Agent') || '',
       timestamp: Date.now(),
       context: body.context,
     };
 
     // Store in KV with timestamp key, keep last 50 errors
-    const logsData = await kv.get('error_logs');
+    const logsData = await platform.kv.get('error_logs');
     const logs: ErrorReport[] = logsData ? JSON.parse(logsData) : [];
     logs.push(report);
 
     // Keep only last 50
     while (logs.length > 50) logs.shift();
-    await kv.put('error_logs', JSON.stringify(logs));
+    await platform.kv.put('error_logs', JSON.stringify(logs));
 
     return new Response(JSON.stringify({ ok: true }), {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
@@ -48,10 +50,10 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
 }
 
 // GET to read error logs (requires auth)
-export async function onRequestGet(context: RequestContext): Promise<Response> {
+export async function onRequestGet(context: EdgeOneRequestContext): Promise<Response> {
   try {
-    const kv = resolveKV(context);
-    const logsData = await kv.get('error_logs');
+    const platform = createEdgeOneContext(context);
+    const logsData = await platform.kv.get('error_logs');
     const logs = logsData ? JSON.parse(logsData) : [];
 
     return new Response(JSON.stringify(logs, null, 2), {
