@@ -38,7 +38,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
             onClick={() => onApply(recommendation)}
             className="mt-2 rounded bg-indigo-500 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-600 transition-colors"
           >
-            {(t as Record<string, string>)['recApply'] ?? 'Try it'}
+            {t.recApply}
           </button>
         )}
       </div>

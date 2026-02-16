@@ -30,7 +30,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
           {msg.text}
           {msg.hasAction && (
             <div className="mt-2 pt-2 border-t border-indigo-500/20 flex items-center gap-1.5 text-xs opacity-90 font-medium">
-              <Sparkles size={12} /> {t.challenge} Active
+              <Sparkles size={12} /> {t.challenge} {t.challengeStatusActive}
             </div>
           )}
         </div>

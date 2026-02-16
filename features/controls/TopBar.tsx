@@ -24,7 +24,7 @@ interface StatsProps {
   t: typeof translations.en;
 }
 
-const DesktopStats: React.FC<StatsProps> = ({ score, bpm, accuracy }) => (
+const DesktopStats: React.FC<StatsProps> = ({ score, bpm, accuracy, t }) => (
   <div className="hidden md:flex items-center gap-6 px-4">
     <div className="flex items-center gap-2">
       <Trophy size={14} className="text-yellow-500" />
@@ -37,7 +37,9 @@ const DesktopStats: React.FC<StatsProps> = ({ score, bpm, accuracy }) => (
     </div>
     <div className="flex items-center gap-2">
       <Activity size={14} className="text-cyan-500" />
-      <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{bpm} BPM</span>
+      <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+        {bpm} {t.bpm}
+      </span>
     </div>
     <div className="flex items-center gap-2">
       <Target size={14} className="text-emerald-500" />
@@ -87,7 +89,7 @@ const TopBar: React.FC<TopBarProps> = ({
         <div className="bg-gradient-to-tr from-indigo-600 to-purple-600 p-1.5 rounded-lg text-white shadow-lg shadow-indigo-500/20">
           <Music size={20} />
         </div>
-        <h1 className="text-lg font-bold leading-none tracking-tight">SightPlay</h1>
+        <h1 className="text-lg font-bold leading-none tracking-tight">{t.appTitle}</h1>
       </div>
 
       <DesktopStats score={score} bpm={bpm} accuracy={accuracy} t={t} />

@@ -42,9 +42,9 @@ const App = () => {
 
   useEffect(() => {
     challengeCompleteRef.current = () => {
-      sendMessage('I finished the challenge! How did I do?');
+      sendMessage(t.aiChallengeCompletedUserMessage);
     };
-  }, [sendMessage]);
+  }, [sendMessage, t.aiChallengeCompletedUserMessage]);
 
   return (
     <AuthGate initialAuthView={initialAuthView} initialInviteCode={inviteCodeFromUrl}>
