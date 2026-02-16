@@ -97,18 +97,19 @@
 
 将邀请链接改为邀请码机制，所有注册（含首个用户）都需要邀请码。
 
-- [ ] 邀请码数据模型（KV 存储，字段：code、createdBy、usedBy、expiresAt）
-- [ ] 邀请码格式：8 位 `XXXX-XXXX`，字符集 `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`（32 个，排除 0/O/I/1/L）
-- [ ] API：管理员生成邀请码（仅限小小涂通过 API 调用，支持批量）
-- [ ] API：已注册用户生成邀请码（每个用户可生成，每码限用一次，一周过期）
-- [ ] 注册页面改造：移除邀请链接入口，改为输入邀请码
-- [ ] 注册流程：验证邀请码有效性 → 注册 → 标记邀请码已使用
-- [ ] Rate limiting：KV 计数，同 IP 10 秒内 >10 次验证请求 → 封禁 1 小时（429）
-- [ ] 移除旧的邀请链接相关代码
-- [ ] Review 修复：PasskeyManagement 硬编码字符串 → i18n
-- [ ] Review 修复：admin secret 改用 constant-time 比较
-- [ ] Review 修复：补充 endpoint 级安全测试
-- [ ] 已知限制：KV 竞态（get+put 非原子），当前用户规模可接受
+- [x] 邀请码数据模型（KV 存储，字段：code、createdBy、usedBy、expiresAt） ← `d1f4daf`
+- [x] 邀请码格式：8 位 `XXXX-XXXX`，字符集 32 个（排除 0/O/I/1/L） ← `d1f4daf`
+- [x] API：管理员生成邀请码（`X-Admin-Secret` 鉴权，支持批量） ← `d1f4daf`
+- [x] API：已注册用户生成邀请码（每码限用一次，一周过期） ← `d1f4daf`
+- [x] 注册页面改造：移除邀请链接入口，改为输入邀请码 ← `d1f4daf`
+- [x] 注册流程：验证邀请码 → 注册 → 标记已使用 ← `d1f4daf`
+- [x] Rate limiting：KV 计数，同 IP 10s >10 次 → 封禁 1h（429） ← `d1f4daf`
+- [x] 移除旧的邀请链接相关代码 ← `d1f4daf`
+- [x] Review 修复：auth 组件硬编码字符串 → i18n ← `3764950`
+- [x] Review 修复：admin secret 改用 constant-time 比较 ← `9fd9d6f`
+- [x] Review 修复：endpoint 级安全测试 ← `672f6dd`
+- [x] Review 修复：E2E 测试适配邀请码流程 ← `ca4577e`
+- 已知限制：KV 竞态（get+put 非原子），当前用户规模可接受
 
 ### P4.2 — 中英文本地化
 
