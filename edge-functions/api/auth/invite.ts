@@ -5,10 +5,47 @@ import {
 } from '../../platform';
 import { CORS_HEADERS, getAuthenticatedUser, requireEnv } from '../_auth-helpers';
 
-function uint8ArrayToHex(bytes: Uint8Array): string {
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+import {
+  consumeInviteValidationRateLimit,
+  createInviteCode,
+  createInviteRecord,
+  getClientIp,
+  getInviteTtlSeconds,
+  inviteKey,
+  isInviteCodeFormatValid,
+  isInviteRecordExpired,
+  parseInviteRecord,
+  toDisplayInviteCode,
+} from './invite-code';
+
+interface InviteCountBody {
+  count?: number;
+}
+
+function getCount(body: InviteCountBody): number {
+  const count = body.count ?? 1;
+  if (!Number.isInteger(count) || count < 1 || count > 10) return 1;
+  return count;
+}
+
+async function generateInviteCodes(
+  platform: PlatformContext,
+  createdBy: string,
+  count: number
+): Promise<string[]> {
+  const codes = new Set<string>();
+  while (codes.size < count) {
+    const code = createInviteCode();
+    if (codes.has(code)) continue;
+    const key = inviteKey(code);
+    const existing = await platform.kv.get(key);
+    if (existing) continue;
+    await platform.kv.put(key, JSON.stringify(createInviteRecord(createdBy)), {
+      expirationTtl: getInviteTtlSeconds(),
+    });
+    codes.add(code);
+  }
+  return [...codes];
 }
 
 export function onRequestOptions(): Response {
@@ -25,18 +62,96 @@ export async function handlePostInvite(platform: PlatformContext): Promise<Respo
       });
     }
 
-    const tokenBytes = new Uint8Array(32);
-    crypto.getRandomValues(tokenBytes);
-    const token = uint8ArrayToHex(tokenBytes);
-
-    const inviteKey = `invite:${token}`;
-    await platform.kv.put(inviteKey, 'valid', { expirationTtl: 1800 });
-
-    return new Response(JSON.stringify({ token, expiresIn: 1800 }), {
+    const body = (await platform.request.json().catch(() => ({}))) as InviteCountBody;
+    const codes = await generateInviteCodes(platform, user, getCount(body));
+    return new Response(JSON.stringify({ codes }), {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   } catch (error) {
-    console.error('Error generating invite:', error);
+    console.error('Error generating invite codes:', error);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  }
+}
+
+export async function handlePostInviteAdmin(platform: PlatformContext): Promise<Response> {
+  try {
+    const adminSecret = platform.env('ADMIN_SECRET');
+    const provided = platform.request.headers.get('X-Admin-Secret');
+    if (!adminSecret || provided !== adminSecret) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      });
+    }
+
+    const body = (await platform.request.json().catch(() => ({}))) as InviteCountBody;
+    const codes = await generateInviteCodes(platform, 'admin', getCount(body));
+    return new Response(JSON.stringify({ codes }), {
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  } catch (error) {
+    console.error('Error generating admin invite codes:', error);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  }
+}
+
+function getInviteCodeFromPath(request: Request): string | null {
+  const segments = new URL(request.url).pathname.split('/').filter(Boolean);
+  return segments.at(-1) ?? null;
+}
+
+export async function handleGetInviteByCode(platform: PlatformContext): Promise<Response> {
+  try {
+    const ip = getClientIp(platform.request);
+    const rate = await consumeInviteValidationRateLimit(platform.kv, ip);
+    if (rate.blocked) {
+      return new Response(JSON.stringify({ error: 'Too many requests' }), {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(rate.retryAfterSeconds ?? 3600),
+          ...CORS_HEADERS,
+        },
+      });
+    }
+
+    const rawCode = getInviteCodeFromPath(platform.request);
+    if (!rawCode || !isInviteCodeFormatValid(rawCode)) {
+      return new Response(JSON.stringify({ valid: false, reason: 'invalid' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      });
+    }
+
+    const normalized = toDisplayInviteCode(rawCode);
+    const record = parseInviteRecord(await platform.kv.get(inviteKey(normalized)));
+    if (!record) {
+      return new Response(JSON.stringify({ valid: false, reason: 'invalid' }), {
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      });
+    }
+    if (record.usedBy) {
+      return new Response(JSON.stringify({ valid: false, reason: 'used' }), {
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      });
+    }
+    if (isInviteRecordExpired(record)) {
+      return new Response(JSON.stringify({ valid: false, reason: 'expired' }), {
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      });
+    }
+
+    return new Response(JSON.stringify({ valid: true, expiresAt: record.expiresAt }), {
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  } catch (error) {
+    console.error('Error validating invite code:', error);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
@@ -46,35 +161,4 @@ export async function handlePostInvite(platform: PlatformContext): Promise<Respo
 
 export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
   return handlePostInvite(createEdgeOneContext(context));
-}
-
-export async function handleGetInvite(platform: PlatformContext): Promise<Response> {
-  try {
-    const url = new URL(platform.request.url);
-    const token = url.searchParams.get('token');
-
-    if (!token) {
-      return new Response(JSON.stringify({ valid: false, error: 'Token required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      });
-    }
-
-    const inviteKey = `invite:${token}`;
-    const inviteData = await platform.kv.get(inviteKey);
-
-    return new Response(JSON.stringify({ valid: inviteData !== null }), {
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-    });
-  } catch (error) {
-    console.error('Error verifying invite:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-    });
-  }
-}
-
-export async function onRequestGet(context: EdgeOneRequestContext): Promise<Response> {
-  return handleGetInvite(createEdgeOneContext(context));
 }

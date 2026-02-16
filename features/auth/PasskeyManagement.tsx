@@ -1,5 +1,8 @@
-import { KeyRound, Trash2, Link as LinkIcon, X, Copy, Check } from 'lucide-react';
+import { KeyRound, Trash2, Ticket, X, Copy, Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
+
+import { translations } from '../../i18n';
+import { useUiStore } from '../../store/uiStore';
 
 import { useAuthContext } from './useAuthContext';
 
@@ -32,25 +35,28 @@ function ModalHeader({ onClose }: { onClose: () => void }) {
   );
 }
 
-function InviteUrlDisplay({
-  inviteUrl,
+function InviteCodeDisplay({
+  inviteCode,
   copied,
   onCopy,
   onClose,
 }: {
-  inviteUrl: string;
+  inviteCode: string;
   copied: boolean;
   onCopy: () => void;
   onClose: () => void;
 }) {
+  const lang = useUiStore((state) => state.lang);
+  const t = translations[lang];
+
   return (
     <div className="space-y-3">
       <div className="rounded-lg bg-slate-700/50 p-4">
-        <div className="mb-2 text-sm font-medium text-slate-300">Invite Link</div>
-        <div className="mb-3 break-all rounded bg-slate-900/50 p-3 font-mono text-sm text-indigo-300">
-          {inviteUrl}
+        <div className="mb-2 text-sm font-medium text-slate-300">{t.inviteCodeLabel}</div>
+        <div className="mb-3 rounded bg-slate-900/50 p-3 text-center font-mono text-xl tracking-widest text-indigo-300">
+          {inviteCode}
         </div>
-        <div className="mb-3 text-xs text-slate-400">Valid for 30 minutes • One-time use</div>
+        <div className="mb-3 text-xs text-slate-400">{t.inviteCodeValidFor}</div>
         <div className="flex gap-2">
           <button
             onClick={onCopy}
@@ -59,12 +65,12 @@ function InviteUrlDisplay({
             {copied ? (
               <>
                 <Check className="h-4 w-4" />
-                Copied!
+                {t.inviteCodeCopied}
               </>
             ) : (
               <>
                 <Copy className="h-4 w-4" />
-                Copy Link
+                {t.inviteCodeCopy}
               </>
             )}
           </button>
@@ -89,13 +95,9 @@ function PasskeyList({
   isLoading: boolean;
   onRemove: (id: string) => void;
 }) {
-  if (isLoading) {
-    return <div className="py-8 text-center text-slate-400">Loading...</div>;
-  }
-
-  if (passkeys.length === 0) {
+  if (isLoading) return <div className="py-8 text-center text-slate-400">Loading...</div>;
+  if (passkeys.length === 0)
     return <div className="py-8 text-center text-slate-400">No passkeys found</div>;
-  }
 
   return (
     <>
@@ -131,6 +133,9 @@ function GenerateInviteButton({
   isGenerating: boolean;
   onClick: () => void;
 }) {
+  const lang = useUiStore((state) => state.lang);
+  const t = translations[lang];
+
   return (
     <button
       onClick={onClick}
@@ -140,12 +145,12 @@ function GenerateInviteButton({
       {isGenerating ? (
         <>
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-          Generating...
+          {t.inviteCodeGenerating}
         </>
       ) : (
         <>
-          <LinkIcon className="h-5 w-5" />
-          Generate Invite Link
+          <Ticket className="h-5 w-5" />
+          {t.inviteCodeGenerate}
         </>
       )}
     </button>
@@ -154,20 +159,19 @@ function GenerateInviteButton({
 
 async function loadPasskeysFromApi(): Promise<Passkey[]> {
   const response = await fetch('/api/auth/passkeys', { credentials: 'include' });
-  if (response.ok) {
-    return await response.json();
-  }
-  return [];
+  return response.ok ? await response.json() : [];
 }
 
-async function generateInviteToken(): Promise<string> {
+async function generateInviteCode(): Promise<string> {
   const response = await fetch('/api/auth/invite', {
     method: 'POST',
     credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ count: 1 }),
   });
-  if (!response.ok) throw new Error('Failed to generate invite');
-  const data = await response.json();
-  return `${window.location.origin}/invite?token=${data.token}`;
+  if (!response.ok) throw new Error('Failed to generate invite code');
+  const data = (await response.json()) as { codes: string[] };
+  return data.codes[0];
 }
 
 async function deletePasskeyById(id: string): Promise<boolean> {
@@ -183,9 +187,11 @@ function usePasskeyManagementState() {
   const [passkeys, setPasskeys] = useState<Passkey[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const lang = useUiStore((state) => state.lang);
+  const t = translations[lang];
 
   useEffect(() => {
     loadPasskeysFromApi()
@@ -197,56 +203,47 @@ function usePasskeyManagementState() {
     setIsGenerating(true);
     setError(null);
     try {
-      const url = await generateInviteToken();
-      setInviteUrl(url);
+      setInviteCode(await generateInviteCode());
     } catch {
-      setError('Failed to generate invite link');
+      setError(t.inviteCodeFailed);
     } finally {
       setIsGenerating(false);
     }
   };
 
   const handleCopyInvite = () => {
-    if (inviteUrl) {
-      navigator.clipboard.writeText(inviteUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+    if (!inviteCode) return;
+    navigator.clipboard.writeText(inviteCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleRemovePasskey = async (id: string) => {
-    if (passkeys.length === 1) {
-      setError('Cannot remove the last passkey');
-      return;
-    }
+    if (passkeys.length === 1) return setError('Cannot remove the last passkey');
     if (!confirm('Are you sure you want to remove this passkey?')) return;
 
-    const success = await deletePasskeyById(id);
-    if (success) {
-      const updatedPasskeys = await loadPasskeysFromApi();
-      setPasskeys(updatedPasskeys);
+    if (await deletePasskeyById(id)) {
+      setPasskeys(await loadPasskeysFromApi());
       await checkSession();
-    } else {
-      setError('Failed to remove passkey');
+      return;
     }
-  };
-
-  const handleCloseInvite = () => {
-    setInviteUrl(null);
-    setCopied(false);
+    setError('Failed to remove passkey');
   };
 
   return {
     passkeys,
     isLoading,
     isGenerating,
-    inviteUrl,
+    inviteCode,
     copied,
     error,
     handleGenerateInvite,
     handleCopyInvite,
     handleRemovePasskey,
-    handleCloseInvite,
+    handleCloseInvite: () => {
+      setInviteCode(null);
+      setCopied(false);
+    },
   };
 }
 
@@ -255,7 +252,7 @@ export function PasskeyManagement({ onClose }: PasskeyManagementProps) {
     passkeys,
     isLoading,
     isGenerating,
-    inviteUrl,
+    inviteCode,
     copied,
     error,
     handleGenerateInvite,
@@ -277,9 +274,9 @@ export function PasskeyManagement({ onClose }: PasskeyManagementProps) {
           <PasskeyList passkeys={passkeys} isLoading={isLoading} onRemove={handleRemovePasskey} />
         </div>
 
-        {inviteUrl ? (
-          <InviteUrlDisplay
-            inviteUrl={inviteUrl}
+        {inviteCode ? (
+          <InviteCodeDisplay
+            inviteCode={inviteCode}
             copied={copied}
             onCopy={handleCopyInvite}
             onClose={handleCloseInvite}

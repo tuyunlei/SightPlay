@@ -7,6 +7,16 @@ import {
 } from '../../platform';
 import { CORS_HEADERS, resolveOrigin } from '../_auth-helpers';
 
+import {
+  consumeInviteValidationRateLimit,
+  getClientIp,
+  inviteKey,
+  isInviteCodeFormatValid,
+  isInviteRecordExpired,
+  parseInviteRecord,
+  toDisplayInviteCode,
+} from './invite-code';
+
 interface Passkey {
   id: string;
   publicKey: string;
@@ -20,31 +30,42 @@ export function onRequestOptions(): Response {
   return new Response(null, { headers: CORS_HEADERS });
 }
 
+function unauthorized(error: string): Response {
+  return new Response(JSON.stringify({ error }), {
+    status: 401,
+    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+  });
+}
+
 export async function handlePostRegisterOptions(platform: PlatformContext): Promise<Response> {
   try {
+    const body = (await platform.request.json().catch(() => ({}))) as { inviteCode?: string };
+    if (!body.inviteCode || !isInviteCodeFormatValid(body.inviteCode)) {
+      return unauthorized('Invite code is invalid');
+    }
+
+    const ip = getClientIp(platform.request);
+    const rate = await consumeInviteValidationRateLimit(platform.kv, ip);
+    if (rate.blocked) {
+      return new Response(JSON.stringify({ error: 'Too many requests' }), {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(rate.retryAfterSeconds ?? 3600),
+          ...CORS_HEADERS,
+        },
+      });
+    }
+
+    const normalizedCode = toDisplayInviteCode(body.inviteCode);
+    const invite = parseInviteRecord(await platform.kv.get(inviteKey(normalizedCode)));
+
+    if (!invite) return unauthorized('Invite code is invalid');
+    if (invite.usedBy) return unauthorized('Invite code has already been used');
+    if (isInviteRecordExpired(invite)) return unauthorized('Invite code has expired');
+
     const passkeysData = await platform.kv.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
-
-    if (passkeys.length > 0) {
-      const body = (await platform.request.json()) as { inviteToken?: string };
-
-      if (!body.inviteToken) {
-        return new Response(JSON.stringify({ error: 'Invite token required' }), {
-          status: 401,
-          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-        });
-      }
-
-      const inviteKey = `invite:${body.inviteToken}`;
-      const inviteData = await platform.kv.get(inviteKey);
-
-      if (!inviteData) {
-        return new Response(JSON.stringify({ error: 'Invalid or expired invite token' }), {
-          status: 401,
-          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-        });
-      }
-    }
 
     const challenge = server.randomChallenge();
     const { hostname } = resolveOrigin(platform);
@@ -83,8 +104,7 @@ export async function handlePostRegisterOptions(platform: PlatformContext): Prom
       timeout: 60000,
     };
 
-    const challengeKey = `challenge:${challenge}`;
-    await platform.kv.put(challengeKey, challenge, { expirationTtl: 300 });
+    await platform.kv.put(`challenge:${challenge}`, challenge, { expirationTtl: 300 });
 
     return new Response(JSON.stringify(options), {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },

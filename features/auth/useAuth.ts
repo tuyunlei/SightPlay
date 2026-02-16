@@ -37,7 +37,7 @@ function getAuthErrorMessage(error: unknown): string {
   return 'An unknown error occurred';
 }
 
-async function performRegister(name?: string, inviteToken?: string): Promise<boolean> {
+async function performRegister(name?: string, inviteCode?: string): Promise<boolean> {
   // Check WebAuthn support before attempting registration
   if (!isWebAuthnSupported()) {
     throw new Error(
@@ -49,17 +49,20 @@ async function performRegister(name?: string, inviteToken?: string): Promise<boo
     category: 'auth',
     message: 'Registration starting',
     level: 'info',
-    data: { hasName: !!name, hasInviteToken: !!inviteToken },
+    data: { hasName: !!name, hasInviteCode: !!inviteCode },
   });
 
   const optionsResponse = await fetch('/api/auth/register-options', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ inviteToken }),
+    body: JSON.stringify({ inviteCode }),
   });
 
-  if (!optionsResponse.ok) throw new Error('Failed to get registration options');
+  if (!optionsResponse.ok) {
+    const data = await optionsResponse.json().catch(() => ({}));
+    throw new Error(data.error || 'Failed to get registration options');
+  }
   const options = await optionsResponse.json();
 
   Sentry.addBreadcrumb({
@@ -98,7 +101,7 @@ async function performRegister(name?: string, inviteToken?: string): Promise<boo
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ response: registration, name, inviteToken }),
+    body: JSON.stringify({ response: registration, name, inviteCode }),
   });
 
   if (!verifyResponse.ok) {
@@ -207,9 +210,9 @@ export function useAuth() {
   }, [checkSession]);
 
   const register = useCallback(
-    async (name?: string, inviteToken?: string): Promise<true | string> => {
+    async (name?: string, inviteCode?: string): Promise<true | string> => {
       try {
-        await performRegister(name, inviteToken);
+        await performRegister(name, inviteCode);
         await checkSession();
         return true;
       } catch (error) {

@@ -6,11 +6,10 @@ import { useAiCoach } from './hooks/useAiCoach';
 import { usePracticeSession } from './hooks/usePracticeSession';
 import { useTestAPI } from './hooks/useTestAPI';
 import { translations } from './i18n';
-import { InvitePage } from './pages/InvitePage';
 import { useUiStore } from './store/uiStore';
 import { MainAppContent } from './views/MainAppContent';
 
-const MainApp = () => {
+const App = () => {
   const lang = useUiStore((state) => state.lang);
   const toggleLang = useUiStore((state) => state.toggleLang);
   const t = translations[lang];
@@ -74,14 +73,6 @@ const MainApp = () => {
       </div>
     </AuthGate>
   );
-};
-
-const App = () => {
-  const inviteToken = new URLSearchParams(window.location.search).get('token');
-  if (window.location.pathname === '/invite' && inviteToken) {
-    return <InvitePage token={inviteToken} />;
-  }
-  return <MainApp />;
 };
 
 export default App;
