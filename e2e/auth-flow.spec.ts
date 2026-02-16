@@ -141,9 +141,11 @@ test.describe('Authentication Flow E2E', () => {
       // Should show registration screen
       await expect(page.getByTestId('register-screen')).toBeVisible();
 
-      // Click register button
-      const registerButton = page.getByRole('button', { name: /set up passkey/i });
+      // Fill invite code and click register button
+      await page.locator('#invite-code').fill('ABCD-EFGH');
+      const registerButton = page.getByRole('button', { name: /passkey/i });
       await expect(registerButton).toBeVisible();
+      await expect(registerButton).toBeEnabled();
       await registerButton.click();
 
       // Wait for navigation to practice screen
@@ -175,7 +177,9 @@ test.describe('Authentication Flow E2E', () => {
 
       await page.goto('/');
 
-      const registerButton = page.getByRole('button', { name: /set up passkey/i });
+      await page.locator('#invite-code').fill('ABCD-EFGH');
+      const registerButton = page.getByRole('button', { name: /passkey/i });
+      await expect(registerButton).toBeEnabled();
       await registerButton.click();
 
       // Should show error - wait a bit for error state
@@ -270,7 +274,9 @@ test.describe('Authentication Flow E2E', () => {
       await page.goto('/');
       await expect(page.getByTestId('register-screen')).toBeVisible();
 
-      const registerButton = page.getByRole('button', { name: /set up passkey/i });
+      await page.locator('#invite-code').fill('ABCD-EFGH');
+      const registerButton = page.getByRole('button', { name: /passkey/i });
+      await expect(registerButton).toBeEnabled();
       await registerButton.click();
 
       // Step 2: Practice screen

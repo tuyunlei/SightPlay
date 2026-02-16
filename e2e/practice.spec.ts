@@ -26,8 +26,8 @@ test.describe('Practice Flow', () => {
 
       // Should show the register screen
       await expect(page.getByTestId('register-screen')).toBeVisible();
-      await expect(page.getByText('Welcome to SightPlay')).toBeVisible();
-      await expect(page.getByText('Set up your passkey to get started')).toBeVisible();
+      await expect(page.getByRole('heading', { name: /SightPlay/ })).toBeVisible();
+      await expect(page.getByLabel(/Invite Code|邀请码/i)).toBeVisible();
     });
 
     test('should show login screen when passkeys exist but not authenticated', async ({ page }) => {
@@ -44,8 +44,8 @@ test.describe('Practice Flow', () => {
 
       // Should show the login screen
       await expect(page.getByTestId('login-screen')).toBeVisible();
-      await expect(page.getByText('Welcome Back')).toBeVisible();
-      await expect(page.getByText('Sign in with your passkey to continue')).toBeVisible();
+      await expect(page.getByRole('heading', { name: /Welcome Back|欢迎回来/i })).toBeVisible();
+      await expect(page.getByRole('button', { name: /Passkey|登录/i })).toBeVisible();
     });
   });
 
