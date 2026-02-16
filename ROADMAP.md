@@ -94,16 +94,13 @@
 
 从 EdgeOne 迁移到 Cloudflare，解决国内访问需要备案的问题。
 
-- [ ] Cloudflare Pages 项目创建 + 静态部署配置
-- [ ] Edge Functions → CF Workers 适配（~1000 行，11 个文件）
-  - [ ] KV 绑定方式改写（EdgeOne env → CF env bindings）
-  - [ ] Request/Response API 适配
-  - [ ] `_auth-helpers.ts` 迁移
-  - [ ] auth 相关 7 个 endpoint 迁移
-  - [ ] `chat.ts` + `error-report.ts` 迁移
-- [ ] KV 数据迁移（passkey、session 等）
-- [ ] CI/CD 切换（GitHub Actions → CF Pages 自动部署）
-- [ ] 域名 / DNS 切换
+- [x] 平台抽象层（`PlatformContext` + EdgeOne/CF adapters） ← `fa8fd18`, `561b9bd`
+- [x] CF Pages Functions 路由文件 + 共享 handler 提取 ← `e3f09ad`
+- [x] CF Pages 项目创建 + KV namespace + 环境变量配置（API）
+- [x] 自定义域名 `sightplay.xclz.org` + SSL 证书
+- [x] `WEBAUTHN_RP_ID` 环境变量支持（预览部署 passkey 共享） ← `1a2392f`
+- [x] 预览环境验证通过（注册/登录正常）
+- [ ] 合并 develop → main，生产环境验证
 - [ ] 国内访问速度验证
 
 ---
@@ -135,3 +132,8 @@
 | 2026-02-15 | P3 上下文提示系统（HintBubble + 聊天改为抽屉式）           | `4f3e82b`                       |
 | 2026-02-15 | P3 智能错误分析（mistakeTracker + 模式检测 + 针对性建议）  | `d43b6d6`                       |
 | 2026-02-15 | P3 个性化练习推荐（准确率分析 + 难度建议 + 曲目推荐）      | `cb736ac`                       |
+| 2026-02-16 | P5 平台抽象层 + EdgeOne adapter 重构                       | `fa8fd18`                       |
+| 2026-02-16 | P5 Cloudflare adapter + wrangler 配置                      | `561b9bd`                       |
+| 2026-02-16 | P5 CF Pages Functions + 共享 handler 提取                  | `e3f09ad`                       |
+| 2026-02-16 | P5 CF Pages 项目 + KV + 自定义域名 + 环境变量              | API                             |
+| 2026-02-16 | P5 WEBAUTHN_RP_ID 环境变量 + 预览环境验证通过              | `1a2392f`                       |
