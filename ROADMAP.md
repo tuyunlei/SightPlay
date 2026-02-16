@@ -100,8 +100,9 @@
 - [x] 自定义域名 `sightplay.xclz.org` + SSL 证书
 - [x] `WEBAUTHN_RP_ID` 环境变量支持（预览部署 passkey 共享） ← `1a2392f`
 - [x] 预览环境验证通过（注册/登录正常）
-- [ ] 合并 develop → main，生产环境验证
-- [ ] 国内访问速度验证
+- [x] 合并 develop → main，生产环境部署 ← `a94324c`
+- [x] Production/Preview KV 隔离（独立 namespace）
+- [ ] 国内访问速度验证（待涂涂从国内确认）
 
 ---
 
