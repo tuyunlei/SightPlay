@@ -105,6 +105,10 @@
 - [ ] 注册流程：验证邀请码有效性 → 注册 → 标记邀请码已使用
 - [ ] Rate limiting：KV 计数，同 IP 10 秒内 >10 次验证请求 → 封禁 1 小时（429）
 - [ ] 移除旧的邀请链接相关代码
+- [ ] Review 修复：PasskeyManagement 硬编码字符串 → i18n
+- [ ] Review 修复：admin secret 改用 constant-time 比较
+- [ ] Review 修复：补充 endpoint 级安全测试
+- [ ] 已知限制：KV 竞态（get+put 非原子），当前用户规模可接受
 
 ### P4.2 — 中英文本地化
 
