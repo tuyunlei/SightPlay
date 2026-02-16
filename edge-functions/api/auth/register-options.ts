@@ -1,6 +1,7 @@
 import { server } from '@passwordless-id/webauthn';
 
-import { CORS_HEADERS, RequestContext, resolveKV, resolveOrigin } from '../_auth-helpers';
+import { createEdgeOneContext, type EdgeOneRequestContext } from '../../platform';
+import { CORS_HEADERS, resolveOrigin } from '../_auth-helpers';
 
 interface Passkey {
   id: string;
@@ -15,16 +16,16 @@ export function onRequestOptions(): Response {
   return new Response(null, { headers: CORS_HEADERS });
 }
 
-export async function onRequestPost(context: RequestContext): Promise<Response> {
+export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
   try {
-    const kv = resolveKV(context);
+    const platform = createEdgeOneContext(context);
     // Get existing passkeys
-    const passkeysData = await kv.get('passkeys');
+    const passkeysData = await platform.kv.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
     // If passkeys exist, require valid invite token
     if (passkeys.length > 0) {
-      const body = (await context.request.json()) as { inviteToken?: string };
+      const body = (await platform.request.json()) as { inviteToken?: string };
 
       if (!body.inviteToken) {
         return new Response(JSON.stringify({ error: 'Invite token required' }), {
@@ -35,7 +36,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
 
       // Verify invite token exists in KV
       const inviteKey = `invite:${body.inviteToken}`;
-      const inviteData = await kv.get(inviteKey);
+      const inviteData = await platform.kv.get(inviteKey);
 
       if (!inviteData) {
         return new Response(JSON.stringify({ error: 'Invalid or expired invite token' }), {
@@ -48,7 +49,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
 
     // Generate challenge
     const challenge = server.randomChallenge();
-    const { hostname } = resolveOrigin(context);
+    const { hostname } = resolveOrigin(platform);
 
     // Build PublicKeyCredentialCreationOptions manually
     const userIdBytes = new TextEncoder().encode('sightplay-user');
@@ -87,7 +88,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
 
     // Store challenge in KV with 5min expiry
     const challengeKey = `challenge:${challenge}`;
-    await kv.put(challengeKey, challenge, { expirationTtl: 300 });
+    await platform.kv.put(challengeKey, challenge, { expirationTtl: 300 });
 
     return new Response(JSON.stringify(options), {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },

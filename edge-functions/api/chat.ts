@@ -1,10 +1,6 @@
-interface RequestContext {
-  request: Request;
-  env: {
-    GEMINI_API_KEY: string;
-    JWT_SECRET: string;
-  };
-}
+import { createEdgeOneContext, type EdgeOneRequestContext } from '../platform';
+
+import { CORS_HEADERS, getAuthenticatedUser, requireEnv } from './_auth-helpers';
 
 interface ChatRequestBody {
   message: string;
@@ -21,8 +17,6 @@ interface GeminiResponse {
     };
   }>;
 }
-
-import { CORS_HEADERS, getAuthenticatedUser, resolveEnv } from './_auth-helpers';
 
 function jsonResponse(body: object, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -122,13 +116,13 @@ export function onRequestOptions(): Response {
   return new Response(null, { headers: CORS_HEADERS });
 }
 
-export async function onRequestPost(context: RequestContext): Promise<Response> {
-  const user = await getAuthenticatedUser(context.request, resolveEnv(context, 'JWT_SECRET'));
+export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
+  const platform = createEdgeOneContext(context);
+  const user = await getAuthenticatedUser(platform.request, requireEnv(platform, 'JWT_SECRET'));
   if (!user) return jsonResponse({ error: 'Authentication required' }, 401);
 
-  const { message, clef, lang } = (await context.request.json()) as ChatRequestBody;
-  const apiKey = context.env.GEMINI_API_KEY;
-  if (!apiKey) return jsonResponse({ error: 'API key not configured' }, 500);
+  const { message, clef, lang } = (await platform.request.json()) as ChatRequestBody;
+  const apiKey = requireEnv(platform, 'GEMINI_API_KEY');
 
   try {
     const systemInstruction = buildSystemInstruction(clef, lang);

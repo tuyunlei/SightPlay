@@ -1,6 +1,7 @@
 import { server } from '@passwordless-id/webauthn';
 
-import { CORS_HEADERS, RequestContext, resolveKV, resolveOrigin } from '../_auth-helpers';
+import { createEdgeOneContext, type EdgeOneRequestContext } from '../../platform';
+import { CORS_HEADERS, resolveOrigin } from '../_auth-helpers';
 
 interface Passkey {
   id: string;
@@ -15,11 +16,11 @@ export function onRequestOptions(): Response {
   return new Response(null, { headers: CORS_HEADERS });
 }
 
-export async function onRequestPost(context: RequestContext): Promise<Response> {
+export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
   try {
-    const kv = resolveKV(context);
+    const platform = createEdgeOneContext(context);
     // Get stored credentials
-    const passkeysData = await kv.get('passkeys');
+    const passkeysData = await platform.kv.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
     if (passkeys.length === 0) {
@@ -31,7 +32,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
 
     // Generate challenge
     const challenge = server.randomChallenge();
-    const { hostname } = resolveOrigin(context);
+    const { hostname } = resolveOrigin(platform);
 
     const options = {
       challenge,
@@ -48,7 +49,7 @@ export async function onRequestPost(context: RequestContext): Promise<Response> 
 
     // Store challenge in KV with 5min expiry
     const challengeKey = `challenge:${challenge}`;
-    await kv.put(challengeKey, challenge, { expirationTtl: 300 });
+    await platform.kv.put(challengeKey, challenge, { expirationTtl: 300 });
 
     return new Response(JSON.stringify(options), {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
