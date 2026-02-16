@@ -17,17 +17,21 @@ interface PasskeyManagementProps {
 }
 
 function ModalHeader({ onClose }: { onClose: () => void }) {
+  const lang = useUiStore((state) => state.lang);
+  const t = translations[lang];
   return (
     <div className="mb-6 flex items-center justify-between">
       <div className="flex items-center gap-3">
         <div className="rounded-lg bg-indigo-500/10 p-2">
           <KeyRound className="h-5 w-5 text-indigo-400" />
         </div>
-        <h2 className="text-xl font-bold text-white">Manage Passkeys</h2>
+        <h2 className="text-xl font-bold text-white">{t.passkeyManageTitle}</h2>
       </div>
       <button
         onClick={onClose}
         className="rounded-lg p-2 text-slate-400 transition-all hover:bg-slate-700 hover:text-white active:scale-90"
+        aria-label={t.passkeyClose}
+        title={t.passkeyClose}
       >
         <X className="h-5 w-5" />
       </button>
@@ -78,7 +82,7 @@ function InviteCodeDisplay({
             onClick={onClose}
             className="rounded-lg bg-slate-700 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-slate-600 active:scale-95"
           >
-            Close
+            {t.passkeyClose}
           </button>
         </div>
       </div>
@@ -95,9 +99,12 @@ function PasskeyList({
   isLoading: boolean;
   onRemove: (id: string) => void;
 }) {
-  if (isLoading) return <div className="py-8 text-center text-slate-400">Loading...</div>;
+  const lang = useUiStore((state) => state.lang);
+  const t = translations[lang];
+
+  if (isLoading) return <div className="py-8 text-center text-slate-400">{t.passkeyLoading}</div>;
   if (passkeys.length === 0)
-    return <div className="py-8 text-center text-slate-400">No passkeys found</div>;
+    return <div className="py-8 text-center text-slate-400">{t.passkeyEmpty}</div>;
 
   return (
     <>
@@ -109,14 +116,15 @@ function PasskeyList({
           <div>
             <div className="font-medium text-white">{passkey.name}</div>
             <div className="text-sm text-slate-400">
-              Added {new Date(passkey.createdAt).toLocaleDateString()}
+              {t.passkeyAdded} {new Date(passkey.createdAt).toLocaleDateString()}
             </div>
           </div>
           <button
             onClick={() => onRemove(passkey.id)}
             className="rounded-lg p-2 text-slate-400 transition-all hover:bg-red-500/10 hover:text-red-400 active:scale-90 disabled:opacity-30"
             disabled={passkeys.length === 1}
-            title={passkeys.length === 1 ? 'Cannot remove the last passkey' : 'Remove'}
+            title={passkeys.length === 1 ? t.passkeyCannotRemoveLast : t.passkeyRemove}
+            aria-label={passkeys.length === 1 ? t.passkeyCannotRemoveLast : t.passkeyRemove}
           >
             <Trash2 className="h-5 w-5" />
           </button>
@@ -169,7 +177,7 @@ async function generateInviteCode(): Promise<string> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ count: 1 }),
   });
-  if (!response.ok) throw new Error('Failed to generate invite code');
+  if (!response.ok) throw new Error('passkeyInviteGenerateFailed');
   const data = (await response.json()) as { codes: string[] };
   return data.codes[0];
 }
@@ -219,15 +227,15 @@ function usePasskeyManagementState() {
   };
 
   const handleRemovePasskey = async (id: string) => {
-    if (passkeys.length === 1) return setError('Cannot remove the last passkey');
-    if (!confirm('Are you sure you want to remove this passkey?')) return;
+    if (passkeys.length === 1) return setError(t.passkeyCannotRemoveLast);
+    if (!confirm(t.passkeyRemoveConfirm)) return;
 
     if (await deletePasskeyById(id)) {
       setPasskeys(await loadPasskeysFromApi());
       await checkSession();
       return;
     }
-    setError('Failed to remove passkey');
+    setError(t.passkeyRemoveFailed);
   };
 
   return {

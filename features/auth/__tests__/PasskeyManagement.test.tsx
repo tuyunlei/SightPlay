@@ -67,7 +67,7 @@ describe('PasskeyManagement', () => {
     render(<PasskeyManagement onClose={mockOnClose} />);
     await waitFor(() => expect(screen.getByText('Manage Passkeys')).toBeInTheDocument());
 
-    await user.click(screen.getByRole('button', { name: '' }).closest('button')!);
+    await user.click(screen.getByRole('button', { name: 'Close' }));
     expect(mockOnClose).toHaveBeenCalled();
   });
 
