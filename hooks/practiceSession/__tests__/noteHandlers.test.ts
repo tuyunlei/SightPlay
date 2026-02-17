@@ -376,4 +376,136 @@ describe('useMidiNoteHandlers', () => {
 
     expect(handleCorrectNote).not.toHaveBeenCalled();
   });
+
+  it('handles both-hands noteOn by matching left-hand target', () => {
+    const rightTarget = makeNote(60, 0);
+    const leftTarget = makeNote(48, 1);
+    usePracticeStore.setState({ handMode: 'both-hands', noteQueue: [rightTarget, leftTarget] });
+
+    const setDetectedNote = vi.fn();
+    const addPressedKey = vi.fn();
+    const removePressedKey = vi.fn();
+    const pressedKeysRef = { current: new Map() };
+    const handleCorrectNote = vi.fn();
+    const refs = makeRefs();
+
+    const { result } = renderHook(() =>
+      useMidiNoteHandlers(
+        setDetectedNote,
+        addPressedKey,
+        removePressedKey,
+        pressedKeysRef,
+        handleCorrectNote,
+        refs
+      )
+    );
+
+    act(() => result.current.handleMidiNoteOn(48));
+
+    expect(addPressedKey).toHaveBeenCalledWith(48, expect.any(Object), true, leftTarget.id);
+    expect(refs.hasMistakeForCurrent.current).toBe(false);
+  });
+
+  it('triggers correct in both-hands mode when both targets are correctly pressed', () => {
+    const rightTarget = makeNote(60, 0);
+    const leftTarget = makeNote(48, 1);
+    usePracticeStore.setState({ handMode: 'both-hands', noteQueue: [rightTarget, leftTarget] });
+
+    const setDetectedNote = vi.fn();
+    const addPressedKey = vi.fn();
+    const removePressedKey = vi.fn(() => ({
+      note: rightTarget,
+      isCorrect: true,
+      targetId: rightTarget.id,
+    }));
+    const pressedKeysRef = {
+      current: new Map([
+        [60, { note: rightTarget, isCorrect: true, targetId: rightTarget.id }],
+        [48, { note: leftTarget, isCorrect: true, targetId: leftTarget.id }],
+      ]),
+    };
+    const handleCorrectNote = vi.fn();
+    const refs = makeRefs();
+
+    const { result } = renderHook(() =>
+      useMidiNoteHandlers(
+        setDetectedNote,
+        addPressedKey,
+        removePressedKey,
+        pressedKeysRef,
+        handleCorrectNote,
+        refs
+      )
+    );
+
+    act(() => result.current.handleMidiNoteOff(60));
+
+    expect(handleCorrectNote).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not trigger correct in both-hands mode when only one hand is correct', () => {
+    const rightTarget = makeNote(60, 0);
+    const leftTarget = makeNote(48, 1);
+    usePracticeStore.setState({ handMode: 'both-hands', noteQueue: [rightTarget, leftTarget] });
+
+    const setDetectedNote = vi.fn();
+    const addPressedKey = vi.fn();
+    const removePressedKey = vi.fn(() => ({
+      note: rightTarget,
+      isCorrect: true,
+      targetId: rightTarget.id,
+    }));
+    const pressedKeysRef = {
+      current: new Map([[60, { note: rightTarget, isCorrect: true, targetId: rightTarget.id }]]),
+    };
+    const handleCorrectNote = vi.fn();
+    const refs = makeRefs();
+
+    const { result } = renderHook(() =>
+      useMidiNoteHandlers(
+        setDetectedNote,
+        addPressedKey,
+        removePressedKey,
+        pressedKeysRef,
+        handleCorrectNote,
+        refs
+      )
+    );
+
+    act(() => result.current.handleMidiNoteOff(60));
+
+    expect(handleCorrectNote).not.toHaveBeenCalled();
+  });
+
+  it('does not trigger correct when processing is already locked', () => {
+    const target = makeNote(60);
+    usePracticeStore.setState({ noteQueue: [target] });
+
+    const setDetectedNote = vi.fn();
+    const addPressedKey = vi.fn();
+    const removePressedKey = vi.fn(() => ({
+      note: target,
+      isCorrect: true,
+      targetId: target.id,
+    }));
+    const pressedKeysRef = { current: new Map() };
+    const handleCorrectNote = vi.fn();
+    const refs = makeRefs();
+    refs.isProcessingRef.current = true;
+
+    const { result } = renderHook(() =>
+      useMidiNoteHandlers(
+        setDetectedNote,
+        addPressedKey,
+        removePressedKey,
+        pressedKeysRef,
+        handleCorrectNote,
+        refs
+      )
+    );
+
+    act(() => result.current.handleMidiNoteOff(60));
+
+    expect(handleCorrectNote).not.toHaveBeenCalled();
+  });
 });
