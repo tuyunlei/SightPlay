@@ -103,7 +103,7 @@
 - [x] API：已注册用户生成邀请码（每码限用一次，一周过期） ← `d1f4daf`
 - [x] 注册页面改造：移除邀请链接入口，改为输入邀请码 ← `d1f4daf`
 - [x] 注册流程：验证邀请码 → 注册 → 标记已使用 ← `d1f4daf`
-- [x] Rate limiting：KV 计数，同 IP 10s >10 次 → 封禁 1h（429） ← `d1f4daf`
+- [x] Rate limiting：KV 计数，同 IP 60s >10 次 → 封禁 1h（429，CF KV TTL ≥60s） ← `d1f4daf`
 - [x] 移除旧的邀请链接相关代码 ← `d1f4daf`
 - [x] Review 修复：auth 组件硬编码字符串 → i18n ← `3764950`
 - [x] Review 修复：admin secret 改用 constant-time 比较 ← `9fd9d6f`
@@ -142,10 +142,18 @@
 逐步提升测试覆盖率准入门槛至 80%。
 
 - [x] 阈值 70% → 73%（73.66%，补了 inviteCode 工具函数测试） ← `5a37aa0`
-- [ ] 阈值 73% → 76%
-- [ ] 阈值 76% → 80%
-- [ ] 每次提升前 review 排除列表，确保排除项合理
-- [ ] 规则：不为凑覆盖率而测试；不可测试或低价值代码可申请审批加白
+- [x] 阈值 73% → 76%（76.34%） ← `fe480df`
+- [x] 阈值 76% → 80%（80.11%） ← `b9b4961`
+- [x] 每次提升前 review 排除列表，确保排除项合理
+- [x] 规则：不为凑覆盖率而测试；不可测试或低价值代码可申请审批加白
+
+### P4.5 — 后端可观测性
+
+补充后端日志，目标：出现问题时能快速定位。
+
+- [ ] 所有 API endpoint 的 catch block 记录结构化错误日志（error message + stack + request context）
+- [ ] 关键业务路径加 Sentry breadcrumb（注册、登录、邀请码验证）
+- [ ] 错误响应包含 request ID，方便关联日志
 
 ## P5 — 迁移至 Cloudflare Pages + Workers
 

@@ -111,8 +111,7 @@ export async function handlePostRegisterOptions(platform: PlatformContext): Prom
     });
   } catch (error) {
     console.error('Error generating registration options:', error);
-    const detail = error instanceof Error ? error.message : String(error);
-    return new Response(JSON.stringify({ error: 'Internal server error', detail }), {
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
