@@ -40,10 +40,10 @@ export default defineConfig({
         'features/auth/RegisterScreen.tsx', // UI shell — auth logic in useAuth.ts
       ],
       thresholds: {
-        lines: 73,
+        lines: 76,
         functions: 60,
         branches: 80,
-        statements: 73,
+        statements: 76,
       },
     },
   },
