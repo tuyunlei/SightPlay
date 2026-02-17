@@ -143,7 +143,7 @@
 
 - [x] 阈值 70% → 73%（73.66%，补了 inviteCode 工具函数测试） ← `5a37aa0`
 - [x] 阈值 73% → 76%（76.34%，补了 useAuth/useRecommendations/noteHandlers 测试） ← `fe480df`
-- [ ] 阈值 76% → 80%
+- [x] 阈值 76% → 80%（80.11%，补了 platform adapter + auth endpoint 测试） ← `b9b4961`
 - [ ] 每次提升前 review 排除列表，确保排除项合理
 - [ ] 规则：不为凑覆盖率而测试；不可测试或低价值代码可申请审批加白
 
