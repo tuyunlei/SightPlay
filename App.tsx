@@ -6,11 +6,10 @@ import { useAiCoach } from './hooks/useAiCoach';
 import { usePracticeSession } from './hooks/usePracticeSession';
 import { useTestAPI } from './hooks/useTestAPI';
 import { translations } from './i18n';
-import { InvitePage } from './pages/InvitePage';
 import { useUiStore } from './store/uiStore';
 import { MainAppContent } from './views/MainAppContent';
 
-const MainApp = () => {
+const App = () => {
   const lang = useUiStore((state) => state.lang);
   const toggleLang = useUiStore((state) => state.toggleLang);
   const t = translations[lang];
@@ -19,6 +18,11 @@ const MainApp = () => {
   const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
   const [showSongComplete, setShowSongComplete] = useState(false);
   const challengeCompleteRef = useRef<() => void>(() => {});
+
+  const pathname = window.location.pathname;
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialAuthView = pathname === '/register' ? 'register' : 'login';
+  const inviteCodeFromUrl = urlParams.get('code') ?? undefined;
 
   const practiceSession = usePracticeSession({
     onMicError: () => alert(t.micError),
@@ -38,14 +42,14 @@ const MainApp = () => {
 
   useEffect(() => {
     challengeCompleteRef.current = () => {
-      sendMessage('I finished the challenge! How did I do?');
+      sendMessage(t.aiChallengeCompletedUserMessage);
     };
-  }, [sendMessage]);
+  }, [sendMessage, t.aiChallengeCompletedUserMessage]);
 
   return (
-    <AuthGate>
+    <AuthGate initialAuthView={initialAuthView} initialInviteCode={inviteCodeFromUrl}>
       <div
-        className="bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-900 dark:text-slate-100"
+        className="bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] flex flex-col font-sans"
         style={{ minHeight: '100dvh' }}
       >
         <MainAppContent
@@ -74,14 +78,6 @@ const MainApp = () => {
       </div>
     </AuthGate>
   );
-};
-
-const App = () => {
-  const inviteToken = new URLSearchParams(window.location.search).get('token');
-  if (window.location.pathname === '/invite' && inviteToken) {
-    return <InvitePage token={inviteToken} />;
-  }
-  return <MainApp />;
 };
 
 export default App;

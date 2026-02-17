@@ -13,6 +13,29 @@ interface SongCompleteProps {
   onBackToLibrary: () => void;
 }
 
+const getGrade = (acc: number): string => {
+  if (acc >= 95) return 'S';
+  if (acc >= 85) return 'A';
+  if (acc >= 75) return 'B';
+  if (acc >= 65) return 'C';
+  return 'D';
+};
+
+const getGradeColor = (grade: string): string => {
+  switch (grade) {
+    case 'S':
+      return 'text-yellow-500';
+    case 'A':
+      return 'text-green-500';
+    case 'B':
+      return 'text-blue-500';
+    case 'C':
+      return 'text-orange-500';
+    default:
+      return 'text-gray-500';
+  }
+};
+
 export const SongComplete: React.FC<SongCompleteProps> = ({
   songTitle,
   accuracy,
@@ -23,74 +46,51 @@ export const SongComplete: React.FC<SongCompleteProps> = ({
   onBackToLibrary,
 }) => {
   const { t } = useLanguage();
-
-  const getGrade = (acc: number): string => {
-    if (acc >= 95) return 'S';
-    if (acc >= 85) return 'A';
-    if (acc >= 75) return 'B';
-    if (acc >= 65) return 'C';
-    return 'D';
-  };
-
-  const getGradeColor = (grade: string): string => {
-    switch (grade) {
-      case 'S':
-        return 'text-yellow-500';
-      case 'A':
-        return 'text-green-500';
-      case 'B':
-        return 'text-blue-500';
-      case 'C':
-        return 'text-orange-500';
-      default:
-        return 'text-gray-500';
-    }
-  };
-
   const grade = getGrade(accuracy);
   const gradeColor = getGradeColor(grade);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-bg-overlay)]">
+      <div className="mx-4 w-full max-w-md rounded-lg border border-slate-200 bg-white p-8 dark:border-slate-700 dark:bg-slate-900">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">{t.songCompleteTitle}</h2>
-          <p className="text-xl text-gray-600 mb-6">{songTitle}</p>
+          <h2 className="mb-2 text-3xl font-bold text-gray-900 dark:text-slate-100">
+            {t.songCompleteTitle}
+          </h2>
+          <p className="mb-6 text-xl text-gray-600 dark:text-slate-300">{songTitle}</p>
 
-          {/* Grade */}
-          <div className={`text-8xl font-bold mb-6 ${gradeColor}`}>{grade}</div>
+          <div className={`mb-6 text-8xl font-bold ${gradeColor}`}>{grade}</div>
 
-          {/* Stats */}
-          <div className="space-y-3 mb-8">
-            <div className="flex justify-between items-center py-2 border-b">
-              <span className="text-gray-600">{t.accuracy}</span>
-              <span className="text-2xl font-semibold text-gray-900">{accuracy}%</span>
+          <div className="mb-8 space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-200 py-2 dark:border-slate-700">
+              <span className="text-gray-600 dark:text-slate-300">{t.accuracy}</span>
+              <span className="text-2xl font-semibold text-gray-900 dark:text-slate-100">
+                {accuracy}%
+              </span>
             </div>
-            <div className="flex justify-between items-center py-2 border-b">
-              <span className="text-gray-600">{t.correctNotes}</span>
-              <span className="text-xl font-semibold text-gray-900">
+            <div className="flex items-center justify-between border-b border-slate-200 py-2 dark:border-slate-700">
+              <span className="text-gray-600 dark:text-slate-300">{t.correctNotes}</span>
+              <span className="text-xl font-semibold text-gray-900 dark:text-slate-100">
                 {correctNotes} / {totalAttempts}
               </span>
             </div>
-            <div className="flex justify-between items-center py-2 border-b">
-              <span className="text-gray-600">{t.time}</span>
-              <span className="text-xl font-semibold text-gray-900">
+            <div className="flex items-center justify-between border-b border-slate-200 py-2 dark:border-slate-700">
+              <span className="text-gray-600 dark:text-slate-300">{t.time}</span>
+              <span className="text-xl font-semibold text-gray-900 dark:text-slate-100">
                 {formatSongTime(timeElapsed)}
               </span>
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex gap-3">
             <button
               onClick={onRetry}
-              className="flex-1 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
+              className="flex-1 rounded-lg bg-blue-500 px-6 py-3 font-medium text-white transition-colors hover:bg-blue-600"
             >
               {t.retrySong}
             </button>
             <button
               onClick={onBackToLibrary}
-              className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium transition-colors"
+              className="flex-1 rounded-lg bg-gray-200 px-6 py-3 font-medium text-gray-800 transition-colors hover:bg-gray-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600"
             >
               {t.backToLibrary}
             </button>

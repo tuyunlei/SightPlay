@@ -18,7 +18,7 @@ const JianpuDots: React.FC<{ count: number; className?: string }> = ({ count, cl
 );
 
 export const TargetInfo: React.FC<TargetInfoProps> = ({ targetNote, t }) => {
-  if (!targetNote) return <span className="text-sm font-bold">Complete!</span>;
+  if (!targetNote) return <span className="text-sm font-bold">{t.challengeStatusComplete}</span>;
   const labels = getNoteLabels(targetNote.name);
   const upDots = Math.max(0, targetNote.octave - 4);
   const downDots = Math.max(0, 4 - targetNote.octave);

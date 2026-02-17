@@ -46,7 +46,7 @@ type FooterBarProps = {
 
 const FooterBar: React.FC<FooterBarProps> = ({ targetNote, t, showPiano, onTogglePiano }) => (
   <div className="px-2 sm:px-3 pb-2 sm:pb-3">
-    <div className="bg-slate-900/95 dark:bg-white/95 text-white dark:text-slate-900 px-3 sm:px-4 py-2 sm:py-3 rounded-xl shadow-lg backdrop-blur-md border border-slate-700/50">
+    <div className="bg-white/95 dark:bg-slate-900/95 text-slate-900 dark:text-white px-3 sm:px-4 py-2 sm:py-3 rounded-xl shadow-lg backdrop-blur-md border border-slate-200 dark:border-slate-700/50">
       <div className="flex flex-col gap-2 sm:gap-3 sm:grid sm:grid-cols-[1fr_auto] sm:items-center sm:gap-4">
         <TargetInfo targetNote={targetNote} t={t} />
         <button
@@ -103,7 +103,7 @@ const PracticeMainPanel: React.FC<PracticeMainPanelProps> = ({
     <div className="w-full relative group">
       {isMidiConnected && (
         <div className="absolute -top-3 left-4 z-20 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 shadow-sm">
-          <Piano size={10} /> MIDI ACTIVE
+          <Piano size={10} /> {t.midiActive}
         </div>
       )}
 

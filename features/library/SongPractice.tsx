@@ -21,11 +21,11 @@ const SongHeader: React.FC<{
   onExit: () => void;
   t: ReturnType<typeof useLanguage>['t'];
 }> = ({ title, progress, accuracy, timeElapsed, onExit, t }) => (
-  <div className="bg-white border-b-2 border-gray-200 p-4 mb-4">
+  <div className="bg-white dark:bg-slate-900 border-b-2 border-gray-200 dark:border-slate-700 p-4 mb-4">
     <div className="max-w-4xl mx-auto flex justify-between items-center">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
-        <div className="flex gap-4 mt-2 text-sm text-gray-600">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">{title}</h2>
+        <div className="flex gap-4 mt-2 text-sm text-gray-600 dark:text-slate-300">
           <span>
             {t.progress}: {progress}%
           </span>
@@ -41,14 +41,14 @@ const SongHeader: React.FC<{
       </div>
       <button
         onClick={onExit}
-        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium transition-colors"
+        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium transition-colors dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-100"
       >
         {t.exitSong}
       </button>
     </div>
 
     <div className="max-w-4xl mx-auto mt-4">
-      <div className="w-full bg-gray-200 rounded-full h-2">
+      <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
         <div
           className="bg-blue-500 h-2 rounded-full transition-all duration-300"
           style={{ width: `${progress}%` }}
@@ -163,7 +163,7 @@ export const SongPractice: React.FC<SongPracticeProps> = ({ songId, onExit, onCo
   if (!song) {
     return (
       <div className="text-center py-12">
-        <p className="text-red-500">{t.songNotFound}</p>
+        <p className="text-red-500 dark:text-red-400">{t.songNotFound}</p>
         <button onClick={onExit} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
           {t.backToLibrary}
         </button>
