@@ -26,6 +26,7 @@
 - 传给子组件的 callback prop 必须用 useCallback 包裹（防止引用不稳定导致 render loop）
 - 新增功能必须有对应的 E2E 用户路径覆盖（不只是单元测试）
 - **零白屏原则**：任何用户可达的页面/状态组合都不能出现白屏，E2E 必须覆盖验证
+- **TEST_PLAN.md 同步维护**：ROADMAP 新增功能时，必须同步在 `e2e/TEST_PLAN.md` 添加对应场景；开发提交时更新覆盖状态；Review 时检查 TEST_PLAN 一致性
 
 ### CI 分层
 
@@ -182,21 +183,12 @@
 - [x] eslint-plugin-react-hooks 所有规则改 error（exhaustive-deps: error） ← `07dc58b`
 - [x] React StrictMode 已启用（index.tsx）
 - [ ] @typescript-eslint/strict 配置
-- [ ] E2E 全场景覆盖：除 passkey 生物认证外，所有用户可达路径必须有 E2E
-  - [x] 曲库练习 E2E：选歌 → 练习 → 退出 → 进度更新 ← `68d65c5`
-  - [ ] AI 对话 E2E：多轮 + 错误 + 空消息 + 历史保持 + 加载态（开发完成待 review）
-  - [ ] 歌曲完成 E2E：弹完一首歌 → 完成画面 → 评分 → 返回曲库
-  - [ ] Passkey 管理 E2E：查看已有 passkey 列表、删除（mock auth）
-  - [ ] 邀请码管理 E2E：已登录用户生成邀请码
-  - [ ] 推荐系统 E2E：练习后出现推荐卡片 → 点击应用推荐
-  - [ ] 智能提示 E2E：弹错音 → HintBubble 出现 → 提示内容正确
-  - [ ] 手模式切换 E2E：左手/右手/双手切换 → UI 正确响应
-  - [ ] 练习范围选择 E2E：调整范围 → 生成的音符在范围内
-  - [ ] 深浅色模式 E2E：模拟 prefers-color-scheme → 验证 CSS 变量切换
-  - [ ] 语言切换 E2E：切换中/英文 → 页面文本正确切换
-  - [ ] 登出 E2E：登出 → 回到登录页 → session 清除
-- [ ] 开发流程：新功能和对应 E2E 必须同时提交
-- [ ] 底线目标：任何页面/状态组合不能出现白屏
+- [x] 建立 `e2e/TEST_PLAN.md`：系统性测试计划，按模块×场景组织，活文档持续维护 ← `e2e/TEST_PLAN.md`
+  - 已梳理 41 个场景（24 已覆盖 / 15 待补 / 2 不可测），覆盖率 58.5%
+  - [x] 曲库练习 E2E ← `68d65c5`
+  - [x] AI 对话 E2E（多轮 + 错误 + 空消息 + 历史 + 加载态） ← `8379ac8`
+  - [ ] 按 TEST_PLAN 优先级（🔴 > 🟡 > 🟢）逐步补齐剩余 15 个场景
+- [ ] 开发流程绑定：新功能同时更新 TEST_PLAN + E2E
 
 #### P2：集成测试层建立（防住组件交互 bug）
 
