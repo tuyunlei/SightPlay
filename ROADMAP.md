@@ -164,9 +164,10 @@
 
 补充后端日志，目标：出现问题时能快速定位。
 
-- [ ] 所有 API endpoint 的 catch block 记录结构化错误日志（error message + stack + request context）
-- [ ] 关键业务路径加 Sentry breadcrumb（注册、登录、邀请码验证）
-- [ ] 错误响应包含 request ID，方便关联日志
+- [x] 所有 API endpoint 的 catch block 记录结构化错误日志（error message + stack + request context） ← `0e25e39`
+- [x] 关键业务路径加结构化 breadcrumb 日志（注册、登录、邀请码验证） ← `0e25e39`
+- [x] 错误响应包含 request ID，方便关联日志 ← `0e25e39`
+- [x] 共享 logger 工具 + 单元测试（logError、logBreadcrumb、errorResponse、createRequestContext） ← `0e25e39`
 
 ### P4.6 — 质量体系升级
 
