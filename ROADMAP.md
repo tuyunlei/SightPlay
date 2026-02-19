@@ -178,8 +178,8 @@
 
 #### P1：静态分析收紧（自动拦截一整类问题）
 
-- [ ] eslint-plugin-react-hooks 所有规则改 error（不是 warn）
-- [ ] 开启 React StrictMode（开发环境 double render 暴露副作用问题）
+- [x] eslint-plugin-react-hooks 所有规则改 error（exhaustive-deps: error） ← `07dc58b`
+- [x] React StrictMode 已启用（index.tsx）
 - [ ] @typescript-eslint/strict 配置
 - [ ] E2E 路径补全：每个用户可达功能必须有完整 E2E
   - [ ] 曲库练习 E2E：选歌 → 练习 → 完成
