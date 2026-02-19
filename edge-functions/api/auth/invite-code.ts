@@ -3,7 +3,7 @@ import type { KVStore } from '../../platform';
 const INVITE_CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const INVITE_RAW_LENGTH = 8;
 const INVITE_TTL_SECONDS = 7 * 24 * 60 * 60;
-const INVITE_RATE_WINDOW_SECONDS = 10;
+const INVITE_RATE_WINDOW_SECONDS = 60; // CF KV minimum expirationTtl is 60s
 const INVITE_RATE_LIMIT = 10;
 const INVITE_BAN_SECONDS = 60 * 60;
 

@@ -23,6 +23,8 @@
 - 新增 UI 文本必须走 i18n，不允许硬编码中文或英文
 - 新增样式必须使用 design token（颜色变量），不允许硬编码颜色值
 - 所有用户可见的功能路径必须有 Sentry 日志
+- 传给子组件的 callback prop 必须用 useCallback 包裹（防止引用不稳定导致 render loop）
+- 新增功能必须有对应的 E2E 用户路径覆盖（不只是单元测试）
 
 ### CI 分层
 
@@ -32,6 +34,15 @@
 | 单元测试 + 覆盖率            |      ✅      |    ✅     |
 | E2E 测试                     |      —       |    ✅     |
 | build（含 Sentry sourcemap） |      —       |    ✅     |
+| 集成测试（组件协作）         |      ✅      |    ✅     |
+
+### 测试策略分层
+
+| 层级     | 覆盖什么             | 工具         | 能发现的问题                             |
+| -------- | -------------------- | ------------ | ---------------------------------------- |
+| 单元测试 | 单个函数/组件的逻辑  | vitest       | 逻辑错误、边界条件                       |
+| 集成测试 | 多组件协作、状态联动 | vitest + RTL | render loop、prop 不稳定、store 联动 bug |
+| E2E 测试 | 完整用户路径         | Playwright   | 页面级故障、流程断裂                     |
 
 ---
 
@@ -103,7 +114,7 @@
 - [x] API：已注册用户生成邀请码（每码限用一次，一周过期） ← `d1f4daf`
 - [x] 注册页面改造：移除邀请链接入口，改为输入邀请码 ← `d1f4daf`
 - [x] 注册流程：验证邀请码 → 注册 → 标记已使用 ← `d1f4daf`
-- [x] Rate limiting：KV 计数，同 IP 10s >10 次 → 封禁 1h（429） ← `d1f4daf`
+- [x] Rate limiting：KV 计数，同 IP 60s >10 次 → 封禁 1h（429，CF KV TTL ≥60s） ← `d1f4daf`
 - [x] 移除旧的邀请链接相关代码 ← `d1f4daf`
 - [x] Review 修复：auth 组件硬编码字符串 → i18n ← `3764950`
 - [x] Review 修复：admin secret 改用 constant-time 比较 ← `9fd9d6f`
@@ -142,10 +153,52 @@
 逐步提升测试覆盖率准入门槛至 80%。
 
 - [x] 阈值 70% → 73%（73.66%，补了 inviteCode 工具函数测试） ← `5a37aa0`
-- [x] 阈值 73% → 76%（76.34%，补了 useAuth/useRecommendations/noteHandlers 测试） ← `fe480df`
-- [x] 阈值 76% → 80%（80.11%，补了 platform adapter + auth endpoint 测试） ← `b9b4961`
-- [ ] 每次提升前 review 排除列表，确保排除项合理
-- [ ] 规则：不为凑覆盖率而测试；不可测试或低价值代码可申请审批加白
+- [x] 阈值 73% → 76%（76.34%） ← `fe480df`
+- [x] 阈值 76% → 80%（80.11%） ← `b9b4961`
+- [x] 每次提升前 review 排除列表，确保排除项合理
+- [x] 规则：不为凑覆盖率而测试；不可测试或低价值代码可申请审批加白
+
+### P4.5 — 后端可观测性
+
+补充后端日志，目标：出现问题时能快速定位。
+
+- [ ] 所有 API endpoint 的 catch block 记录结构化错误日志（error message + stack + request context）
+- [ ] 关键业务路径加 Sentry breadcrumb（注册、登录、邀请码验证）
+- [ ] 错误响应包含 request ID，方便关联日志
+
+### P4.6 — 质量体系升级
+
+现有测试只能回答"代码被执行了吗"，无法保证组件交互正确性和用户路径完整性。需要系统性补强。
+
+#### P0：立即止血
+
+- [ ] 修复 ContentView.tsx render loop（completeSong/exitSong/backToLib 加 useCallback）
+- [ ] 修复 SongPractice.tsx usePracticeStore selector 加 shallow 比较
+- [ ] 加 ErrorBoundary 兜住 render loop 等运行时崩溃，展示降级 UI 而非白屏
+
+#### P1：静态分析收紧（自动拦截一整类问题）
+
+- [ ] eslint-plugin-react-hooks 所有规则改 error（不是 warn）
+- [ ] 开启 React StrictMode（开发环境 double render 暴露副作用问题）
+- [ ] @typescript-eslint/strict 配置
+- [ ] E2E 路径补全：每个用户可达功能必须有完整 E2E
+  - [ ] 曲库练习 E2E：选歌 → 练习 → 完成
+  - [ ] AI 对话完整流程 E2E
+  - [ ] 设置/偏好 E2E（语言切换、深浅色模式）
+- [ ] 开发流程：新功能和对应 E2E 必须同时提交
+
+#### P2：集成测试层建立（防住组件交互 bug）
+
+- [ ] 建立集成测试规范：多组件 + zustand store 联动的 render 测试
+- [ ] ContentView + SongPractice 集成测试（复现并防止 render loop）
+- [ ] AuthGate + LoginScreen + RegisterCard 集成测试
+- [ ] 每个主要页面（练习、曲库、设置）至少一个多组件联动测试
+
+#### P3：长期演进
+
+- [ ] 评估 React Compiler（React 19+）— 自动 memoize，根治引用稳定性问题
+- [ ] 引入 mutation testing（Stryker）— 度量测试真实有效性，而非覆盖率
+- [ ] 性能回归检测：React Profiler 检测不必要重渲染，设阈值报警
 
 ## P5 — 迁移至 Cloudflare Pages + Workers
 
