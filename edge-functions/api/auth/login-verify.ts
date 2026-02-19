@@ -6,6 +6,7 @@ import {
   type EdgeOneRequestContext,
   type PlatformContext,
 } from '../../platform';
+import { createRequestContext, logBreadcrumb, logError } from '../../utils/logger';
 import { CORS_HEADERS, signJWT, createCookie, requireEnv, resolveOrigin } from '../_auth-helpers';
 
 interface Passkey {
@@ -18,12 +19,38 @@ interface Passkey {
   algorithm?: string;
 }
 
+function jsonResponse(body: object, status = 200, headers?: HeadersInit): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS, ...headers },
+  });
+}
+
+async function issueAuthCookie(platform: PlatformContext): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  const token = await signJWT(
+    { sub: 'owner', iat: now, exp: now + 7 * 24 * 60 * 60 },
+    requireEnv(platform, 'JWT_SECRET')
+  );
+
+  return createCookie('auth_token', token, {
+    maxAge: 7 * 24 * 60 * 60,
+    httpOnly: true,
+    secure: true,
+    sameSite: 'Lax',
+    path: '/',
+  });
+}
+
 export function onRequestOptions(): Response {
   return new Response(null, { headers: CORS_HEADERS });
 }
 
 export async function handlePostLoginVerify(platform: PlatformContext): Promise<Response> {
+  const requestContext = createRequestContext(platform.request);
+
   try {
+    logBreadcrumb('auth.login.start', requestContext);
     const body = (await platform.request.json()) as {
       response: AuthenticationJSON;
     };
@@ -35,10 +62,10 @@ export async function handlePostLoginVerify(platform: PlatformContext): Promise<
 
     const storedChallenge = await platform.kv.get(`challenge:${challenge}`);
     if (!storedChallenge) {
-      return new Response(JSON.stringify({ error: 'Invalid or expired challenge' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      });
+      return jsonResponse(
+        { error: 'Invalid or expired challenge', requestId: requestContext.requestId },
+        400
+      );
     }
 
     const passkeysData = await platform.kv.get('passkeys');
@@ -46,10 +73,10 @@ export async function handlePostLoginVerify(platform: PlatformContext): Promise<
 
     const credential = passkeys.find((pk) => pk.id === body.response.id);
     if (!credential) {
-      return new Response(JSON.stringify({ error: 'Credential not found' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      });
+      return jsonResponse(
+        { error: 'Credential not found', requestId: requestContext.requestId },
+        400
+      );
     }
 
     const { origin } = resolveOrigin(platform);
@@ -75,37 +102,18 @@ export async function handlePostLoginVerify(platform: PlatformContext): Promise<
 
     await platform.kv.delete(`challenge:${challenge}`);
 
-    const now = Math.floor(Date.now() / 1000);
-    const token = await signJWT(
-      {
-        sub: 'owner',
-        iat: now,
-        exp: now + 7 * 24 * 60 * 60,
-      },
-      requireEnv(platform, 'JWT_SECRET')
-    );
+    const cookie = await issueAuthCookie(platform);
 
-    const cookie = createCookie('auth_token', token, {
-      maxAge: 7 * 24 * 60 * 60,
-      httpOnly: true,
-      secure: true,
-      sameSite: 'Lax',
-      path: '/',
-    });
+    logBreadcrumb('auth.login.success', requestContext, { credentialId: credential.id });
 
-    return new Response(JSON.stringify({ verified: true }), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Set-Cookie': cookie,
-        ...CORS_HEADERS,
-      },
-    });
+    return jsonResponse({ verified: true }, 200, { 'Set-Cookie': cookie });
   } catch (error) {
-    console.error('Error verifying authentication:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-    });
+    logBreadcrumb('auth.login.failure', requestContext);
+    logError('auth.login-verify', error, requestContext);
+    return jsonResponse(
+      { error: 'Internal server error', requestId: requestContext.requestId },
+      500
+    );
   }
 }
 

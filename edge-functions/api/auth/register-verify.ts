@@ -6,6 +6,7 @@ import {
   type EdgeOneRequestContext,
   type PlatformContext,
 } from '../../platform';
+import { createRequestContext, logBreadcrumb, logError } from '../../utils/logger';
 import { CORS_HEADERS, signJWT, createCookie, requireEnv, resolveOrigin } from '../_auth-helpers';
 
 import {
@@ -33,19 +34,42 @@ function formatPasskeyName(authenticatorName: string): string {
   return `${authenticatorName} · ${month} ${date.getDate()}, ${date.getFullYear()}`;
 }
 
+function jsonResponse(body: object, status = 200, headers?: HeadersInit): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS, ...headers },
+  });
+}
+
+async function issueAuthCookie(platform: PlatformContext): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  const token = await signJWT(
+    { sub: 'owner', iat: now, exp: now + 7 * 24 * 60 * 60 },
+    requireEnv(platform, 'JWT_SECRET')
+  );
+
+  return createCookie('auth_token', token, {
+    maxAge: 7 * 24 * 60 * 60,
+    httpOnly: true,
+    secure: true,
+    sameSite: 'Lax',
+    path: '/',
+  });
+}
+
 export function onRequestOptions(): Response {
   return new Response(null, { headers: CORS_HEADERS });
 }
 
-function unauthorized(error: string): Response {
-  return new Response(JSON.stringify({ error }), {
-    status: 401,
-    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-  });
+function unauthorized(error: string, requestId: string): Response {
+  return jsonResponse({ error, requestId }, 401);
 }
 
 export async function handlePostRegisterVerify(platform: PlatformContext): Promise<Response> {
+  const requestContext = createRequestContext(platform.request);
+
   try {
+    logBreadcrumb('auth.registration.start', requestContext);
     const body = (await platform.request.json()) as {
       response: RegistrationJSON;
       name?: string;
@@ -53,16 +77,18 @@ export async function handlePostRegisterVerify(platform: PlatformContext): Promi
     };
 
     if (!body.inviteCode || !isInviteCodeFormatValid(body.inviteCode)) {
-      return unauthorized('Invite code is invalid');
+      return unauthorized('Invite code is invalid', requestContext.requestId);
     }
 
     const normalizedCode = toDisplayInviteCode(body.inviteCode);
     const inviteStorageKey = inviteKey(normalizedCode);
     const invite = parseInviteRecord(await platform.kv.get(inviteStorageKey));
 
-    if (!invite) return unauthorized('Invite code is invalid');
-    if (invite.usedBy) return unauthorized('Invite code has already been used');
-    if (isInviteRecordExpired(invite)) return unauthorized('Invite code has expired');
+    if (!invite) return unauthorized('Invite code is invalid', requestContext.requestId);
+    if (invite.usedBy)
+      return unauthorized('Invite code has already been used', requestContext.requestId);
+    if (isInviteRecordExpired(invite))
+      return unauthorized('Invite code has expired', requestContext.requestId);
 
     const clientDataJSON = JSON.parse(
       atob(body.response.response.clientDataJSON.replace(/-/g, '+').replace(/_/g, '/'))
@@ -71,10 +97,10 @@ export async function handlePostRegisterVerify(platform: PlatformContext): Promi
 
     const storedChallenge = await platform.kv.get(`challenge:${challenge}`);
     if (!storedChallenge) {
-      return new Response(JSON.stringify({ error: 'Invalid or expired challenge' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      });
+      return jsonResponse(
+        { error: 'Invalid or expired challenge', requestId: requestContext.requestId },
+        400
+      );
     }
 
     const { origin } = resolveOrigin(platform);
@@ -105,29 +131,16 @@ export async function handlePostRegisterVerify(platform: PlatformContext): Promi
       { expirationTtl: Math.max(1, Math.ceil((invite.expiresAt - usedAt) / 1000)) }
     );
 
-    const now = Math.floor(Date.now() / 1000);
-    const token = await signJWT(
-      { sub: 'owner', iat: now, exp: now + 7 * 24 * 60 * 60 },
-      requireEnv(platform, 'JWT_SECRET')
-    );
-    const cookie = createCookie('auth_token', token, {
-      maxAge: 7 * 24 * 60 * 60,
-      httpOnly: true,
-      secure: true,
-      sameSite: 'Lax',
-      path: '/',
-    });
+    const cookie = await issueAuthCookie(platform);
 
-    return new Response(JSON.stringify({ verified: true }), {
-      headers: { 'Content-Type': 'application/json', 'Set-Cookie': cookie, ...CORS_HEADERS },
-    });
+    logBreadcrumb('auth.registration.success', requestContext, { credentialId: credential.id });
+
+    return jsonResponse({ verified: true }, 200, { 'Set-Cookie': cookie });
   } catch (error) {
+    logBreadcrumb('auth.registration.failure', requestContext);
+    logError('auth.register-verify', error, requestContext);
     const message = error instanceof Error ? error.message : String(error);
-    console.error('Error verifying registration:', message);
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-    });
+    return jsonResponse({ error: message, requestId: requestContext.requestId }, 500);
   }
 }
 

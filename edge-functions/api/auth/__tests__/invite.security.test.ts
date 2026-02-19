@@ -48,7 +48,10 @@ describe('invite endpoint security', () => {
 
     const response = await handlePostInviteAdmin(context);
     expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({ error: 'Unauthorized' });
+    await expect(response.json()).resolves.toMatchObject({
+      error: 'Unauthorized',
+      requestId: expect.any(String),
+    });
   });
 
   it('admin endpoint rejects requests with wrong secret', async () => {
@@ -65,7 +68,10 @@ describe('invite endpoint security', () => {
 
     const response = await handlePostInviteAdmin(context);
     expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({ error: 'Unauthorized' });
+    await expect(response.json()).resolves.toMatchObject({
+      error: 'Unauthorized',
+      requestId: expect.any(String),
+    });
   });
 
   it('admin endpoint accepts correct secret and returns codes', async () => {
@@ -167,6 +173,9 @@ describe('invite endpoint security', () => {
       createContext({ kv, request: new Request(url, { headers }) })
     );
     expect(blocked.status).toBe(429);
-    await expect(blocked.json()).resolves.toEqual({ error: 'Too many requests' });
+    await expect(blocked.json()).resolves.toMatchObject({
+      error: 'Too many requests',
+      requestId: expect.any(String),
+    });
   });
 });

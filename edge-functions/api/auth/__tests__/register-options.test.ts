@@ -48,7 +48,10 @@ describe('register-options endpoint', () => {
       createContext({ inviteCode: 'bad' }, new FakeKV())
     );
     expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({ error: 'Invite code is invalid' });
+    await expect(response.json()).resolves.toMatchObject({
+      error: 'Invite code is invalid',
+      requestId: expect.any(String),
+    });
   });
 
   it('rejects used or expired invite codes', async () => {
