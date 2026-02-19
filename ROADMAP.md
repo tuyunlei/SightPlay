@@ -166,33 +166,39 @@
 - [ ] 关键业务路径加 Sentry breadcrumb（注册、登录、邀请码验证）
 - [ ] 错误响应包含 request ID，方便关联日志
 
-### P4.6 — 测试体系补强
+### P4.6 — 质量体系升级
 
-现有测试（单元 + E2E）存在结构性盲区：组件间交互 bug 系统性逃逸。
+现有测试只能回答"代码被执行了吗"，无法保证组件交互正确性和用户路径完整性。需要系统性补强。
 
-#### 集成测试层（补缺）
+#### P0：立即止血
+
+- [ ] 修复 ContentView.tsx render loop（completeSong/exitSong/backToLib 加 useCallback）
+- [ ] 修复 SongPractice.tsx usePracticeStore selector 加 shallow 比较
+- [ ] 加 ErrorBoundary 兜住 render loop 等运行时崩溃，展示降级 UI 而非白屏
+
+#### P1：静态分析收紧（自动拦截一整类问题）
+
+- [ ] eslint-plugin-react-hooks 所有规则改 error（不是 warn）
+- [ ] 开启 React StrictMode（开发环境 double render 暴露副作用问题）
+- [ ] @typescript-eslint/strict 配置
+- [ ] E2E 路径补全：每个用户可达功能必须有完整 E2E
+  - [ ] 曲库练习 E2E：选歌 → 练习 → 完成
+  - [ ] AI 对话完整流程 E2E
+  - [ ] 设置/偏好 E2E（语言切换、深浅色模式）
+- [ ] 开发流程：新功能和对应 E2E 必须同时提交
+
+#### P2：集成测试层建立（防住组件交互 bug）
 
 - [ ] 建立集成测试规范：多组件 + zustand store 联动的 render 测试
 - [ ] ContentView + SongPractice 集成测试（复现并防止 render loop）
-- [ ] AuthGate + LoginScreen + RegisterCard 集成测试（登录失败→注册引导流程）
-- [ ] 关键组件组合至少一个集成测试，防止 prop 引用不稳定问题
+- [ ] AuthGate + LoginScreen + RegisterCard 集成测试
+- [ ] 每个主要页面（练习、曲库、设置）至少一个多组件联动测试
 
-#### E2E 用户路径补全
+#### P3：长期演进
 
-- [ ] 曲库练习 E2E：选歌 → 练习 → 完成
-- [ ] AI 对话完整流程 E2E（当前只有 mock 层）
-- [ ] 设置/偏好 E2E（语言切换、深浅色模式）
-
-#### 静态分析强化
-
-- [ ] eslint-plugin-react-hooks exhaustive-deps 严格模式
-- [ ] 自定义 lint 规则或 code review checklist：传给子组件的 callback 必须 useCallback
-- [ ] zustand selector 返回对象字面量时建议加 shallow 比较
-
-#### 修复已知问题
-
-- [ ] ContentView.tsx：completeSong/exitSong/backToLib 加 useCallback（render loop bug）
-- [ ] SongPractice.tsx：usePracticeStore selector 加 shallow 比较（性能优化）
+- [ ] 评估 React Compiler（React 19+）— 自动 memoize，根治引用稳定性问题
+- [ ] 引入 mutation testing（Stryker）— 度量测试真实有效性，而非覆盖率
+- [ ] 性能回归检测：React Profiler 检测不必要重渲染，设阈值报警
 
 ## P5 — 迁移至 Cloudflare Pages + Workers
 
