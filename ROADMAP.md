@@ -25,6 +25,8 @@
 - 所有用户可见的功能路径必须有 Sentry 日志
 - 传给子组件的 callback prop 必须用 useCallback 包裹（防止引用不稳定导致 render loop）
 - 新增功能必须有对应的 E2E 用户路径覆盖（不只是单元测试）
+- **零白屏原则**：任何用户可达的页面/状态组合都不能出现白屏，E2E 必须覆盖验证
+- **TEST_PLAN.md 同步维护**：ROADMAP 新增功能时，必须同步在 `e2e/TEST_PLAN.md` 添加对应场景；开发提交时更新覆盖状态；Review 时检查 TEST_PLAN 一致性
 
 ### CI 分层
 
@@ -172,20 +174,21 @@
 
 #### P0：立即止血
 
-- [ ] 修复 ContentView.tsx render loop（completeSong/exitSong/backToLib 加 useCallback）
-- [ ] 修复 SongPractice.tsx usePracticeStore selector 加 shallow 比较
-- [ ] 加 ErrorBoundary 兜住 render loop 等运行时崩溃，展示降级 UI 而非白屏
+- [x] 修复 ContentView.tsx render loop（所有 callback props 加 useCallback） ← `ae7704e`
+- [x] 修复 SongPractice.tsx usePracticeStore selector 加 useShallow ← `ae7704e`
+- [x] 加 ErrorBoundary 兜住运行时崩溃，Sentry 上报 + i18n 降级 UI ← `ae7704e`
 
 #### P1：静态分析收紧（自动拦截一整类问题）
 
-- [ ] eslint-plugin-react-hooks 所有规则改 error（不是 warn）
-- [ ] 开启 React StrictMode（开发环境 double render 暴露副作用问题）
+- [x] eslint-plugin-react-hooks 所有规则改 error（exhaustive-deps: error） ← `07dc58b`
+- [x] React StrictMode 已启用（index.tsx）
 - [ ] @typescript-eslint/strict 配置
-- [ ] E2E 路径补全：每个用户可达功能必须有完整 E2E
-  - [ ] 曲库练习 E2E：选歌 → 练习 → 完成
-  - [ ] AI 对话完整流程 E2E
-  - [ ] 设置/偏好 E2E（语言切换、深浅色模式）
-- [ ] 开发流程：新功能和对应 E2E 必须同时提交
+- [x] 建立 `e2e/TEST_PLAN.md`：系统性测试计划，按模块×场景组织，活文档持续维护 ← `e2e/TEST_PLAN.md`
+  - 已梳理 41 个场景（24 已覆盖 / 15 待补 / 2 不可测），覆盖率 58.5%
+  - [x] 曲库练习 E2E ← `68d65c5`
+  - [x] AI 对话 E2E（多轮 + 错误 + 空消息 + 历史 + 加载态） ← `8379ac8`
+  - [ ] 按 TEST_PLAN 优先级（🔴 > 🟡 > 🟢）逐步补齐剩余 15 个场景
+- [ ] 开发流程绑定：新功能同时更新 TEST_PLAN + E2E
 
 #### P2：集成测试层建立（防住组件交互 bug）
 

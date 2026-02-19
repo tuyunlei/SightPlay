@@ -122,6 +122,7 @@ export const zh = {
   passkeyRemove: '删除',
   passkeyRemoveConfirm: '确定要删除这个 Passkey 吗？',
   passkeyRemoveFailed: '删除 Passkey 失败',
+  authLogoutButton: '退出登录',
   authErrorCanceled: '认证已取消，请重试。',
   authErrorNotSupportedDevice: '你的设备不支持 Passkey，请使用支持生物识别认证的设备。',
   authErrorConnectionTimeout: '连接超时，请检查网络后重试。',
@@ -142,4 +143,7 @@ export const zh = {
   aiChallengeCompletedUserMessage: '我完成挑战了！我弹得怎么样？',
   passkeyButtonTitle: '管理 Passkey',
   aiConnectionErrorMessage: '连接 AI 失败。',
+  errorBoundaryTitle: '出了点问题',
+  errorBoundaryDescription: '发生了意外错误，请重试。',
+  errorBoundaryRetry: '重试',
 };

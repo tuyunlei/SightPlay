@@ -122,6 +122,7 @@ export const en = {
   passkeyRemove: 'Remove',
   passkeyRemoveConfirm: 'Are you sure you want to remove this passkey?',
   passkeyRemoveFailed: 'Failed to remove passkey',
+  authLogoutButton: 'Logout',
   authErrorCanceled: 'Authentication was canceled. Please try again.',
   authErrorNotSupportedDevice:
     'Your device does not support passkeys. Please use a device with biometric authentication.',
@@ -143,4 +144,7 @@ export const en = {
   aiChallengeCompletedUserMessage: 'I finished the challenge! How did I do?',
   passkeyButtonTitle: 'Manage Passkeys',
   aiConnectionErrorMessage: 'Error connecting to AI.',
+  errorBoundaryTitle: 'Something went wrong',
+  errorBoundaryDescription: 'An unexpected error occurred. Please try again.',
+  errorBoundaryRetry: 'Retry',
 };
