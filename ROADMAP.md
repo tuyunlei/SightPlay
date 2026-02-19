@@ -172,9 +172,9 @@
 
 #### P0：立即止血
 
-- [ ] 修复 ContentView.tsx render loop（completeSong/exitSong/backToLib 加 useCallback）
-- [ ] 修复 SongPractice.tsx usePracticeStore selector 加 shallow 比较
-- [ ] 加 ErrorBoundary 兜住 render loop 等运行时崩溃，展示降级 UI 而非白屏
+- [x] 修复 ContentView.tsx render loop（所有 callback props 加 useCallback） ← `ae7704e`
+- [x] 修复 SongPractice.tsx usePracticeStore selector 加 useShallow ← `ae7704e`
+- [x] 加 ErrorBoundary 兜住运行时崩溃，Sentry 上报 + i18n 降级 UI ← `ae7704e`
 
 #### P1：静态分析收紧（自动拦截一整类问题）
 
