@@ -23,6 +23,8 @@
 - 新增 UI 文本必须走 i18n，不允许硬编码中文或英文
 - 新增样式必须使用 design token（颜色变量），不允许硬编码颜色值
 - 所有用户可见的功能路径必须有 Sentry 日志
+- 传给子组件的 callback prop 必须用 useCallback 包裹（防止引用不稳定导致 render loop）
+- 新增功能必须有对应的 E2E 用户路径覆盖（不只是单元测试）
 
 ### CI 分层
 
@@ -32,6 +34,15 @@
 | 单元测试 + 覆盖率            |      ✅      |    ✅     |
 | E2E 测试                     |      —       |    ✅     |
 | build（含 Sentry sourcemap） |      —       |    ✅     |
+| 集成测试（组件协作）         |      ✅      |    ✅     |
+
+### 测试策略分层
+
+| 层级 | 覆盖什么 | 工具 | 能发现的问题 |
+| ---- | -------- | ---- | ------------ |
+| 单元测试 | 单个函数/组件的逻辑 | vitest | 逻辑错误、边界条件 |
+| 集成测试 | 多组件协作、状态联动 | vitest + RTL | render loop、prop 不稳定、store 联动 bug |
+| E2E 测试 | 完整用户路径 | Playwright | 页面级故障、流程断裂 |
 
 ---
 
@@ -154,6 +165,34 @@
 - [ ] 所有 API endpoint 的 catch block 记录结构化错误日志（error message + stack + request context）
 - [ ] 关键业务路径加 Sentry breadcrumb（注册、登录、邀请码验证）
 - [ ] 错误响应包含 request ID，方便关联日志
+
+### P4.6 — 测试体系补强
+
+现有测试（单元 + E2E）存在结构性盲区：组件间交互 bug 系统性逃逸。
+
+#### 集成测试层（补缺）
+
+- [ ] 建立集成测试规范：多组件 + zustand store 联动的 render 测试
+- [ ] ContentView + SongPractice 集成测试（复现并防止 render loop）
+- [ ] AuthGate + LoginScreen + RegisterCard 集成测试（登录失败→注册引导流程）
+- [ ] 关键组件组合至少一个集成测试，防止 prop 引用不稳定问题
+
+#### E2E 用户路径补全
+
+- [ ] 曲库练习 E2E：选歌 → 练习 → 完成
+- [ ] AI 对话完整流程 E2E（当前只有 mock 层）
+- [ ] 设置/偏好 E2E（语言切换、深浅色模式）
+
+#### 静态分析强化
+
+- [ ] eslint-plugin-react-hooks exhaustive-deps 严格模式
+- [ ] 自定义 lint 规则或 code review checklist：传给子组件的 callback 必须 useCallback
+- [ ] zustand selector 返回对象字面量时建议加 shallow 比较
+
+#### 修复已知问题
+
+- [ ] ContentView.tsx：completeSong/exitSong/backToLib 加 useCallback（render loop bug）
+- [ ] SongPractice.tsx：usePracticeStore selector 加 shallow 比较（性能优化）
 
 ## P5 — 迁移至 Cloudflare Pages + Workers
 
