@@ -34,6 +34,15 @@ type MainAppContentProps = {
 };
 
 export const MainAppContent: React.FC<MainAppContentProps> = (props) => {
+  if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
+    const forceErrorBoundary = new URLSearchParams(window.location.search).get(
+      '__forceErrorBoundary'
+    );
+    if (forceErrorBoundary === '1') {
+      throw new Error('E2E forced child render error');
+    }
+  }
+
   return (
     <>
       <BackgroundDecor />
