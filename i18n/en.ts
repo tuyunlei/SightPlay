@@ -143,4 +143,7 @@ export const en = {
   aiChallengeCompletedUserMessage: 'I finished the challenge! How did I do?',
   passkeyButtonTitle: 'Manage Passkeys',
   aiConnectionErrorMessage: 'Error connecting to AI.',
+  errorBoundaryTitle: 'Something went wrong',
+  errorBoundaryDescription: 'An unexpected error occurred. Please try again.',
+  errorBoundaryRetry: 'Retry',
 };

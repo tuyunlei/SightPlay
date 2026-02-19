@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { ViewMode } from './components/navigation/NavigationTabs';
 import { AuthGate } from './features/auth/AuthGate';
 import { useAiCoach } from './hooks/useAiCoach';
@@ -47,36 +48,38 @@ const App = () => {
   }, [sendMessage, t.aiChallengeCompletedUserMessage]);
 
   return (
-    <AuthGate initialAuthView={initialAuthView} initialInviteCode={inviteCodeFromUrl}>
-      <div
-        className="bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] flex flex-col font-sans"
-        style={{ minHeight: '100dvh' }}
-      >
-        <MainAppContent
-          state={state}
-          derived={derived}
-          actions={actions}
-          pressedKeys={pressedKeys}
-          t={t}
-          toggleLang={toggleLang}
-          chatInput={chatInput}
-          setChatInput={setChatInput}
-          chatHistory={chatHistory}
-          isLoadingAi={isLoadingAi}
-          sendMessage={sendMessage}
-          chatEndRef={chatEndRef}
-          lang={lang}
-          showPasskeyManagement={showPasskeyManagement}
-          setShowPasskeyManagement={setShowPasskeyManagement}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          selectedSongId={selectedSongId}
-          setSelectedSongId={setSelectedSongId}
-          showSongComplete={showSongComplete}
-          setShowSongComplete={setShowSongComplete}
-        />
-      </div>
-    </AuthGate>
+    <ErrorBoundary t={t}>
+      <AuthGate initialAuthView={initialAuthView} initialInviteCode={inviteCodeFromUrl}>
+        <div
+          className="bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] flex flex-col font-sans"
+          style={{ minHeight: '100dvh' }}
+        >
+          <MainAppContent
+            state={state}
+            derived={derived}
+            actions={actions}
+            pressedKeys={pressedKeys}
+            t={t}
+            toggleLang={toggleLang}
+            chatInput={chatInput}
+            setChatInput={setChatInput}
+            chatHistory={chatHistory}
+            isLoadingAi={isLoadingAi}
+            sendMessage={sendMessage}
+            chatEndRef={chatEndRef}
+            lang={lang}
+            showPasskeyManagement={showPasskeyManagement}
+            setShowPasskeyManagement={setShowPasskeyManagement}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            selectedSongId={selectedSongId}
+            setSelectedSongId={setSelectedSongId}
+            showSongComplete={showSongComplete}
+            setShowSongComplete={setShowSongComplete}
+          />
+        </div>
+      </AuthGate>
+    </ErrorBoundary>
   );
 };
 
