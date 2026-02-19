@@ -5,6 +5,7 @@ import {
   type EdgeOneRequestContext,
   type PlatformContext,
 } from '../../platform';
+import { createRequestContext, logBreadcrumb, logError } from '../../utils/logger';
 import { CORS_HEADERS, resolveOrigin } from '../_auth-helpers';
 
 interface Passkey {
@@ -21,15 +22,21 @@ export function onRequestOptions(): Response {
 }
 
 export async function handlePostLoginOptions(platform: PlatformContext): Promise<Response> {
+  const requestContext = createRequestContext(platform.request);
+
   try {
+    logBreadcrumb('auth.login.start', requestContext);
     const passkeysData = await platform.kv.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
     if (passkeys.length === 0) {
-      return new Response(JSON.stringify({ error: 'No passkeys registered' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      });
+      return new Response(
+        JSON.stringify({ error: 'No passkeys registered', requestId: requestContext.requestId }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+        }
+      );
     }
 
     const challenge = server.randomChallenge();
@@ -51,15 +58,21 @@ export async function handlePostLoginOptions(platform: PlatformContext): Promise
     const challengeKey = `challenge:${challenge}`;
     await platform.kv.put(challengeKey, challenge, { expirationTtl: 300 });
 
+    logBreadcrumb('auth.login.success', requestContext);
+
     return new Response(JSON.stringify(options), {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   } catch (error) {
-    console.error('Error generating authentication options:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-    });
+    logBreadcrumb('auth.login.failure', requestContext);
+    logError('auth.login-options', error, requestContext);
+    return new Response(
+      JSON.stringify({ error: 'Internal server error', requestId: requestContext.requestId }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      }
+    );
   }
 }
 

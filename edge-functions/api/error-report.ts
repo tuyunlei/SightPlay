@@ -3,6 +3,7 @@ import {
   type EdgeOneRequestContext,
   type PlatformContext,
 } from '../platform';
+import { createRequestContext, logError } from '../utils/logger';
 
 import { CORS_HEADERS } from './_auth-helpers';
 
@@ -20,6 +21,8 @@ export function onRequestOptions(): Response {
 }
 
 export async function handlePostErrorReport(platform: PlatformContext): Promise<Response> {
+  const requestContext = createRequestContext(platform.request);
+
   try {
     const body = (await platform.request.json()) as Partial<ErrorReport>;
 
@@ -42,8 +45,9 @@ export async function handlePostErrorReport(platform: PlatformContext): Promise<
     return new Response(JSON.stringify({ ok: true }), {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
-  } catch {
-    return new Response(JSON.stringify({ ok: false }), {
+  } catch (error) {
+    logError('error-report.post', error, requestContext);
+    return new Response(JSON.stringify({ ok: false, requestId: requestContext.requestId }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
@@ -55,6 +59,8 @@ export async function onRequestPost(context: EdgeOneRequestContext): Promise<Res
 }
 
 export async function handleGetErrorReport(platform: PlatformContext): Promise<Response> {
+  const requestContext = createRequestContext(platform.request);
+
   try {
     const logsData = await platform.kv.get('error_logs');
     const logs = logsData ? JSON.parse(logsData) : [];
@@ -62,7 +68,8 @@ export async function handleGetErrorReport(platform: PlatformContext): Promise<R
     return new Response(JSON.stringify(logs, null, 2), {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
-  } catch {
+  } catch (error) {
+    logError('error-report.get', error, requestContext);
     return new Response(JSON.stringify([]), {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });

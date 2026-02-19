@@ -3,6 +3,7 @@ import {
   type EdgeOneRequestContext,
   type PlatformContext,
 } from '../../platform';
+import { createRequestContext, logError } from '../../utils/logger';
 import { CORS_HEADERS, getAuthenticatedUser, requireEnv } from '../_auth-helpers';
 
 interface Passkey {
@@ -19,13 +20,18 @@ export function onRequestOptions(): Response {
 }
 
 export async function handleGetPasskeys(platform: PlatformContext): Promise<Response> {
+  const requestContext = createRequestContext(platform.request);
+
   try {
     const user = await getAuthenticatedUser(platform.request, requireEnv(platform, 'JWT_SECRET'));
     if (!user) {
-      return new Response(JSON.stringify({ error: 'Authentication required' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      });
+      return new Response(
+        JSON.stringify({ error: 'Authentication required', requestId: requestContext.requestId }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+        }
+      );
     }
 
     const passkeysData = await platform.kv.get('passkeys');
@@ -41,11 +47,14 @@ export async function handleGetPasskeys(platform: PlatformContext): Promise<Resp
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   } catch (error) {
-    console.error('Error listing passkeys:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-    });
+    logError('auth.passkeys.list', error, requestContext);
+    return new Response(
+      JSON.stringify({ error: 'Internal server error', requestId: requestContext.requestId }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      }
+    );
   }
 }
 
@@ -54,42 +63,59 @@ export async function onRequestGet(context: EdgeOneRequestContext): Promise<Resp
 }
 
 export async function handleDeletePasskey(platform: PlatformContext): Promise<Response> {
+  const requestContext = createRequestContext(platform.request);
+
   try {
     const user = await getAuthenticatedUser(platform.request, requireEnv(platform, 'JWT_SECRET'));
     if (!user) {
-      return new Response(JSON.stringify({ error: 'Authentication required' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      });
+      return new Response(
+        JSON.stringify({ error: 'Authentication required', requestId: requestContext.requestId }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+        }
+      );
     }
 
     const url = new URL(platform.request.url);
     const passkeyId = url.searchParams.get('id');
 
     if (!passkeyId) {
-      return new Response(JSON.stringify({ error: 'Passkey ID required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      });
+      return new Response(
+        JSON.stringify({ error: 'Passkey ID required', requestId: requestContext.requestId }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+        }
+      );
     }
 
     const passkeysData = await platform.kv.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
 
     if (passkeys.length === 1) {
-      return new Response(JSON.stringify({ error: 'Cannot remove the last passkey' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      });
+      return new Response(
+        JSON.stringify({
+          error: 'Cannot remove the last passkey',
+          requestId: requestContext.requestId,
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+        }
+      );
     }
 
     const updatedPasskeys = passkeys.filter((pk) => pk.id !== passkeyId);
 
     if (updatedPasskeys.length === passkeys.length) {
-      return new Response(JSON.stringify({ error: 'Passkey not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      });
+      return new Response(
+        JSON.stringify({ error: 'Passkey not found', requestId: requestContext.requestId }),
+        {
+          status: 404,
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+        }
+      );
     }
 
     await platform.kv.put('passkeys', JSON.stringify(updatedPasskeys));
@@ -98,11 +124,14 @@ export async function handleDeletePasskey(platform: PlatformContext): Promise<Re
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   } catch (error) {
-    console.error('Error deleting passkey:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-    });
+    logError('auth.passkeys.delete', error, requestContext);
+    return new Response(
+      JSON.stringify({ error: 'Internal server error', requestId: requestContext.requestId }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      }
+    );
   }
 }
 

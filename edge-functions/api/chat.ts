@@ -3,6 +3,7 @@ import {
   type EdgeOneRequestContext,
   type PlatformContext,
 } from '../platform';
+import { createRequestContext, logError } from '../utils/logger';
 
 import { CORS_HEADERS, getAuthenticatedUser, requireEnv } from './_auth-helpers';
 
@@ -90,7 +91,11 @@ function buildGeminiRequestBody(message: string, systemInstruction: string) {
   };
 }
 
-async function callGemini(apiKey: string, requestBody: object): Promise<Response> {
+async function callGemini(
+  apiKey: string,
+  requestBody: object,
+  requestContext: { requestId: string; method: string; path: string }
+): Promise<Response> {
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
     {
@@ -102,15 +107,18 @@ async function callGemini(apiKey: string, requestBody: object): Promise<Response
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('Gemini API error:', errorText);
-    return jsonResponse({ error: 'Gemini API error' }, 502);
+    logError('chat.gemini.upstream', errorText, {
+      ...requestContext,
+      status: response.status,
+    });
+    return jsonResponse({ error: 'Gemini API error', requestId: requestContext.requestId }, 502);
   }
 
   const data = (await response.json()) as GeminiResponse;
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
   if (!text) {
-    return jsonResponse({ error: 'No response from AI' }, 502);
+    return jsonResponse({ error: 'No response from AI', requestId: requestContext.requestId }, 502);
   }
 
   return jsonResponse(JSON.parse(text));
@@ -121,8 +129,13 @@ export function onRequestOptions(): Response {
 }
 
 export async function handlePostChat(platform: PlatformContext): Promise<Response> {
+  const requestContext = createRequestContext(platform.request);
   const user = await getAuthenticatedUser(platform.request, requireEnv(platform, 'JWT_SECRET'));
-  if (!user) return jsonResponse({ error: 'Authentication required' }, 401);
+  if (!user)
+    return jsonResponse(
+      { error: 'Authentication required', requestId: requestContext.requestId },
+      401
+    );
 
   const { message, clef, lang } = (await platform.request.json()) as ChatRequestBody;
   const apiKey = requireEnv(platform, 'GEMINI_API_KEY');
@@ -130,10 +143,13 @@ export async function handlePostChat(platform: PlatformContext): Promise<Respons
   try {
     const systemInstruction = buildSystemInstruction(clef, lang);
     const requestBody = buildGeminiRequestBody(message, systemInstruction);
-    return await callGemini(apiKey, requestBody);
+    return await callGemini(apiKey, requestBody, requestContext);
   } catch (error) {
-    console.error('Edge function error:', error);
-    return jsonResponse({ error: 'Internal server error' }, 500);
+    logError('chat.post', error, requestContext);
+    return jsonResponse(
+      { error: 'Internal server error', requestId: requestContext.requestId },
+      500
+    );
   }
 }
 
