@@ -80,7 +80,7 @@ describe('invite-code utils', () => {
     expect(stillBanned.retryAfterSeconds).toBeGreaterThan(0);
   });
 
-  it('resets window after 10 seconds', async () => {
+  it('resets window after 60 seconds', async () => {
     const kv = new FakeKV();
     const now = 2_000_000;
 
@@ -88,7 +88,7 @@ describe('invite-code utils', () => {
       await consumeInviteValidationRateLimit(kv, '2.2.2.2', now + i * 100);
     }
 
-    const afterWindow = await consumeInviteValidationRateLimit(kv, '2.2.2.2', now + 11_000);
+    const afterWindow = await consumeInviteValidationRateLimit(kv, '2.2.2.2', now + 61_000);
     expect(afterWindow.blocked).toBe(false);
   });
 });
