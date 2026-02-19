@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { ViewMode } from '../components/navigation/NavigationTabs';
 import { getSongById } from '../data/songs';
@@ -68,29 +68,36 @@ export const ContentView: React.FC<ContentViewProps> = (props) => {
     setSelectedSongId
   );
 
-  const exitSong = () => {
+  const exitSong = useCallback(() => {
     setViewMode('library');
     setSelectedSongId(null);
-  };
-  const completeSong = () => {
+  }, [setViewMode, setSelectedSongId]);
+
+  const completeSong = useCallback(() => {
     setShowSongComplete(true);
     const song = selectedSongId ? getSongById(selectedSongId) : undefined;
     if (song) onSongComplete(song.difficulty);
-  };
-  const backToLib = () => {
+  }, [selectedSongId, setShowSongComplete, onSongComplete]);
+
+  const backToLib = useCallback(() => {
     setShowSongComplete(false);
     exitSong();
-  };
+  }, [setShowSongComplete, exitSong]);
+
+  const selectSong = useCallback(
+    (id: string) => {
+      setSelectedSongId(id);
+      setViewMode('song-practice');
+    },
+    [setSelectedSongId, setViewMode]
+  );
+
+  const retrySong = useCallback(() => {
+    setShowSongComplete(false);
+  }, [setShowSongComplete]);
 
   if (viewMode === 'library') {
-    return (
-      <SongLibrary
-        onSongSelect={(id) => {
-          setSelectedSongId(id);
-          setViewMode('song-practice');
-        }}
-      />
-    );
+    return <SongLibrary onSongSelect={selectSong} />;
   }
 
   if (viewMode === 'song-practice' && selectedSongId) {
@@ -102,7 +109,7 @@ export const ContentView: React.FC<ContentViewProps> = (props) => {
         t={t}
         onExit={exitSong}
         onComplete={completeSong}
-        onRetry={() => setShowSongComplete(false)}
+        onRetry={retrySong}
         onBackToLibrary={backToLib}
         onApplyRec={applyRec}
         onDismissRec={dismiss}

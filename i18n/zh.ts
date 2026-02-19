@@ -142,4 +142,7 @@ export const zh = {
   aiChallengeCompletedUserMessage: '我完成挑战了！我弹得怎么样？',
   passkeyButtonTitle: '管理 Passkey',
   aiConnectionErrorMessage: '连接 AI 失败。',
+  errorBoundaryTitle: '出了点问题',
+  errorBoundaryDescription: '发生了意外错误，请重试。',
+  errorBoundaryRetry: '重试',
 };

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
+import { useShallow } from 'zustand/shallow';
 
 import { getSongById } from '../../data/songs';
 import { computeAccuracy } from '../../domain/scoring';
@@ -140,21 +141,23 @@ export const SongPractice: React.FC<SongPracticeProps> = ({ songId, onExit, onCo
   );
 
   // Get practice state for PracticeArea
-  const practiceState = usePracticeStore((state) => ({
-    clef: state.clef,
-    practiceRange: state.practiceRange,
-    handMode: state.handMode,
-    noteQueue: state.noteQueue,
-    exitingNotes: state.exitingNotes,
-    detectedNote: state.detectedNote,
-    status: state.status,
-    challengeSequence: state.challengeSequence,
-    challengeIndex: state.challengeIndex,
-    challengeInfo: state.challengeInfo,
-    isMidiConnected: state.isMidiConnected,
-    setPracticeRange: state.setPracticeRange,
-    setHandMode: state.setHandMode,
-  }));
+  const practiceState = usePracticeStore(
+    useShallow((state) => ({
+      clef: state.clef,
+      practiceRange: state.practiceRange,
+      handMode: state.handMode,
+      noteQueue: state.noteQueue,
+      exitingNotes: state.exitingNotes,
+      detectedNote: state.detectedNote,
+      status: state.status,
+      challengeSequence: state.challengeSequence,
+      challengeIndex: state.challengeIndex,
+      challengeInfo: state.challengeInfo,
+      isMidiConnected: state.isMidiConnected,
+      setPracticeRange: state.setPracticeRange,
+      setHandMode: state.setHandMode,
+    }))
+  );
 
   const accuracy = useMemo(() => computeAccuracy(sessionStats), [sessionStats]);
   const timeElapsed = formatSongTime(songStartTime);
