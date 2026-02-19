@@ -29,7 +29,7 @@ describe('useLoadChallenge', () => {
       )
     );
 
-    let count: number;
+    let count = 0;
     act(() => {
       count = result.current({
         title: 'Test',
@@ -38,7 +38,7 @@ describe('useLoadChallenge', () => {
       });
     });
 
-    expect(count!).toBe(3);
+    expect(count).toBe(3);
     expect(setChallengeInfo).toHaveBeenCalled();
     expect(setChallengeSequence).toHaveBeenCalledWith(
       expect.arrayContaining([
@@ -69,7 +69,7 @@ describe('useLoadChallenge', () => {
       )
     );
 
-    let count: number;
+    let count = 0;
     act(() => {
       count = result.current({
         title: 'Test',
@@ -78,7 +78,7 @@ describe('useLoadChallenge', () => {
       });
     });
 
-    expect(count!).toBe(0);
+    expect(count).toBe(0);
     expect(setChallengeSequence).not.toHaveBeenCalled();
   });
 });

@@ -13,8 +13,11 @@ test.describe('Phone Portrait', () => {
     // Check viewport dimensions
     const viewportSize = page.viewportSize();
     expect(viewportSize).toBeTruthy();
-    expect(viewportSize!.width).toBe(390);
-    expect(viewportSize!.height).toBe(844);
+    if (!viewportSize) {
+      throw new Error('Expected viewport size to be available');
+    }
+    expect(viewportSize.width).toBe(390);
+    expect(viewportSize.height).toBe(844);
   });
 
   test('no horizontal overflow on phone portrait', async ({ page }) => {
@@ -59,8 +62,11 @@ test.describe('iPad Landscape', () => {
     // Check viewport dimensions
     const viewportSize = page.viewportSize();
     expect(viewportSize).toBeTruthy();
-    expect(viewportSize!.width).toBe(1080);
-    expect(viewportSize!.height).toBe(810);
+    if (!viewportSize) {
+      throw new Error('Expected viewport size to be available');
+    }
+    expect(viewportSize.width).toBe(1080);
+    expect(viewportSize.height).toBe(810);
   });
 
   test('no horizontal overflow on iPad landscape', async ({ page }) => {

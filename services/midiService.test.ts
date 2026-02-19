@@ -133,7 +133,10 @@ describe('MidiService', () => {
       await midiService.initialize(onNoteOn);
 
       // Simulate note on: channel 1, note 60 (C4), velocity 100
-      mockInput.onmidimessage!({ data: [0x90, 60, 100] });
+      if (!mockInput.onmidimessage) {
+        throw new Error('Expected MIDI message handler to be set');
+      }
+      mockInput.onmidimessage({ data: [0x90, 60, 100] });
 
       expect(onNoteOn).toHaveBeenCalledWith(60);
     });
@@ -149,7 +152,10 @@ describe('MidiService', () => {
       await midiService.initialize(onNoteOn, undefined, onNoteOff);
 
       // Simulate note off: channel 1, note 60
-      mockInput.onmidimessage!({ data: [0x80, 60, 0] });
+      if (!mockInput.onmidimessage) {
+        throw new Error('Expected MIDI message handler to be set');
+      }
+      mockInput.onmidimessage({ data: [0x80, 60, 0] });
 
       expect(onNoteOff).toHaveBeenCalledWith(60);
     });
@@ -165,7 +171,10 @@ describe('MidiService', () => {
       await midiService.initialize(onNoteOn, undefined, onNoteOff);
 
       // Note on with velocity 0 is treated as note off
-      mockInput.onmidimessage!({ data: [0x90, 60, 0] });
+      if (!mockInput.onmidimessage) {
+        throw new Error('Expected MIDI message handler to be set');
+      }
+      mockInput.onmidimessage({ data: [0x90, 60, 0] });
 
       expect(onNoteOff).toHaveBeenCalledWith(60);
       expect(onNoteOn).not.toHaveBeenCalled();
@@ -182,7 +191,10 @@ describe('MidiService', () => {
       await midiService.initialize(onNoteOn, undefined, onNoteOff);
 
       // Simulate control change message (0xB0)
-      mockInput.onmidimessage!({ data: [0xb0, 1, 64] });
+      if (!mockInput.onmidimessage) {
+        throw new Error('Expected MIDI message handler to be set');
+      }
+      mockInput.onmidimessage({ data: [0xb0, 1, 64] });
 
       expect(onNoteOn).not.toHaveBeenCalled();
       expect(onNoteOff).not.toHaveBeenCalled();
@@ -202,7 +214,10 @@ describe('MidiService', () => {
       // Simulate device connection
       const newInput = { onmidimessage: null };
       mockMidiAccess.inputs.set('input1', newInput);
-      mockMidiAccess.onstatechange!({
+      if (!mockMidiAccess.onstatechange) {
+        throw new Error('Expected MIDI state change handler to be set');
+      }
+      mockMidiAccess.onstatechange({
         port: { type: 'input', state: 'connected', onmidimessage: null },
       });
 
