@@ -47,6 +47,13 @@ const App = () => {
     };
   }, [sendMessage, t.aiChallengeCompletedUserMessage]);
 
+  if (
+    (import.meta.env.MODE === 'test' || import.meta.env.DEV) &&
+    window.localStorage.getItem('__sightplay_force_render_error') === '1'
+  ) {
+    throw new Error('E2E forced render error');
+  }
+
   return (
     <ErrorBoundary t={t}>
       <AuthGate initialAuthView={initialAuthView} initialInviteCode={inviteCodeFromUrl}>

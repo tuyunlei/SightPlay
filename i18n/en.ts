@@ -122,6 +122,7 @@ export const en = {
   passkeyRemove: 'Remove',
   passkeyRemoveConfirm: 'Are you sure you want to remove this passkey?',
   passkeyRemoveFailed: 'Failed to remove passkey',
+  authLogoutButton: 'Logout',
   authErrorCanceled: 'Authentication was canceled. Please try again.',
   authErrorNotSupportedDevice:
     'Your device does not support passkeys. Please use a device with biometric authentication.',

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { translations } from '../../i18n';
 import { useUiStore } from '../../store/uiStore';
 
+import { deletePasskeyById, generateInviteCode } from './passkey-api';
 import { useAuthContext } from './useAuthContext';
 interface Passkey {
   id: string;
@@ -172,24 +173,6 @@ async function loadPasskeysFromApi(): Promise<Passkey[]> {
   const response = await fetch('/api/auth/passkeys', { credentials: 'include' });
   return response.ok ? await response.json() : [];
 }
-async function generateInviteCode(): Promise<string> {
-  const response = await fetch('/api/auth/invite', {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ count: 1 }),
-  });
-  if (!response.ok) throw new Error('passkeyInviteGenerateFailed');
-  const data = (await response.json()) as { codes: string[] };
-  return data.codes[0];
-}
-async function deletePasskeyById(id: string): Promise<boolean> {
-  const response = await fetch(`/api/auth/passkeys?id=${id}`, {
-    method: 'DELETE',
-    credentials: 'include',
-  });
-  return response.ok;
-}
 function usePasskeyManagementState() {
   const { checkSession } = useAuthContext();
   const [passkeys, setPasskeys] = useState<Passkey[]>([]);
@@ -255,6 +238,7 @@ function usePasskeyManagementState() {
   };
 }
 export function PasskeyManagement({ onClose }: PasskeyManagementProps) {
+  const { logout } = useAuthContext();
   const {
     passkeys,
     isLoading,
@@ -267,6 +251,8 @@ export function PasskeyManagement({ onClose }: PasskeyManagementProps) {
     handleRemovePasskey,
     handleCloseInvite,
   } = usePasskeyManagementState();
+  const lang = useUiStore((state) => state.lang);
+  const t = translations[lang];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-bg-overlay)] p-4 backdrop-blur-sm">
@@ -291,6 +277,14 @@ export function PasskeyManagement({ onClose }: PasskeyManagementProps) {
         ) : (
           <GenerateInviteButton isGenerating={isGenerating} onClick={handleGenerateInvite} />
         )}
+
+        <button
+          type="button"
+          onClick={logout}
+          className="mt-3 w-full rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-all hover:bg-red-50 active:scale-95 dark:border-red-500/40 dark:text-red-400 dark:hover:bg-red-500/10"
+        >
+          {t.authLogoutButton}
+        </button>
       </div>
     </div>
   );

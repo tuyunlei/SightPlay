@@ -122,6 +122,7 @@ export const zh = {
   passkeyRemove: '删除',
   passkeyRemoveConfirm: '确定要删除这个 Passkey 吗？',
   passkeyRemoveFailed: '删除 Passkey 失败',
+  authLogoutButton: '退出登录',
   authErrorCanceled: '认证已取消，请重试。',
   authErrorNotSupportedDevice: '你的设备不支持 Passkey，请使用支持生物识别认证的设备。',
   authErrorConnectionTimeout: '连接超时，请检查网络后重试。',
