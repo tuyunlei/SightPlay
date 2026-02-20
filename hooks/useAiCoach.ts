@@ -48,7 +48,8 @@ export const useAiCoach = ({ clef, lang, onLoadChallenge }: UseAiCoachOptions) =
         setChatHistory((prev) => [...prev, aiMsg]);
 
         if (response.challengeData) {
-          const noteCount = onLoadChallenge(response.challengeData!);
+          const challengeData = response.challengeData;
+          const noteCount = onLoadChallenge(challengeData);
           if (noteCount > 0) {
             const t = translations[lang];
             setChatHistory((prev) => [
@@ -57,7 +58,7 @@ export const useAiCoach = ({ clef, lang, onLoadChallenge }: UseAiCoachOptions) =
                 role: 'ai',
                 text: formatTemplate(t.aiChallengeLoaded, {
                   challenge: t.challenge,
-                  title: response.challengeData!.title,
+                  title: challengeData.title,
                   count: noteCount,
                   notes: t.notes,
                 }),

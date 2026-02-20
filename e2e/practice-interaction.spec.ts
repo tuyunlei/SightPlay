@@ -56,9 +56,16 @@ async function getStreak(page: Page): Promise<number> {
   });
 }
 
-async function playWrongThenCorrect(page: Page): Promise<void> {
+async function requireTargetMidi(page: Page): Promise<number> {
   const targetMidi = await getTargetNoteMidi(page);
-  if (targetMidi === null) throw new Error('Target note not found');
+  if (targetMidi === null) {
+    throw new Error('Target note not found');
+  }
+  return targetMidi;
+}
+
+async function playWrongThenCorrect(page: Page): Promise<void> {
+  const targetMidi = await requireTargetMidi(page);
 
   const wrongMidi = targetMidi + 2;
   await simulateMidiNote(page, wrongMidi, 'on');
@@ -81,12 +88,11 @@ test.describe('Practice Interaction E2E', () => {
 
   test('should recognize correct note and update score', async ({ page }) => {
     const initialScore = await getScore(page);
-    const targetMidi = await getTargetNoteMidi(page);
-    expect(targetMidi).not.toBeNull();
+    const targetMidi = await requireTargetMidi(page);
 
-    await simulateMidiNote(page, targetMidi!, 'on');
+    await simulateMidiNote(page, targetMidi, 'on');
     await page.waitForTimeout(100);
-    await simulateMidiNote(page, targetMidi!, 'off');
+    await simulateMidiNote(page, targetMidi, 'off');
     await page.waitForTimeout(500);
 
     const newScore = await getScore(page);
@@ -97,15 +103,14 @@ test.describe('Practice Interaction E2E', () => {
   });
 
   test('should mark mistake when wrong note is played', async ({ page }) => {
-    const targetMidi = await getTargetNoteMidi(page);
-    expect(targetMidi).not.toBeNull();
+    const targetMidi = await requireTargetMidi(page);
 
     const initialStats = await page.evaluate(() => {
       const api = (window as any).__sightplayTestAPI;
       return api?.getSessionStats() ?? { cleanHits: 0, totalAttempts: 0 };
     });
 
-    const wrongMidi = targetMidi! + 2;
+    const wrongMidi = targetMidi + 2;
     await simulateMidiNote(page, wrongMidi, 'on');
     await page.waitForTimeout(100);
     await simulateMidiNote(page, wrongMidi, 'off');
@@ -114,9 +119,9 @@ test.describe('Practice Interaction E2E', () => {
     const newTargetMidi = await getTargetNoteMidi(page);
     expect(newTargetMidi).toBe(targetMidi);
 
-    await simulateMidiNote(page, targetMidi!, 'on');
+    await simulateMidiNote(page, targetMidi, 'on');
     await page.waitForTimeout(100);
-    await simulateMidiNote(page, targetMidi!, 'off');
+    await simulateMidiNote(page, targetMidi, 'off');
     await page.waitForTimeout(500);
 
     const finalStats = await page.evaluate(() => {
@@ -143,9 +148,9 @@ test.describe('Practice Interaction E2E', () => {
       const targetMidi = await getTargetNoteMidi(page);
       expect(targetMidi).not.toBeNull();
 
-      await simulateMidiNote(page, targetMidi!, 'on');
+      await simulateMidiNote(page, targetMidi, 'on');
       await page.waitForTimeout(100);
-      await simulateMidiNote(page, targetMidi!, 'off');
+      await simulateMidiNote(page, targetMidi, 'off');
       await page.waitForTimeout(500);
 
       const currentStreak = await getStreak(page);

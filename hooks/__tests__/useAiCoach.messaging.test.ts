@@ -98,7 +98,7 @@ describe('useAiCoach - messaging', () => {
     });
 
     it('sets loading state while processing', async () => {
-      let resolvePromise: (value: AiResponse | PromiseLike<AiResponse>) => void;
+      let resolvePromise: ((value: AiResponse | PromiseLike<AiResponse>) => void) | undefined;
       vi.mocked(geminiService.chatWithAiCoach).mockReturnValue(
         new Promise<AiResponse>((resolve) => {
           resolvePromise = resolve;
@@ -114,7 +114,10 @@ describe('useAiCoach - messaging', () => {
       expect(result.current.isLoadingAi).toBe(true);
 
       await act(async () => {
-        resolvePromise!({ replyText: 'Hi', challengeData: null });
+        if (!resolvePromise) {
+          throw new Error('Expected AI promise resolver to be set');
+        }
+        resolvePromise({ replyText: 'Hi', challengeData: null });
       });
 
       await waitFor(() => {
@@ -149,7 +152,7 @@ describe('useAiCoach - messaging', () => {
     });
 
     it('does not send while already loading', async () => {
-      let resolvePromise: (value: AiResponse | PromiseLike<AiResponse>) => void;
+      let resolvePromise: ((value: AiResponse | PromiseLike<AiResponse>) => void) | undefined;
       vi.mocked(geminiService.chatWithAiCoach).mockReturnValue(
         new Promise<AiResponse>((resolve) => {
           resolvePromise = resolve;
@@ -169,7 +172,10 @@ describe('useAiCoach - messaging', () => {
       expect(geminiService.chatWithAiCoach).toHaveBeenCalledTimes(1);
 
       await act(async () => {
-        resolvePromise!({ replyText: 'Hi', challengeData: null });
+        if (!resolvePromise) {
+          throw new Error('Expected AI promise resolver to be set');
+        }
+        resolvePromise({ replyText: 'Hi', challengeData: null });
       });
     });
 
