@@ -10,6 +10,7 @@ export const useMicNoteHandler = (
   handleCorrectNote: () => void,
   refs: PracticeRefs
 ) => {
+  'use no memo';
   const { matchTimer, wrongTimer, hasMistakeForCurrent, isProcessingRef } = refs;
 
   return useCallback(

@@ -12,6 +12,7 @@ export const useHandleCorrectNote = (
   refs: PracticeRefs,
   onChallengeComplete?: () => void
 ) => {
+  'use no memo';
   const {
     setExitingNotes,
     setNoteQueue,

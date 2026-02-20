@@ -23,7 +23,6 @@ import {
   usePressedKeysState,
 } from './practiceSession/slices';
 import type { UsePracticeSessionOptions } from './practiceSession/slices';
-import { useAudioInput } from './useAudioInput';
 import { useMidiInput } from './useMidiInput';
 
 export type { UsePracticeSessionOptions };
@@ -52,6 +51,7 @@ export const usePracticeSession = ({
   onMicError,
   onChallengeComplete,
 }: UsePracticeSessionOptions) => {
+  'use no memo';
   const state = usePracticeStateSlice();
   const actions = usePracticeActionsSlice();
   const refs = usePracticeRefs();
@@ -87,8 +87,7 @@ export const usePracticeSession = ({
     actions.setIsListening,
     actions.setStatus,
     actions.setDetectedNote,
-    onMicError,
-    useAudioInput
+    onMicError
   );
 
   const toggleMic = useToggleMic(state.isListening, startMic, stopMic);
