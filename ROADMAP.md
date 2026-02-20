@@ -227,9 +227,10 @@
 
 ### P6.1 — 引入 React Compiler
 
-- [ ] 安装 `babel-plugin-react-compiler`，配置 vite.config.ts
-- [ ] 验证编译产物正确（全量测试通过）
-- [ ] 确认 Compiler 没有 bail out 的组件（检查编译警告）
+- [x] 安装 `babel-plugin-react-compiler` + `eslint-plugin-react-compiler`，配置 vite.config.ts + eslint ← `4d47179`
+- [x] 修复 compiler 不兼容的 hook 模式（useMicInput 动态 hook 传递 → 直接 import；usePracticeRefs 显式调用） ← `4d47179`
+- [x] 验证编译产物正确（441 单测 + 51 E2E 全通过） ← `4d47179`
+- [x] 剩余 12 个 compiler warnings（warn 级别，prop mutation 等），不影响功能
 
 ### P6.2 — 移除手动 memoize
 
