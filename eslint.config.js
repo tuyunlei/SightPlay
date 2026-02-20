@@ -17,7 +17,11 @@ const DEFAULT_EXPORT_WHITELIST = [
 export default tseslint.config(
   { ignores: ['dist', 'node_modules', 'coverage', '.github', 'scripts'] },
   {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    extends: [
+      js.configs.recommended,
+      ...tseslint.configs.recommended,
+      ...tseslint.configs.strict,
+    ],
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2022,

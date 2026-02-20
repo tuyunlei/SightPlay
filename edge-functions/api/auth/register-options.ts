@@ -5,6 +5,7 @@ import {
   type EdgeOneRequestContext,
   type PlatformContext,
 } from '../../platform';
+import { createRequestContext, logBreadcrumb, logError } from '../../utils/logger';
 import { CORS_HEADERS, resolveOrigin } from '../_auth-helpers';
 
 import {
@@ -26,43 +27,57 @@ interface Passkey {
   transports?: string[];
 }
 
+function jsonResponse(body: object, status = 200, headers?: HeadersInit): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS, ...headers },
+  });
+}
+
+function createUserIdBase64(): string {
+  const userIdBytes = new TextEncoder().encode('sightplay-user');
+  return btoa(String.fromCharCode(...userIdBytes))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+}
+
 export function onRequestOptions(): Response {
   return new Response(null, { headers: CORS_HEADERS });
 }
 
-function unauthorized(error: string): Response {
-  return new Response(JSON.stringify({ error }), {
-    status: 401,
-    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-  });
+function unauthorized(error: string, requestId: string): Response {
+  return jsonResponse({ error, requestId }, 401);
 }
 
 export async function handlePostRegisterOptions(platform: PlatformContext): Promise<Response> {
+  const requestContext = createRequestContext(platform.request);
+
   try {
+    logBreadcrumb('auth.registration.start', requestContext);
     const body = (await platform.request.json().catch(() => ({}))) as { inviteCode?: string };
     if (!body.inviteCode || !isInviteCodeFormatValid(body.inviteCode)) {
-      return unauthorized('Invite code is invalid');
+      return unauthorized('Invite code is invalid', requestContext.requestId);
     }
 
     const ip = getClientIp(platform.request);
     const rate = await consumeInviteValidationRateLimit(platform.kv, ip);
     if (rate.blocked) {
-      return new Response(JSON.stringify({ error: 'Too many requests' }), {
-        status: 429,
-        headers: {
-          'Content-Type': 'application/json',
-          'Retry-After': String(rate.retryAfterSeconds ?? 3600),
-          ...CORS_HEADERS,
-        },
-      });
+      return jsonResponse(
+        { error: 'Too many requests', requestId: requestContext.requestId },
+        429,
+        { 'Retry-After': String(rate.retryAfterSeconds ?? 3600) }
+      );
     }
 
     const normalizedCode = toDisplayInviteCode(body.inviteCode);
     const invite = parseInviteRecord(await platform.kv.get(inviteKey(normalizedCode)));
 
-    if (!invite) return unauthorized('Invite code is invalid');
-    if (invite.usedBy) return unauthorized('Invite code has already been used');
-    if (isInviteRecordExpired(invite)) return unauthorized('Invite code has expired');
+    if (!invite) return unauthorized('Invite code is invalid', requestContext.requestId);
+    if (invite.usedBy)
+      return unauthorized('Invite code has already been used', requestContext.requestId);
+    if (isInviteRecordExpired(invite))
+      return unauthorized('Invite code has expired', requestContext.requestId);
 
     const passkeysData = await platform.kv.get('passkeys');
     const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
@@ -70,11 +85,7 @@ export async function handlePostRegisterOptions(platform: PlatformContext): Prom
     const challenge = server.randomChallenge();
     const { hostname } = resolveOrigin(platform);
 
-    const userIdBytes = new TextEncoder().encode('sightplay-user');
-    const userIdBase64 = btoa(String.fromCharCode(...userIdBytes))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
+    const userIdBase64 = createUserIdBase64();
 
     const options = {
       challenge,
@@ -106,15 +117,16 @@ export async function handlePostRegisterOptions(platform: PlatformContext): Prom
 
     await platform.kv.put(`challenge:${challenge}`, challenge, { expirationTtl: 300 });
 
-    return new Response(JSON.stringify(options), {
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-    });
+    logBreadcrumb('auth.registration.success', requestContext);
+
+    return jsonResponse(options);
   } catch (error) {
-    console.error('Error generating registration options:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-    });
+    logBreadcrumb('auth.registration.failure', requestContext);
+    logError('auth.register-options', error, requestContext);
+    return jsonResponse(
+      { error: 'Internal server error', requestId: requestContext.requestId },
+      500
+    );
   }
 }
 

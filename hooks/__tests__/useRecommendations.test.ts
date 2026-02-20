@@ -42,9 +42,12 @@ describe('useRecommendations', () => {
 
     const clefRec = result.current.recommendations.find((r) => r.action?.kind === 'setClef');
     expect(clefRec).toBeDefined();
+    if (!clefRec) {
+      throw new Error('Expected clef recommendation to exist');
+    }
 
     act(() => {
-      result.current.applyAction(clefRec!, { toggleClef, setPracticeRange });
+      result.current.applyAction(clefRec, { toggleClef, setPracticeRange });
     });
 
     expect(toggleClef).toHaveBeenCalledTimes(1);

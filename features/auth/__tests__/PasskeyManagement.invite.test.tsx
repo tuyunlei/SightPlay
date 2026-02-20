@@ -55,7 +55,7 @@ describe('PasskeyManagement - Generate Invite Code', () => {
 
   it('shows generating state', async () => {
     const user = userEvent.setup();
-    let resolveInvite: (value: Response) => void;
+    let resolveInvite: ((value: Response) => void) | undefined;
     const invitePromise = new Promise<Response>((resolve) => {
       resolveInvite = resolve;
     });
@@ -70,7 +70,10 @@ describe('PasskeyManagement - Generate Invite Code', () => {
 
     expect(screen.getByText('Generating...')).toBeInTheDocument();
 
-    resolveInvite!({ ok: true, json: async () => ({ codes: ['ABCD-EFGH'] }) } as Response);
+    if (!resolveInvite) {
+      throw new Error('Expected invite resolver to be set');
+    }
+    resolveInvite({ ok: true, json: async () => ({ codes: ['ABCD-EFGH'] }) } as Response);
     expect(await screen.findByText('Invite Code')).toBeInTheDocument();
   });
 

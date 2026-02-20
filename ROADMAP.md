@@ -164,9 +164,10 @@
 
 补充后端日志，目标：出现问题时能快速定位。
 
-- [ ] 所有 API endpoint 的 catch block 记录结构化错误日志（error message + stack + request context）
-- [ ] 关键业务路径加 Sentry breadcrumb（注册、登录、邀请码验证）
-- [ ] 错误响应包含 request ID，方便关联日志
+- [x] 所有 API endpoint 的 catch block 记录结构化错误日志（error message + stack + request context） ← `0e25e39`
+- [x] 关键业务路径加结构化 breadcrumb 日志（注册、登录、邀请码验证） ← `0e25e39`
+- [x] 错误响应包含 request ID，方便关联日志 ← `0e25e39`
+- [x] 共享 logger 工具 + 单元测试（logError、logBreadcrumb、errorResponse、createRequestContext） ← `0e25e39`
 
 ### P4.6 — 质量体系升级
 
@@ -182,19 +183,22 @@
 
 - [x] eslint-plugin-react-hooks 所有规则改 error（exhaustive-deps: error） ← `07dc58b`
 - [x] React StrictMode 已启用（index.tsx）
-- [ ] @typescript-eslint/strict 配置
+- [x] @typescript-eslint/strict 配置 ← `dc8da18`
 - [x] 建立 `e2e/TEST_PLAN.md`：系统性测试计划，按模块×场景组织，活文档持续维护 ← `e2e/TEST_PLAN.md`
   - 已梳理 41 个场景（24 已覆盖 / 15 待补 / 2 不可测），覆盖率 58.5%
   - [x] 曲库练习 E2E ← `68d65c5`
   - [x] AI 对话 E2E（多轮 + 错误 + 空消息 + 历史 + 加载态） ← `8379ac8`
-  - [ ] 按 TEST_PLAN 优先级（🔴 > 🟡 > 🟢）逐步补齐剩余 15 个场景
-- [ ] 开发流程绑定：新功能同时更新 TEST_PLAN + E2E
+  - [x] 🔴 关键路径 E2E（ErrorBoundary、导航不白屏、歌曲完成、登出） ← `eaf65a8`
+  - [x] 🟡 功能验证 E2E（passkey 管理、邀请码、手模式、练习范围） ← `0609143`
+  - [x] 🟢 剩余场景 E2E（注册错误、智能提示、语言切换、深浅色） ← `f3bc685`
+  - TEST_PLAN 覆盖率：41/41（100%），51 个 E2E 测试
+- [x] 开发流程绑定：新功能同时更新 TEST_PLAN + E2E
 
 #### P2：集成测试层建立（防住组件交互 bug）
 
-- [ ] 建立集成测试规范：多组件 + zustand store 联动的 render 测试
-- [ ] ContentView + SongPractice 集成测试（复现并防止 render loop）
-- [ ] AuthGate + LoginScreen + RegisterCard 集成测试
+- [x] 建立集成测试规范：多组件 + zustand store 联动的 render 测试 ← `c2dd234`
+- [x] ContentView + SongPractice 集成测试（render loop 防护 + viewMode 切换 + callback 稳定性） ← `c2dd234`
+- [x] AuthGate + LoginScreen + RegisterCard 集成测试（未认证 → 登录 → 失败 → 注册 → 认证通过） ← `c2dd234`
 - [ ] 每个主要页面（练习、曲库、设置）至少一个多组件联动测试
 
 #### P3：长期演进

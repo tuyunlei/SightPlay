@@ -59,7 +59,10 @@ describe('login-verify endpoint', () => {
     );
 
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({ error: 'Invalid or expired challenge' });
+    await expect(response.json()).resolves.toMatchObject({
+      error: 'Invalid or expired challenge',
+      requestId: expect.any(String),
+    });
   });
 
   it('rejects unknown credential id', async () => {
@@ -81,7 +84,10 @@ describe('login-verify endpoint', () => {
     );
 
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({ error: 'Credential not found' });
+    await expect(response.json()).resolves.toMatchObject({
+      error: 'Credential not found',
+      requestId: expect.any(String),
+    });
   });
 
   it('verifies authentication, updates counter, deletes challenge and sets cookie', async () => {

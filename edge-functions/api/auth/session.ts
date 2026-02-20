@@ -3,6 +3,7 @@ import {
   type EdgeOneRequestContext,
   type PlatformContext,
 } from '../../platform';
+import { createRequestContext, logError } from '../../utils/logger';
 import { CORS_HEADERS, getAuthenticatedUser, requireEnv } from '../_auth-helpers';
 
 interface Passkey {
@@ -19,6 +20,8 @@ export function onRequestOptions(): Response {
 }
 
 export async function handleGetSession(platform: PlatformContext): Promise<Response> {
+  const requestContext = createRequestContext(platform.request);
+
   try {
     const user = await getAuthenticatedUser(platform.request, requireEnv(platform, 'JWT_SECRET'));
 
@@ -35,11 +38,14 @@ export async function handleGetSession(platform: PlatformContext): Promise<Respo
       }
     );
   } catch (error) {
-    console.error('Error checking session:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-    });
+    logError('auth.session.get', error, requestContext);
+    return new Response(
+      JSON.stringify({ error: 'Internal server error', requestId: requestContext.requestId }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      }
+    );
   }
 }
 

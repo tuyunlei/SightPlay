@@ -97,7 +97,10 @@ describe('session + passkeys auth endpoints', () => {
     );
 
     expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({ error: 'Authentication required' });
+    await expect(response.json()).resolves.toMatchObject({
+      error: 'Authentication required',
+      requestId: expect.any(String),
+    });
   });
 
   it('deletes a matching passkey', async () => {

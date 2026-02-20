@@ -44,7 +44,10 @@ describe('login-options endpoint', () => {
     const response = await handlePostLoginOptions(createContext(kv));
 
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({ error: 'No passkeys registered' });
+    await expect(response.json()).resolves.toMatchObject({
+      error: 'No passkeys registered',
+      requestId: expect.any(String),
+    });
   });
 
   it('returns login options and stores challenge', async () => {
@@ -83,6 +86,9 @@ describe('login-options endpoint', () => {
 
     const response = await handlePostLoginOptions(createContext(kv));
     expect(response.status).toBe(500);
-    await expect(response.json()).resolves.toEqual({ error: 'Internal server error' });
+    await expect(response.json()).resolves.toMatchObject({
+      error: 'Internal server error',
+      requestId: expect.any(String),
+    });
   });
 });

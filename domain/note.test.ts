@@ -189,7 +189,10 @@ describe('note', () => {
       testCases.forEach((noteStr) => {
         const midi = noteStringToMidi(noteStr);
         expect(midi).not.toBeNull();
-        const note = createNoteFromMidi(midi!, 0);
+        if (midi === null) {
+          throw new Error('Expected midi to be non-null');
+        }
+        const note = createNoteFromMidi(midi, 0);
         // Reconstruct the note string
         const reconstructed = `${note.name}${note.octave}`;
         expect(reconstructed).toBe(noteStr);
