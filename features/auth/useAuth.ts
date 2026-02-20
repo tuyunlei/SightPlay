@@ -206,6 +206,7 @@ export function useAuth() {
     isLoading: true,
   });
 
+  // Kept: stable identity needed for useEffect dependency.
   const checkSession = useCallback(async () => {
     try {
       const response = await fetch('/api/auth/session', { credentials: 'include' });
@@ -225,29 +226,26 @@ export function useAuth() {
     checkSession();
   }, [checkSession]);
 
-  const register = useCallback(
-    async (name?: string, inviteCode?: string): Promise<true | string> => {
-      try {
-        await performRegister(name, inviteCode);
-        await checkSession();
-        return true;
-      } catch (error) {
-        const message = getAuthErrorMessage(error, t);
-        Sentry.captureException(error, {
-          tags: { flow: 'register' },
-          extra: {
-            errorName: error instanceof Error ? error.name : 'unknown',
-            userAgent: navigator.userAgent,
-          },
-        });
-        console.error('Registration error:', message, error);
-        return message;
-      }
-    },
-    [checkSession, t]
-  );
+  const register = async (name?: string, inviteCode?: string): Promise<true | string> => {
+    try {
+      await performRegister(name, inviteCode);
+      await checkSession();
+      return true;
+    } catch (error) {
+      const message = getAuthErrorMessage(error, t);
+      Sentry.captureException(error, {
+        tags: { flow: 'register' },
+        extra: {
+          errorName: error instanceof Error ? error.name : 'unknown',
+          userAgent: navigator.userAgent,
+        },
+      });
+      console.error('Registration error:', message, error);
+      return message;
+    }
+  };
 
-  const login = useCallback(async (): Promise<true | string> => {
+  const login = async (): Promise<true | string> => {
     try {
       await performLogin();
       await checkSession();
@@ -264,12 +262,12 @@ export function useAuth() {
       console.error('Authentication error:', message, error);
       return message;
     }
-  }, [checkSession, t]);
+  };
 
-  const logout = useCallback(() => {
+  const logout = () => {
     document.cookie = 'auth_token=; Max-Age=0; path=/';
     setState({ isAuthenticated: false, hasPasskeys: state.hasPasskeys, isLoading: false });
-  }, [state.hasPasskeys]);
+  };
 
   return { ...state, login, register, logout, checkSession };
 }

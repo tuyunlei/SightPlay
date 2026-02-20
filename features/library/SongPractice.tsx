@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import { useShallow } from 'zustand/shallow';
 
 import { getSongById } from '../../data/songs';
@@ -133,7 +133,7 @@ const useSongInitialization = (
 
 export const SongPractice: React.FC<SongPracticeProps> = ({ songId, onExit, onComplete }) => {
   const { t } = useLanguage();
-  const song = useMemo(() => getSongById(songId), [songId]);
+  const song = getSongById(songId);
   const { songProgress, songStartTime, sessionStats } = useSongInitialization(
     songId,
     song,
@@ -159,7 +159,7 @@ export const SongPractice: React.FC<SongPracticeProps> = ({ songId, onExit, onCo
     }))
   );
 
-  const accuracy = useMemo(() => computeAccuracy(sessionStats), [sessionStats]);
+  const accuracy = computeAccuracy(sessionStats);
   const timeElapsed = formatSongTime(songStartTime);
   const targetNote = practiceState.noteQueue.length > 0 ? practiceState.noteQueue[0] : null;
 

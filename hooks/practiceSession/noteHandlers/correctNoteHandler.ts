@@ -1,5 +1,3 @@
-import { useCallback } from 'react';
-
 import { DEFAULT_QUEUE_SIZE, advanceQueue } from '../../../domain/queue';
 import { usePracticeStore } from '../../../store/practiceStore';
 import type { PracticeActions, PracticeRefs } from '../slices';
@@ -12,7 +10,6 @@ export const useHandleCorrectNote = (
   refs: PracticeRefs,
   onChallengeComplete?: () => void
 ) => {
-  'use no memo';
   const {
     setExitingNotes,
     setNoteQueue,
@@ -25,7 +22,7 @@ export const useHandleCorrectNote = (
   } = actions;
   const { lastHitTime, hasMistakeForCurrent, isProcessingRef } = refs;
 
-  return useCallback(() => {
+  return () => {
     if (isProcessingRef.current) return;
 
     const state = usePracticeStore.getState();
@@ -76,18 +73,5 @@ export const useHandleCorrectNote = (
     });
 
     hasMistakeForCurrent.current = false;
-  }, [
-    hasMistakeForCurrent,
-    isProcessingRef,
-    lastHitTime,
-    onChallengeComplete,
-    setChallengeIndex,
-    setChallengeInfo,
-    setChallengeSequence,
-    setExitingNotes,
-    setNoteQueue,
-    setScore,
-    setSessionStats,
-    setStreak,
-  ]);
+  };
 };

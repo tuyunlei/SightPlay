@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { SongDifficulty } from '../data/songs/types';
 import {
@@ -24,45 +24,36 @@ export function useRecommendations() {
   const practiceMode = usePracticeStore((s) => s.practiceMode);
   const sessionStats = usePracticeStore((s) => s.sessionStats);
 
-  const snapshot: PracticeSnapshot = useMemo(
-    () => ({
-      totalAttempts: sessionStats.totalAttempts,
-      cleanHits: sessionStats.cleanHits,
-      currentClef: clef,
-      currentRange: practiceRange,
-      practiceMode,
-      completedSongDifficulty: completedDifficulty,
-    }),
-    [sessionStats, clef, practiceRange, practiceMode, completedDifficulty]
-  );
+  const snapshot: PracticeSnapshot = {
+    totalAttempts: sessionStats.totalAttempts,
+    cleanHits: sessionStats.cleanHits,
+    currentClef: clef,
+    currentRange: practiceRange,
+    practiceMode,
+    completedSongDifficulty: completedDifficulty,
+  };
 
-  const recommendations: Recommendation[] = useMemo(() => {
-    if (dismissed) return [];
-    return generateRecommendations(snapshot);
-  }, [snapshot, dismissed]);
+  const recommendations: Recommendation[] = dismissed ? [] : generateRecommendations(snapshot);
 
-  const onSongComplete = useCallback((difficulty: SongDifficulty) => {
+  const onSongComplete = (difficulty: SongDifficulty) => {
     setDismissed(false);
     setCompletedDifficulty(difficulty);
-  }, []);
+  };
 
-  const dismiss = useCallback(() => setDismissed(true), []);
+  const dismiss = () => setDismissed(true);
 
-  const applyAction = useCallback(
-    (rec: Recommendation, cbs: PracticeCallbacks) => {
-      const action = rec.action as RecommendationAction | undefined;
-      if (!action) return;
-      if (action.kind === 'setClef') cbs.toggleClef();
-      if (action.kind === 'setPracticeRange') cbs.setPracticeRange(action.range);
-      dismiss();
-    },
-    [dismiss]
-  );
+  const applyAction = (rec: Recommendation, cbs: PracticeCallbacks) => {
+    const action = rec.action as RecommendationAction | undefined;
+    if (!action) return;
+    if (action.kind === 'setClef') cbs.toggleClef();
+    if (action.kind === 'setPracticeRange') cbs.setPracticeRange(action.range);
+    dismiss();
+  };
 
-  const reset = useCallback(() => {
+  const reset = () => {
     setDismissed(false);
     setCompletedDifficulty(undefined);
-  }, []);
+  };
 
   return { recommendations, onSongComplete, dismiss, applyAction, reset };
 }
