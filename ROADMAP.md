@@ -221,6 +221,26 @@
   - 如果引入 Compiler 后仍有性能问题，再加 React Profiler 集成测试检测
   - ContentView 集成测试已有 render count 断言（< 15 次），可作为基础扩展
 
+## P6 — React Compiler + 代码简化
+
+引入 React Compiler 自动 memoize，移除手动 useCallback/useMemo/React.memo，简化代码。
+
+### P6.1 — 引入 React Compiler
+
+- [ ] 安装 `babel-plugin-react-compiler`，配置 vite.config.ts
+- [ ] 验证编译产物正确（全量测试通过）
+- [ ] 确认 Compiler 没有 bail out 的组件（检查编译警告）
+
+### P6.2 — 移除手动 memoize
+
+- [ ] 移除不再需要的 useCallback 调用（Compiler 自动处理）
+- [ ] 移除不再需要的 useMemo 调用
+- [ ] 移除不再需要的 React.memo 包裹
+- [ ] 保留有特殊语义的 useMemo（如昂贵计算的惰性初始化）
+- [ ] 全量测试回归验证
+
+---
+
 ## P5 — 迁移至 Cloudflare Pages + Workers
 
 从 EdgeOne 迁移到 Cloudflare，解决国内访问需要备案的问题。
