@@ -183,7 +183,7 @@
 
 - [x] eslint-plugin-react-hooks 所有规则改 error（exhaustive-deps: error） ← `07dc58b`
 - [x] React StrictMode 已启用（index.tsx）
-- [ ] @typescript-eslint/strict 配置
+- [x] @typescript-eslint/strict 配置 ← `dc8da18`
 - [x] 建立 `e2e/TEST_PLAN.md`：系统性测试计划，按模块×场景组织，活文档持续维护 ← `e2e/TEST_PLAN.md`
   - 已梳理 41 个场景（24 已覆盖 / 15 待补 / 2 不可测），覆盖率 58.5%
   - [x] 曲库练习 E2E ← `68d65c5`
