@@ -234,11 +234,10 @@
 
 ### P6.2 — 移除手动 memoize
 
-- [ ] 移除不再需要的 useCallback 调用（Compiler 自动处理）
-- [ ] 移除不再需要的 useMemo 调用
-- [ ] 移除不再需要的 React.memo 包裹
-- [ ] 保留有特殊语义的 useMemo（如昂贵计算的惰性初始化）
-- [ ] 全量测试回归验证
+- [x] 移除 18 个文件中的 useCallback/useMemo/React.memo（净减 73 行） ← `0993343`
+- [x] 保留 3 处需要稳定引用的 useCallback（checkSession、initializeQueue、selectSong）
+- [x] 清理 'use no memo' 指令和未使用 import
+- [x] 全量测试回归验证（441 单测 + 51 E2E 全过） ← `0993343`
 
 ---
 
