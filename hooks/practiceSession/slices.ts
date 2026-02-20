@@ -20,6 +20,7 @@ export type PracticeRefs = {
 };
 
 export const usePracticeStateSlice = () => {
+  'use no memo';
   const clef = usePracticeStore((state) => state.clef);
   const practiceRange = usePracticeStore((state) => state.practiceRange);
   const handMode = usePracticeStore((state) => state.handMode);
@@ -56,6 +57,7 @@ export const usePracticeStateSlice = () => {
 };
 
 export const usePracticeActionsSlice = () => {
+  'use no memo';
   const setClef = usePracticeStore((state) => state.setClef);
   const setIsListening = usePracticeStore((state) => state.setIsListening);
   const setIsMidiConnected = usePracticeStore((state) => state.setIsMidiConnected);
@@ -96,15 +98,25 @@ export const usePracticeActionsSlice = () => {
 export type PracticeActions = ReturnType<typeof usePracticeActionsSlice>;
 export type PracticeStoreState = ReturnType<typeof usePracticeStore.getState>;
 
-export const usePracticeRefs = (): PracticeRefs => ({
-  matchTimer: useRef(0),
-  wrongTimer: useRef(0),
-  lastHitTime: useRef(0),
-  hasMistakeForCurrent: useRef(false),
-  isProcessingRef: useRef(false),
-});
+export const usePracticeRefs = (): PracticeRefs => {
+  'use no memo';
+  const matchTimer = useRef(0);
+  const wrongTimer = useRef(0);
+  const lastHitTime = useRef(0);
+  const hasMistakeForCurrent = useRef(false);
+  const isProcessingRef = useRef(false);
+
+  return {
+    matchTimer,
+    wrongTimer,
+    lastHitTime,
+    hasMistakeForCurrent,
+    isProcessingRef,
+  };
+};
 
 export const usePressedKeysState = () => {
+  'use no memo';
   const pressedKeysRef = useRef<PressedKeys>(new Map());
   const [pressedKeys, setPressedKeys] = useState<PressedKeys>(pressedKeysRef.current);
 

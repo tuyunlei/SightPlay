@@ -3,6 +3,7 @@ import { useCallback, useEffect } from 'react';
 import { buildChallengeNotes } from '../../domain/challenge';
 import { createInitialQueue, createChallengeQueue, DEFAULT_QUEUE_SIZE } from '../../domain/queue';
 import { ClefType, GeneratedChallenge, HandPracticeMode, Note } from '../../types';
+import { useAudioInput } from '../useAudioInput';
 
 import type { PracticeActions, PracticeRefs, PracticeStoreState } from './slices';
 
@@ -100,14 +101,9 @@ export const useMicInput = (
   setIsListening: PracticeActions['setIsListening'],
   setStatus: PracticeActions['setStatus'],
   setDetectedNote: PracticeActions['setDetectedNote'],
-  onMicError: () => void,
-  useAudioInput: (opts: {
-    onNoteDetected: (note: Note | null) => void;
-    onStart: () => void;
-    onStop: () => void;
-    onError: () => void;
-  }) => { start: () => void; stop: () => void }
+  onMicError: () => void
 ) => {
+  'use no memo';
   const handleStart = useCallback(() => {
     setIsListening(true);
     setStatus('listening');

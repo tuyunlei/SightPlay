@@ -40,6 +40,7 @@ export const useMidiNoteHandlers = (
   handleCorrectNote: () => void,
   refs: PracticeRefs
 ) => {
+  'use no memo';
   const { hasMistakeForCurrent, isProcessingRef } = refs;
 
   const handleMidiNoteOn = useCallback(

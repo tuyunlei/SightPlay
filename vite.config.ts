@@ -32,7 +32,11 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
     },
     plugins: [
-      react(),
+      react({
+        babel: {
+          plugins: ['babel-plugin-react-compiler'],
+        },
+      }),
       copyEdgeFunctions(),
       {
         name: 'dev-auth',

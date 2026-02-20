@@ -11,6 +11,19 @@ import {
   useQueueInitialization,
 } from '../actions';
 
+const micInputMockState = vi.hoisted(() => {
+  const state: { capturedOpts?: any } = {};
+  const mockUseAudioInput = vi.fn((opts) => {
+    state.capturedOpts = opts;
+    return { start: vi.fn(), stop: vi.fn() };
+  });
+  return { state, mockUseAudioInput };
+});
+
+vi.mock('../../useAudioInput', () => ({
+  useAudioInput: micInputMockState.mockUseAudioInput,
+}));
+
 describe('useLoadChallenge', () => {
   it('loads challenge notes and returns count', () => {
     const resetStats = vi.fn();
@@ -162,24 +175,14 @@ describe('useMicInput', () => {
     const setDetectedNote = vi.fn();
     const onMicError = vi.fn();
 
-    let capturedOpts: any;
-    const mockUseAudioInput = vi.fn((opts) => {
-      capturedOpts = opts;
-      return { start: vi.fn(), stop: vi.fn() };
-    });
+    micInputMockState.state.capturedOpts = undefined;
 
     renderHook(() =>
-      useMicInput(
-        handleMicNote,
-        setIsListening,
-        setStatus,
-        setDetectedNote,
-        onMicError,
-        mockUseAudioInput
-      )
+      useMicInput(handleMicNote, setIsListening, setStatus, setDetectedNote, onMicError)
     );
 
-    expect(mockUseAudioInput).toHaveBeenCalled();
+    expect(micInputMockState.mockUseAudioInput).toHaveBeenCalled();
+    const capturedOpts = micInputMockState.state.capturedOpts;
 
     // Test onStart callback
     act(() => {
