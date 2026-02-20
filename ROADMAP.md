@@ -199,7 +199,7 @@
 - [x] 建立集成测试规范：多组件 + zustand store 联动的 render 测试 ← `c2dd234`
 - [x] ContentView + SongPractice 集成测试（render loop 防护 + viewMode 切换 + callback 稳定性） ← `c2dd234`
 - [x] AuthGate + LoginScreen + RegisterCard 集成测试（未认证 → 登录 → 失败 → 注册 → 认证通过） ← `c2dd234`
-- [ ] 每个主要页面（练习、曲库、设置）至少一个多组件联动测试
+- [x] 每个主要页面（练习、曲库、设置）至少一个多组件联动测试 ← ContentView + AuthGate + PasskeyManagement
 
 #### P3：长期演进
 
