@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { AudioProcessor } from '../services/audioService';
 import { Note } from '../types';
@@ -19,21 +19,21 @@ export const useAudioInput = ({
   const audioProcessor = useRef<AudioProcessor>(new AudioProcessor());
   const rafId = useRef<number>(0);
 
-  const stop = useCallback(() => {
+  const stop = () => {
     audioProcessor.current.stop();
     if (rafId.current) {
       cancelAnimationFrame(rafId.current);
     }
     onStop?.();
-  }, [onStop]);
+  };
 
-  const detectLoop = useCallback(() => {
+  const detectLoop = () => {
     const note = audioProcessor.current.getPitch();
     onNoteDetected(note);
     rafId.current = requestAnimationFrame(detectLoop);
-  }, [onNoteDetected]);
+  };
 
-  const start = useCallback(async () => {
+  const start = async () => {
     try {
       await audioProcessor.current.start();
       onStart?.();
@@ -41,9 +41,18 @@ export const useAudioInput = ({
     } catch (error) {
       onError?.(error);
     }
-  }, [detectLoop, onError, onStart]);
+  };
 
-  useEffect(() => () => stop(), [stop]);
+  useEffect(() => {
+    const processor = audioProcessor.current;
+    return () => {
+      processor.stop();
+      if (rafId.current) {
+        cancelAnimationFrame(rafId.current);
+      }
+      onStop?.();
+    };
+  }, [onStop]);
 
   return { start, stop };
 };

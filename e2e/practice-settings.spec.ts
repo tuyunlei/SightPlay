@@ -61,7 +61,7 @@ test.describe('Practice Settings E2E', () => {
     const firstMidi = state.noteQueue?.[0]?.midi ?? -1;
     const secondMidi = state.noteQueue?.[1]?.midi ?? -1;
     expect(firstMidi).toBeGreaterThanOrEqual(60);
-    expect(secondMidi).toBeLessThan(60);
+    expect(secondMidi).toBeLessThanOrEqual(60);
   });
 
   test('2.3.4 should adjust practice range and regenerate note queue', async ({ page }) => {

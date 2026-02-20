@@ -1,5 +1,5 @@
 import { Fingerprint } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { translations } from '../../i18n';
 import { useUiStore } from '../../store/uiStore';
@@ -122,10 +122,7 @@ export function RegisterCard({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const isInviteCodeComplete = useMemo(
-    () => normalizeInviteCode(inviteCode).length === 8,
-    [inviteCode]
-  );
+  const isInviteCodeComplete = normalizeInviteCode(inviteCode).length === 8;
 
   const handleRegister = async () => {
     setIsLoading(true);

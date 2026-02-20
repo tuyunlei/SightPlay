@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { translations, Language } from '../i18n';
 import { chatWithAiCoach } from '../services/geminiService';
@@ -28,7 +28,7 @@ export const useContextualHints = (lang: Language, clef: string) => {
   const consecutiveMistakes = useRef(0);
   const t = translations[lang];
 
-  const showHint = useCallback((text: string, type: Hint['type']) => {
+  const showHint = (text: string, type: Hint['type']) => {
     const now = Date.now();
     if (now - lastHintTime.current < RATE_LIMIT_MS) return;
     lastHintTime.current = now;
@@ -38,64 +38,55 @@ export const useContextualHints = (lang: Language, clef: string) => {
 
     if (dismissTimer.current) clearTimeout(dismissTimer.current);
     dismissTimer.current = setTimeout(() => setCurrentHint(null), HINT_DISPLAY_MS);
-  }, []);
+  };
 
-  const dismissHint = useCallback(() => {
+  const dismissHint = () => {
     setCurrentHint(null);
     if (dismissTimer.current) clearTimeout(dismissTimer.current);
-  }, []);
+  };
 
-  const showLocalHint = useCallback(
-    (type: Hint['type']) => {
-      const hints = getLocalHints(t);
-      const pool = hints[type];
-      const text = pool[Math.floor(Math.random() * pool.length)];
-      showHint(text, type);
-    },
-    [showHint, t]
-  );
+  const showLocalHint = (type: Hint['type']) => {
+    const hints = getLocalHints(t);
+    const pool = hints[type];
+    const text = pool[Math.floor(Math.random() * pool.length)];
+    showHint(text, type);
+  };
 
-  const fetchAiHint = useCallback(
-    async (context: string, type: Hint['type']) => {
-      try {
-        const prompt = `Give a very brief (under 15 words) ${type === 'encouragement' ? 'encouraging' : 'helpful tip'} message for a piano student who ${context}. Be warm and concise.`;
-        const response = await chatWithAiCoach(prompt, clef, lang);
-        if (response.replyText) {
-          showHint(response.replyText, type);
-          return;
-        }
-      } catch {
-        // fall through to local
+  const fetchAiHint = async (context: string, type: Hint['type']) => {
+    try {
+      const prompt = `Give a very brief (under 15 words) ${type === 'encouragement' ? 'encouraging' : 'helpful tip'} message for a piano student who ${context}. Be warm and concise.`;
+      const response = await chatWithAiCoach(prompt, clef, lang);
+      if (response.replyText) {
+        showHint(response.replyText, type);
+        return;
       }
-      showLocalHint(type);
-    },
-    [clef, lang, showHint, showLocalHint]
-  );
+    } catch {
+      // fall through to local
+    }
+    showLocalHint(type);
+  };
 
-  const onPracticeUpdate = useCallback(
-    (streak: number, hasMistake: boolean) => {
-      if (hasMistake) {
-        consecutiveMistakes.current += 1;
-        if (consecutiveMistakes.current >= MISTAKE_THRESHOLD) {
-          consecutiveMistakes.current = 0;
-          void fetchAiHint('is struggling with mistakes', 'tip');
-        }
-      }
-
-      if (streak > prevStreak.current && streak > 0 && streak % STREAK_THRESHOLD === 0) {
+  const onPracticeUpdate = (streak: number, hasMistake: boolean) => {
+    if (hasMistake) {
+      consecutiveMistakes.current += 1;
+      if (consecutiveMistakes.current >= MISTAKE_THRESHOLD) {
         consecutiveMistakes.current = 0;
-        void fetchAiHint(`has a ${streak}-note streak`, 'encouragement');
+        void fetchAiHint('is struggling with mistakes', 'tip');
       }
+    }
 
-      if (streak < prevStreak.current) {
-        // streak was reset (wrong note)
-        consecutiveMistakes.current += 1;
-      }
+    if (streak > prevStreak.current && streak > 0 && streak % STREAK_THRESHOLD === 0) {
+      consecutiveMistakes.current = 0;
+      void fetchAiHint(`has a ${streak}-note streak`, 'encouragement');
+    }
 
-      prevStreak.current = streak;
-    },
-    [fetchAiHint]
-  );
+    if (streak < prevStreak.current) {
+      // streak was reset (wrong note)
+      consecutiveMistakes.current += 1;
+    }
+
+    prevStreak.current = streak;
+  };
 
   useEffect(() => {
     return () => {

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { CLEF_CENTER_MIDI, TIME_SIGNATURES } from '../config/music';
 import { ClefType, Note, TimeSignature } from '../types';
@@ -38,7 +38,7 @@ const StaffCanvas: React.FC<StaffCanvasProps> = ({
   viewportWidth,
   timeSignature,
 }) => {
-  const layout = useMemo(() => createStaffLayout(viewportWidth), [viewportWidth]);
+  const layout = createStaffLayout(viewportWidth);
   const centerMidi = CLEF_CENTER_MIDI[clef];
   const availableWidth = Math.max(0, layout.VIEWPORT_WIDTH - layout.START_X - layout.RIGHT_PADDING);
   const maxFitNotes = Math.max(1, Math.floor(availableWidth / layout.NOTE_SPACING) + 1);
@@ -46,15 +46,11 @@ const StaffCanvas: React.FC<StaffCanvasProps> = ({
   const contentWidth =
     layout.START_X + Math.max(visibleCount - 1, 0) * layout.NOTE_SPACING + layout.RIGHT_PADDING;
 
-  const layoutNotes: NoteLayout[] = useMemo(
-    () =>
-      noteQueue.slice(0, visibleCount).map((note, index) => ({
-        note,
-        index,
-        x: layout.START_X + index * layout.NOTE_SPACING,
-      })),
-    [noteQueue, visibleCount, layout.START_X, layout.NOTE_SPACING]
-  );
+  const layoutNotes: NoteLayout[] = noteQueue.slice(0, visibleCount).map((note, index) => ({
+    note,
+    index,
+    x: layout.START_X + index * layout.NOTE_SPACING,
+  }));
 
   return (
     <svg

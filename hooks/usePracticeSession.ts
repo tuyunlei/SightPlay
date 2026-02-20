@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-
 import { computeAccuracy } from '../domain/scoring';
 
 import {
@@ -51,14 +49,13 @@ export const usePracticeSession = ({
   onMicError,
   onChallengeComplete,
 }: UsePracticeSessionOptions) => {
-  'use no memo';
   const state = usePracticeStateSlice();
   const actions = usePracticeActionsSlice();
   const refs = usePracticeRefs();
   const pressedKeysState = usePressedKeysState();
 
   const targetNote = state.noteQueue.length > 0 ? state.noteQueue[0] : null;
-  const accuracy = useMemo(() => computeAccuracy(state.sessionStats), [state.sessionStats]);
+  const accuracy = computeAccuracy(state.sessionStats);
 
   useQueueInitialization({
     clef: state.clef,
