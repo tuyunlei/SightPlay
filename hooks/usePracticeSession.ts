@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-
 import { computeAccuracy } from '../domain/scoring';
 
 import {
@@ -23,7 +21,6 @@ import {
   usePressedKeysState,
 } from './practiceSession/slices';
 import type { UsePracticeSessionOptions } from './practiceSession/slices';
-import { useAudioInput } from './useAudioInput';
 import { useMidiInput } from './useMidiInput';
 
 export type { UsePracticeSessionOptions };
@@ -58,7 +55,7 @@ export const usePracticeSession = ({
   const pressedKeysState = usePressedKeysState();
 
   const targetNote = state.noteQueue.length > 0 ? state.noteQueue[0] : null;
-  const accuracy = useMemo(() => computeAccuracy(state.sessionStats), [state.sessionStats]);
+  const accuracy = computeAccuracy(state.sessionStats);
 
   useQueueInitialization({
     clef: state.clef,
@@ -87,8 +84,7 @@ export const usePracticeSession = ({
     actions.setIsListening,
     actions.setStatus,
     actions.setDetectedNote,
-    onMicError,
-    useAudioInput
+    onMicError
   );
 
   const toggleMic = useToggleMic(state.isListening, startMic, stopMic);

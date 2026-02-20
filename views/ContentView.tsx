@@ -68,22 +68,23 @@ export const ContentView: React.FC<ContentViewProps> = (props) => {
     setSelectedSongId
   );
 
-  const exitSong = useCallback(() => {
+  const exitSong = () => {
     setViewMode('library');
     setSelectedSongId(null);
-  }, [setViewMode, setSelectedSongId]);
+  };
 
-  const completeSong = useCallback(() => {
+  const completeSong = () => {
     setShowSongComplete(true);
     const song = selectedSongId ? getSongById(selectedSongId) : undefined;
     if (song) onSongComplete(song.difficulty);
-  }, [selectedSongId, setShowSongComplete, onSongComplete]);
+  };
 
-  const backToLib = useCallback(() => {
+  const backToLib = () => {
     setShowSongComplete(false);
     exitSong();
-  }, [setShowSongComplete, exitSong]);
+  };
 
+  // Kept: stable identity required for child callback behavior.
   const selectSong = useCallback(
     (id: string) => {
       setSelectedSongId(id);
@@ -92,9 +93,9 @@ export const ContentView: React.FC<ContentViewProps> = (props) => {
     [setSelectedSongId, setViewMode]
   );
 
-  const retrySong = useCallback(() => {
+  const retrySong = () => {
     setShowSongComplete(false);
-  }, [setShowSongComplete]);
+  };
 
   if (viewMode === 'library') {
     return <SongLibrary onSongSelect={selectSong} />;

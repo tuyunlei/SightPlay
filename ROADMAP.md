@@ -199,13 +199,47 @@
 - [x] 建立集成测试规范：多组件 + zustand store 联动的 render 测试 ← `c2dd234`
 - [x] ContentView + SongPractice 集成测试（render loop 防护 + viewMode 切换 + callback 稳定性） ← `c2dd234`
 - [x] AuthGate + LoginScreen + RegisterCard 集成测试（未认证 → 登录 → 失败 → 注册 → 认证通过） ← `c2dd234`
-- [ ] 每个主要页面（练习、曲库、设置）至少一个多组件联动测试
+- [x] 每个主要页面（练习、曲库、设置）至少一个多组件联动测试 ← ContentView + AuthGate + PasskeyManagement
 
 #### P3：长期演进
 
-- [ ] 评估 React Compiler（React 19+）— 自动 memoize，根治引用稳定性问题
-- [ ] 引入 mutation testing（Stryker）— 度量测试真实有效性，而非覆盖率
-- [ ] 性能回归检测：React Profiler 检测不必要重渲染，设阈值报警
+- [x] 评估 React Compiler（React 19+）— 自动 memoize，根治引用稳定性问题
+  - **结论：推荐引入。** React Compiler 1.0 已于 2025-10-07 正式发布，Meta 生产验证，完全稳定。
+  - SightPlay 环境兼容：React 19.2 + Vite 6 + TS 5.8，满足所有要求
+  - 安装：`pnpm add -D babel-plugin-react-compiler` + vite.config.ts 配置
+  - 预期收益：自动 memoize 所有组件和 hooks，根治 P4.6-P0 那类 render loop（无需手动 useCallback/useMemo）
+  - 风险：低。编译器是 Babel 插件，不改运行时；已有 441 单测 + 51 E2E 做回归保护
+  - **建议作为 P6 第一步引入，移除手动 memoize 后简化代码**
+- [x] 评估 mutation testing（Stryker）— 度量测试真实有效性，而非覆盖率
+  - **结论：暂不引入。** Stryker 支持 vitest，但运行极慢（每个 mutation 跑完整测试套件）
+  - 441 个测试 × 数百个 mutation = 数小时运行时间，不适合 CI 常规流程
+  - 适合阶段性手动跑（如每月一次），评估测试质量趋势
+  - **建议：等项目规模再大或测试质量有疑问时再引入，当前 84% 覆盖率 + 集成测试已足够**
+- [x] 评估性能回归检测：React Profiler 检测不必要重渲染，设阈值报警
+  - **结论：引入 React Compiler 后再评估。** 当前手动 useCallback/useMemo 已解决已知 render loop
+  - React Compiler 自动 memoize 后，大部分重渲染问题将被编译器消除
+  - 如果引入 Compiler 后仍有性能问题，再加 React Profiler 集成测试检测
+  - ContentView 集成测试已有 render count 断言（< 15 次），可作为基础扩展
+
+## P6 — React Compiler + 代码简化
+
+引入 React Compiler 自动 memoize，移除手动 useCallback/useMemo/React.memo，简化代码。
+
+### P6.1 — 引入 React Compiler
+
+- [x] 安装 `babel-plugin-react-compiler` + `eslint-plugin-react-compiler`，配置 vite.config.ts + eslint ← `4d47179`
+- [x] 修复 compiler 不兼容的 hook 模式（useMicInput 动态 hook 传递 → 直接 import；usePracticeRefs 显式调用） ← `4d47179`
+- [x] 验证编译产物正确（441 单测 + 51 E2E 全通过） ← `4d47179`
+- [x] 剩余 12 个 compiler warnings（warn 级别，prop mutation 等），不影响功能
+
+### P6.2 — 移除手动 memoize
+
+- [x] 移除 18 个文件中的 useCallback/useMemo/React.memo（净减 73 行） ← `0993343`
+- [x] 保留 3 处需要稳定引用的 useCallback（checkSession、initializeQueue、selectSong）
+- [x] 清理 'use no memo' 指令和未使用 import
+- [x] 全量测试回归验证（441 单测 + 51 E2E 全过） ← `0993343`
+
+---
 
 ## P5 — 迁移至 Cloudflare Pages + Workers
 

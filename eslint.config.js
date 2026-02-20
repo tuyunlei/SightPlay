@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
+import reactCompiler from 'eslint-plugin-react-compiler';
 import importPlugin from 'eslint-plugin-import';
 import prettier from 'eslint-config-prettier';
 
@@ -17,11 +18,7 @@ const DEFAULT_EXPORT_WHITELIST = [
 export default tseslint.config(
   { ignores: ['dist', 'node_modules', 'coverage', '.github', 'scripts'] },
   {
-    extends: [
-      js.configs.recommended,
-      ...tseslint.configs.recommended,
-      ...tseslint.configs.strict,
-    ],
+    extends: [js.configs.recommended, ...tseslint.configs.recommended, ...tseslint.configs.strict],
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2022,
@@ -29,6 +26,7 @@ export default tseslint.config(
     plugins: {
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
+      'react-compiler': reactCompiler,
       import: importPlugin,
     },
     settings: {
@@ -46,6 +44,7 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'error',
+      'react-compiler/react-compiler': 'warn',
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       '@typescript-eslint/no-unused-vars': [
         'error',

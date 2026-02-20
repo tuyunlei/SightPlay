@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 
 import { SONG_LIBRARY, SongDifficulty, SongMetadata } from '../../data/songs';
 import { useLanguage } from '../../hooks/useLanguage';
@@ -29,14 +29,14 @@ export const SongLibrary: React.FC<SongLibraryProps> = ({ onSongSelect }) => {
   const { t } = useLanguage();
   const [difficultyFilter, setDifficultyFilter] = useState<SongDifficulty | 'all'>('all');
 
-  const songs = useMemo(() => SONG_LIBRARY.map(convertToMetadata), []);
+  const songs = SONG_LIBRARY.map(convertToMetadata);
 
-  const filteredSongs = useMemo(() => {
-    if (difficultyFilter === 'all') return songs;
-    return songs.filter((song) => song.difficulty === difficultyFilter);
-  }, [songs, difficultyFilter]);
+  const filteredSongs =
+    difficultyFilter === 'all'
+      ? songs
+      : songs.filter((song) => song.difficulty === difficultyFilter);
 
-  const groupedByDifficulty = useMemo(() => {
+  const groupedByDifficulty = (() => {
     const groups: Record<SongDifficulty, typeof songs> = {
       beginner: [],
       intermediate: [],
@@ -46,7 +46,7 @@ export const SongLibrary: React.FC<SongLibraryProps> = ({ onSongSelect }) => {
       groups[song.difficulty].push(song);
     });
     return groups;
-  }, [filteredSongs]);
+  })();
 
   const difficulties: (SongDifficulty | 'all')[] = ['all', 'beginner', 'intermediate', 'advanced'];
 

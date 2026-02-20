@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState } from 'react';
 import type { MutableRefObject } from 'react';
 
 import { usePracticeStore } from '../../store/practiceStore';
@@ -96,42 +96,49 @@ export const usePracticeActionsSlice = () => {
 export type PracticeActions = ReturnType<typeof usePracticeActionsSlice>;
 export type PracticeStoreState = ReturnType<typeof usePracticeStore.getState>;
 
-export const usePracticeRefs = (): PracticeRefs => ({
-  matchTimer: useRef(0),
-  wrongTimer: useRef(0),
-  lastHitTime: useRef(0),
-  hasMistakeForCurrent: useRef(false),
-  isProcessingRef: useRef(false),
-});
+export const usePracticeRefs = (): PracticeRefs => {
+  const matchTimer = useRef(0);
+  const wrongTimer = useRef(0);
+  const lastHitTime = useRef(0);
+  const hasMistakeForCurrent = useRef(false);
+  const isProcessingRef = useRef(false);
+
+  return {
+    matchTimer,
+    wrongTimer,
+    lastHitTime,
+    hasMistakeForCurrent,
+    isProcessingRef,
+  };
+};
 
 export const usePressedKeysState = () => {
   const pressedKeysRef = useRef<PressedKeys>(new Map());
   const [pressedKeys, setPressedKeys] = useState<PressedKeys>(pressedKeysRef.current);
 
-  const setPressedKeysValue = useCallback((next: PressedKeys) => {
+  const setPressedKeysValue = (next: PressedKeys) => {
     pressedKeysRef.current = next;
     setPressedKeys(next);
-  }, []);
+  };
 
-  const addPressedKey = useCallback(
-    (midiNumber: number, note: Note, isCorrect: boolean, targetId?: string | null) => {
-      const next = new Map(pressedKeysRef.current);
-      next.set(midiNumber, { note, isCorrect, targetId });
-      setPressedKeysValue(next);
-    },
-    [setPressedKeysValue]
-  );
+  const addPressedKey = (
+    midiNumber: number,
+    note: Note,
+    isCorrect: boolean,
+    targetId?: string | null
+  ) => {
+    const next = new Map(pressedKeysRef.current);
+    next.set(midiNumber, { note, isCorrect, targetId });
+    setPressedKeysValue(next);
+  };
 
-  const removePressedKey = useCallback(
-    (midiNumber: number) => {
-      const next = new Map(pressedKeysRef.current);
-      const pressedInfo = next.get(midiNumber) ?? null;
-      next.delete(midiNumber);
-      setPressedKeysValue(next);
-      return pressedInfo;
-    },
-    [setPressedKeysValue]
-  );
+  const removePressedKey = (midiNumber: number) => {
+    const next = new Map(pressedKeysRef.current);
+    const pressedInfo = next.get(midiNumber) ?? null;
+    next.delete(midiNumber);
+    setPressedKeysValue(next);
+    return pressedInfo;
+  };
 
   return {
     pressedKeys,

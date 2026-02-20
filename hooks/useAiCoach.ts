@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { Language, translations } from '../i18n';
 import { chatWithAiCoach } from '../services/geminiService';
@@ -27,58 +27,55 @@ export const useAiCoach = ({ clef, lang, onLoadChallenge }: UseAiCoachOptions) =
   ]);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const sendMessage = useCallback(
-    async (text: string) => {
-      if (!text.trim() || isLoadingAi) return;
+  const sendMessage = async (text: string) => {
+    if (!text.trim() || isLoadingAi) return;
 
-      const userMsg: ChatMessage = { role: 'user', text };
-      setChatHistory((prev) => [...prev, userMsg]);
-      setChatInput('');
-      setIsLoadingAi(true);
+    const userMsg: ChatMessage = { role: 'user', text };
+    setChatHistory((prev) => [...prev, userMsg]);
+    setChatInput('');
+    setIsLoadingAi(true);
 
-      try {
-        const response = await chatWithAiCoach(text, clef, lang);
+    try {
+      const response = await chatWithAiCoach(text, clef, lang);
 
-        const aiMsg: ChatMessage = {
-          role: 'ai',
-          text: response.replyText,
-          hasAction: !!response.challengeData,
-        };
+      const aiMsg: ChatMessage = {
+        role: 'ai',
+        text: response.replyText,
+        hasAction: !!response.challengeData,
+      };
 
-        setChatHistory((prev) => [...prev, aiMsg]);
+      setChatHistory((prev) => [...prev, aiMsg]);
 
-        if (response.challengeData) {
-          const challengeData = response.challengeData;
-          const noteCount = onLoadChallenge(challengeData);
-          if (noteCount > 0) {
-            const t = translations[lang];
-            setChatHistory((prev) => [
-              ...prev,
-              {
-                role: 'ai',
-                text: formatTemplate(t.aiChallengeLoaded, {
-                  challenge: t.challenge,
-                  title: challengeData.title,
-                  count: noteCount,
-                  notes: t.notes,
-                }),
-                hasAction: true,
-              },
-            ]);
-          }
+      if (response.challengeData) {
+        const challengeData = response.challengeData;
+        const noteCount = onLoadChallenge(challengeData);
+        if (noteCount > 0) {
+          const t = translations[lang];
+          setChatHistory((prev) => [
+            ...prev,
+            {
+              role: 'ai',
+              text: formatTemplate(t.aiChallengeLoaded, {
+                challenge: t.challenge,
+                title: challengeData.title,
+                count: noteCount,
+                notes: t.notes,
+              }),
+              hasAction: true,
+            },
+          ]);
         }
-      } catch (error) {
-        console.error(error);
-        setChatHistory((prev) => [
-          ...prev,
-          { role: 'ai', text: translations[lang].aiConnectionErrorMessage },
-        ]);
-      } finally {
-        setIsLoadingAi(false);
       }
-    },
-    [clef, isLoadingAi, lang, onLoadChallenge]
-  );
+    } catch (error) {
+      console.error(error);
+      setChatHistory((prev) => [
+        ...prev,
+        { role: 'ai', text: translations[lang].aiConnectionErrorMessage },
+      ]);
+    } finally {
+      setIsLoadingAi(false);
+    }
+  };
 
   return {
     chatInput,

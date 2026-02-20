@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { CLEF_CENTER_MIDI } from '../../config/music';
 import { ClefType, Note, TimeSignature } from '../../types';
@@ -132,7 +132,7 @@ export const GrandStaffCanvas: React.FC<GrandStaffCanvasProps> = ({
   viewportWidth,
   timeSignature,
 }) => {
-  const layout = useMemo(() => createGrandStaffLayout(viewportWidth), [viewportWidth]);
+  const layout = createGrandStaffLayout(viewportWidth);
   const maxFitNotes = computeMaxFitNotes(layout);
   const contentWidth = computeContentWidth(layout, noteQueue.length, maxFitNotes);
 
@@ -141,12 +141,8 @@ export const GrandStaffCanvas: React.FC<GrandStaffCanvasProps> = ({
     bass: bassNotes,
     trebleLayout: trebleLayoutNotes,
     bassLayout: bassLayoutNotes,
-  } = useMemo(
-    () =>
-      splitNotesByClef(noteQueue, maxFitNotes, layout.treble.START_X, layout.treble.NOTE_SPACING),
-    [noteQueue, maxFitNotes, layout.treble.START_X, layout.treble.NOTE_SPACING]
-  );
-  const { treble: trebleExiting, bass: bassExiting } = useMemo(() => {
+  } = splitNotesByClef(noteQueue, maxFitNotes, layout.treble.START_X, layout.treble.NOTE_SPACING);
+  const { treble: trebleExiting, bass: bassExiting } = (() => {
     const split = splitNotesByClef(
       exitingNotes,
       exitingNotes.length,
@@ -154,7 +150,7 @@ export const GrandStaffCanvas: React.FC<GrandStaffCanvasProps> = ({
       layout.treble.NOTE_SPACING
     );
     return { treble: split.treble, bass: split.bass };
-  }, [exitingNotes, layout.treble.START_X, layout.treble.NOTE_SPACING]);
+  })();
 
   return (
     <svg

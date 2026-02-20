@@ -3,6 +3,7 @@ import { useCallback, useEffect } from 'react';
 import { buildChallengeNotes } from '../../domain/challenge';
 import { createInitialQueue, createChallengeQueue, DEFAULT_QUEUE_SIZE } from '../../domain/queue';
 import { ClefType, GeneratedChallenge, HandPracticeMode, Note } from '../../types';
+import { useAudioInput } from '../useAudioInput';
 
 import type { PracticeActions, PracticeRefs, PracticeStoreState } from './slices';
 
@@ -21,6 +22,7 @@ export const useQueueInitialization = ({
   setNoteQueue: PracticeActions['setNoteQueue'];
   lastHitTime: PracticeRefs['lastHitTime'];
 }) => {
+  // Kept: stable identity required for useEffect dependency behavior.
   const initializeQueue = useCallback(
     (overrideClef?: ClefType, overrideHandMode?: HandPracticeMode) => {
       const nextQueue = createInitialQueue(
@@ -44,84 +46,79 @@ export const useQueueInitialization = ({
     if (challengeSequenceLength === 0) {
       initializeQueue(clef, handMode);
     }
-  }, [clef, handMode, challengeSequenceLength, initializeQueue]);
+  }, [challengeSequenceLength, clef, handMode, initializeQueue]);
 };
 
-export const useToggleMic = (isListening: boolean, startMic: () => void, stopMic: () => void) =>
-  useCallback(() => {
+export const useToggleMic = (isListening: boolean, startMic: () => void, stopMic: () => void) => {
+  return () => {
     if (isListening) {
       stopMic();
     } else {
       startMic();
     }
-  }, [isListening, startMic, stopMic]);
+  };
+};
 
-export const useToggleClef = (clef: ClefType, setClef: PracticeActions['setClef']) =>
-  useCallback(() => {
+export const useToggleClef = (clef: ClefType, setClef: PracticeActions['setClef']) => {
+  return () => {
     const nextClef = clef === ClefType.TREBLE ? ClefType.BASS : ClefType.TREBLE;
     setClef(nextClef);
-  }, [clef, setClef]);
+  };
+};
 
 export const useResetSessionStats = (
   resetStats: PracticeActions['resetStats'],
   lastHitTime: PracticeRefs['lastHitTime']
-) =>
-  useCallback(() => {
+) => {
+  return () => {
     resetStats();
     lastHitTime.current = Date.now();
-  }, [lastHitTime, resetStats]);
+  };
+};
 
-export const useLoadChallenge = (
-  resetSessionStats: () => void,
-  setChallengeInfo: PracticeActions['setChallengeInfo'],
-  setChallengeSequence: PracticeActions['setChallengeSequence'],
-  setChallengeIndex: PracticeActions['setChallengeIndex'],
-  setNoteQueue: PracticeActions['setNoteQueue']
-) =>
-  useCallback(
-    (challenge: GeneratedChallenge) => {
-      const notes = buildChallengeNotes(challenge.notes);
-      if (notes.length === 0) return 0;
+export const useLoadChallenge =
+  (
+    resetSessionStats: () => void,
+    setChallengeInfo: PracticeActions['setChallengeInfo'],
+    setChallengeSequence: PracticeActions['setChallengeSequence'],
+    setChallengeIndex: PracticeActions['setChallengeIndex'],
+    setNoteQueue: PracticeActions['setNoteQueue']
+  ) =>
+  (challenge: GeneratedChallenge) => {
+    const notes = buildChallengeNotes(challenge.notes);
+    if (notes.length === 0) return 0;
 
-      setChallengeInfo(challenge);
-      setChallengeSequence(notes);
-      setChallengeIndex(0);
+    setChallengeInfo(challenge);
+    setChallengeSequence(notes);
+    setChallengeIndex(0);
 
-      setNoteQueue(createChallengeQueue(notes, DEFAULT_QUEUE_SIZE));
-      resetSessionStats();
+    setNoteQueue(createChallengeQueue(notes, DEFAULT_QUEUE_SIZE));
+    resetSessionStats();
 
-      return notes.length;
-    },
-    [resetSessionStats, setChallengeIndex, setChallengeInfo, setChallengeSequence, setNoteQueue]
-  );
+    return notes.length;
+  };
 
 export const useMicInput = (
   handleMicNote: (note: Note | null) => void,
   setIsListening: PracticeActions['setIsListening'],
   setStatus: PracticeActions['setStatus'],
   setDetectedNote: PracticeActions['setDetectedNote'],
-  onMicError: () => void,
-  useAudioInput: (opts: {
-    onNoteDetected: (note: Note | null) => void;
-    onStart: () => void;
-    onStop: () => void;
-    onError: () => void;
-  }) => { start: () => void; stop: () => void }
+  onMicError: () => void
 ) => {
-  const handleStart = useCallback(() => {
+  const handleStart = () => {
     setIsListening(true);
     setStatus('listening');
-  }, [setIsListening, setStatus]);
+  };
 
-  const handleStop = useCallback(() => {
+  const handleStop = () => {
     setIsListening(false);
     setStatus('waiting');
     setDetectedNote(null);
-  }, [setDetectedNote, setIsListening, setStatus]);
+  };
 
-  const handleError = useCallback(() => {
+  const handleError = () => {
     onMicError();
-  }, [onMicError]);
+  };
 
   return useAudioInput({
     onNoteDetected: handleMicNote,
