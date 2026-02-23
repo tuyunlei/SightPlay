@@ -161,13 +161,18 @@ export const GrandStaffCanvas: React.FC<GrandStaffCanvasProps> = ({
       style={{ width: `${contentWidth}px`, height: `${layout.TOTAL_HEIGHT}px` }}
       preserveAspectRatio="xMinYMin meet"
     >
-      <path d={createBracePath(layout)} stroke="#0f172a" strokeWidth={1.5} fill="none" />
+      <path
+        d={createBracePath(layout)}
+        stroke="var(--color-note-active)"
+        strokeWidth={1.5}
+        fill="none"
+      />
       <rect
         x={layout.treble.HIGHLIGHT_X}
         y={layout.treble.STAFF_SPACE}
         width={layout.treble.HIGHLIGHT_WIDTH}
         height={layout.TOTAL_HEIGHT - layout.treble.STAFF_SPACE * 2}
-        fill="#f1f5f9"
+        fill="var(--color-staff-highlight)"
         rx="8"
       />
       <SingleStaffContent

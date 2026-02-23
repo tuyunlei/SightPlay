@@ -108,7 +108,7 @@ describe('staffUtils rendering', () => {
         detectedNote: null,
         activeNote: undefined,
       };
-      expect(getNoteColor(params)).toBe('#22c55e');
+      expect(getNoteColor(params)).toBe('var(--color-note-correct)');
     });
 
     it('should return green when first note matches detected note', () => {
@@ -119,7 +119,7 @@ describe('staffUtils rendering', () => {
         detectedNote: note,
         activeNote: note,
       };
-      expect(getNoteColor(params)).toBe('#22c55e');
+      expect(getNoteColor(params)).toBe('var(--color-note-correct)');
     });
 
     it('should return dark color when first note does not match detected note', () => {
@@ -129,7 +129,7 @@ describe('staffUtils rendering', () => {
         detectedNote: createMockNote(60),
         activeNote: createMockNote(62),
       };
-      expect(getNoteColor(params)).toBe('#1e293b');
+      expect(getNoteColor(params)).toBe('var(--color-note-active)');
     });
 
     it('should return dark color when first note has no detected note', () => {
@@ -139,7 +139,7 @@ describe('staffUtils rendering', () => {
         detectedNote: null,
         activeNote: createMockNote(60),
       };
-      expect(getNoteColor(params)).toBe('#1e293b');
+      expect(getNoteColor(params)).toBe('var(--color-note-active)');
     });
 
     it('should return dark color when first note has no active note', () => {
@@ -149,7 +149,7 @@ describe('staffUtils rendering', () => {
         detectedNote: createMockNote(60),
         activeNote: undefined,
       };
-      expect(getNoteColor(params)).toBe('#1e293b');
+      expect(getNoteColor(params)).toBe('var(--color-note-active)');
     });
 
     it('should return darkest color for non-first notes', () => {
@@ -159,7 +159,7 @@ describe('staffUtils rendering', () => {
         detectedNote: null,
         activeNote: undefined,
       };
-      expect(getNoteColor(params)).toBe('#0f172a');
+      expect(getNoteColor(params)).toBe('var(--color-note-queue)');
     });
 
     it('should prioritize exiting state over other conditions', () => {
@@ -170,7 +170,7 @@ describe('staffUtils rendering', () => {
         detectedNote: note,
         activeNote: note,
       };
-      expect(getNoteColor(params)).toBe('#22c55e');
+      expect(getNoteColor(params)).toBe('var(--color-note-correct)');
     });
 
     it('should handle all combinations of index and note states', () => {
@@ -178,16 +178,16 @@ describe('staffUtils rendering', () => {
 
       expect(
         getNoteColor({ isExiting: false, index: 0, detectedNote: null, activeNote: undefined })
-      ).toBe('#1e293b');
+      ).toBe('var(--color-note-active)');
       expect(
         getNoteColor({ isExiting: false, index: 1, detectedNote: null, activeNote: undefined })
-      ).toBe('#0f172a');
+      ).toBe('var(--color-note-queue)');
       expect(
         getNoteColor({ isExiting: false, index: 0, detectedNote: note, activeNote: note })
-      ).toBe('#22c55e');
+      ).toBe('var(--color-note-correct)');
       expect(
         getNoteColor({ isExiting: false, index: 1, detectedNote: note, activeNote: note })
-      ).toBe('#0f172a');
+      ).toBe('var(--color-note-queue)');
     });
   });
 });

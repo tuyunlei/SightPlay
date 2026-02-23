@@ -57,12 +57,12 @@ export type NoteColorParams = {
 };
 
 export const getNoteColor = ({ isExiting, index, detectedNote, activeNote }: NoteColorParams) => {
-  if (isExiting) return '#22c55e';
+  if (isExiting) return 'var(--color-note-correct)';
   if (index === 0 && detectedNote && activeNote) {
-    if (detectedNote.midi === activeNote.midi) return '#22c55e';
+    if (detectedNote.midi === activeNote.midi) return 'var(--color-note-correct)';
   }
-  if (index === 0) return '#1e293b';
-  return '#0f172a';
+  if (index === 0) return 'var(--color-note-active)';
+  return 'var(--color-note-queue)';
 };
 
 export const isSharp = (note: Note) => note.name.includes('#');
