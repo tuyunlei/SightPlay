@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 import { MidiService } from '../services/midiService';
@@ -11,10 +11,21 @@ describe('useMidiInput', () => {
   let mockMidiService: {
     initialize: ReturnType<typeof vi.fn>;
   };
+  let capturedCallbacks: {
+    onNoteOn?: (midi: number) => void;
+    onConnectionChange?: (connected: boolean) => void;
+    onNoteOff?: (midi: number) => void;
+  };
 
   beforeEach(() => {
+    capturedCallbacks = {};
     mockMidiService = {
-      initialize: vi.fn().mockResolvedValue(undefined),
+      initialize: vi.fn().mockImplementation((noteOn, connChange, noteOff) => {
+        capturedCallbacks.onNoteOn = noteOn;
+        capturedCallbacks.onConnectionChange = connChange;
+        capturedCallbacks.onNoteOff = noteOff;
+        return Promise.resolve();
+      }),
     };
     vi.mocked(MidiService).mockImplementation(() => mockMidiService as unknown as MidiService);
   });
@@ -30,34 +41,14 @@ describe('useMidiInput', () => {
     expect(MidiService).toHaveBeenCalledTimes(1);
   });
 
-  it('initializes MIDI service with onNoteOn callback', () => {
+  it('initializes MIDI service once on mount', () => {
     const onNoteOn = vi.fn();
     renderHook(() => useMidiInput({ onNoteOn }));
 
-    expect(mockMidiService.initialize).toHaveBeenCalledWith(onNoteOn, undefined, undefined);
+    expect(mockMidiService.initialize).toHaveBeenCalledTimes(1);
   });
 
-  it('passes all callbacks to initialize', () => {
-    const onNoteOn = vi.fn();
-    const onNoteOff = vi.fn();
-    const onConnectionChange = vi.fn();
-
-    renderHook(() =>
-      useMidiInput({
-        onNoteOn,
-        onNoteOff,
-        onConnectionChange,
-      })
-    );
-
-    expect(mockMidiService.initialize).toHaveBeenCalledWith(
-      onNoteOn,
-      onConnectionChange,
-      onNoteOff
-    );
-  });
-
-  it('reinitializes when onNoteOn changes', () => {
+  it('does not reinitialize when callbacks change', () => {
     const onNoteOn1 = vi.fn();
     const onNoteOn2 = vi.fn();
 
@@ -65,15 +56,51 @@ describe('useMidiInput', () => {
       initialProps: { onNoteOn: onNoteOn1 },
     });
 
+    rerender({ onNoteOn: onNoteOn2 });
+
+    // Should only initialize once — callbacks are accessed via refs
     expect(mockMidiService.initialize).toHaveBeenCalledTimes(1);
+  });
+
+  it('delegates to latest onNoteOn callback via ref', () => {
+    const onNoteOn1 = vi.fn();
+    const onNoteOn2 = vi.fn();
+
+    const { rerender } = renderHook(({ onNoteOn }) => useMidiInput({ onNoteOn }), {
+      initialProps: { onNoteOn: onNoteOn1 },
+    });
 
     rerender({ onNoteOn: onNoteOn2 });
 
-    expect(mockMidiService.initialize).toHaveBeenCalledTimes(2);
-    expect(mockMidiService.initialize).toHaveBeenLastCalledWith(onNoteOn2, undefined, undefined);
+    // Simulate MIDI event through captured wrapper
+    act(() => {
+      capturedCallbacks.onNoteOn?.(60);
+    });
+
+    expect(onNoteOn1).not.toHaveBeenCalled();
+    expect(onNoteOn2).toHaveBeenCalledWith(60);
   });
 
-  it('reinitializes when onConnectionChange changes', () => {
+  it('delegates to latest onNoteOff callback via ref', () => {
+    const onNoteOn = vi.fn();
+    const onNoteOff1 = vi.fn();
+    const onNoteOff2 = vi.fn();
+
+    const { rerender } = renderHook(({ onNoteOff }) => useMidiInput({ onNoteOn, onNoteOff }), {
+      initialProps: { onNoteOff: onNoteOff1 },
+    });
+
+    rerender({ onNoteOff: onNoteOff2 });
+
+    act(() => {
+      capturedCallbacks.onNoteOff?.(60);
+    });
+
+    expect(onNoteOff1).not.toHaveBeenCalled();
+    expect(onNoteOff2).toHaveBeenCalledWith(60);
+  });
+
+  it('delegates to latest onConnectionChange callback via ref', () => {
     const onNoteOn = vi.fn();
     const onConnectionChange1 = vi.fn();
     const onConnectionChange2 = vi.fn();
@@ -85,21 +112,12 @@ describe('useMidiInput', () => {
 
     rerender({ onConnectionChange: onConnectionChange2 });
 
-    expect(mockMidiService.initialize).toHaveBeenCalledTimes(2);
-  });
-
-  it('reinitializes when onNoteOff changes', () => {
-    const onNoteOn = vi.fn();
-    const onNoteOff1 = vi.fn();
-    const onNoteOff2 = vi.fn();
-
-    const { rerender } = renderHook(({ onNoteOff }) => useMidiInput({ onNoteOn, onNoteOff }), {
-      initialProps: { onNoteOff: onNoteOff1 },
+    act(() => {
+      capturedCallbacks.onConnectionChange?.(true);
     });
 
-    rerender({ onNoteOff: onNoteOff2 });
-
-    expect(mockMidiService.initialize).toHaveBeenCalledTimes(2);
+    expect(onConnectionChange1).not.toHaveBeenCalled();
+    expect(onConnectionChange2).toHaveBeenCalledWith(true);
   });
 
   it('uses same MidiService instance across rerenders', () => {
@@ -112,7 +130,6 @@ describe('useMidiInput', () => {
     rerender({ onNoteOn: vi.fn() });
     rerender({ onNoteOn: vi.fn() });
 
-    // MidiService should be constructed (StrictMode may cause multiple calls)
     expect(MidiService).toHaveBeenCalled();
   });
 });

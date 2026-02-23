@@ -8,6 +8,9 @@ pages_build_output_dir = "dist"
 binding = "AUTH_STORE"
 id = "3f7ca5a5081a495283be07c91c610434"
 
+[vars]
+WEBAUTHN_RP_ID = "sightplay.xclz.org"
+
 # Configure runtime secrets (not in source control):
 # wrangler secret put JWT_SECRET
 # wrangler secret put GEMINI_API_KEY
