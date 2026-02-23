@@ -256,11 +256,11 @@ P6.2 移除 useCallback 后 MIDI 输入静默失效，现有测试体系未能�
 
 Mock `navigator.requestMIDIAccess` 返回假 MIDIAccess/MIDIInput，验证：
 
-- [ ] 设备连接/断开 → onConnectionChange 回调
-- [ ] Note On 消息（0x90 + velocity > 0）→ onNoteOn 回调，参数正确
-- [ ] Note Off 消息（0x80 或 velocity=0）→ onNoteOff 回调
-- [ ] 热插拔：运行中连接新设备 → 自动绑定
-- [ ] 回调更新后，MIDI 事件仍能正确传递到最新回调（P6.3 的回归测试）
+- [x] 设备连接/断开 → onConnectionChange 回调 ← `9a1b704`
+- [x] Note On 消息（0x90 + velocity > 0）→ onNoteOn 回调，参数正确 ← `9a1b704`
+- [x] Note Off 消息（0x80 或 velocity=0）→ onNoteOff 回调 ← `9a1b704`
+- [x] 热插拔：运行中连接新设备 → 自动绑定 ← `9a1b704`
+- [x] 回调更新后，MIDI 事件仍能正确传递到最新回调（P6.3 的回归测试） ← `9a1b704`
 
 ### P7.2 — E2E WebMIDI 模拟
 
