@@ -266,11 +266,11 @@ Mock `navigator.requestMIDIAccess` 返回假 MIDIAccess/MIDIInput，验证：
 
 通过 Playwright `page.addInitScript` 注入 WebMIDI mock：
 
-- [ ] 编写 WebMIDI mock（假 MIDIAccess + MIDIInput + 事件分发）
-- [ ] 暴露 `window.__simulateMidiNoteOn(midi)` / `__simulateMidiNoteOff(midi)` 供 E2E 调用
-- [ ] E2E：MIDI 设备连接 → 按正确键 → 音符高亮 + 得分变化 + 下一个音符
-- [ ] E2E：按错误键 → 错误反馈
-- [ ] E2E：双手模式 → 同时按两个正确键 → 通过
+- [x] 编写 WebMIDI mock（假 MIDIAccess + MIDIInput + 事件分发） ← `bbdc716`
+- [x] 暴露 `window.__simulateMidiNoteOn(midi)` / `__simulateMidiNoteOff(midi)` 供 E2E 调用 ← `bbdc716`
+- [x] E2E：MIDI 设备连接 → 按正确键 → 音符高亮 + 得分变化 + 下一个音符 ← `bbdc716`
+- [x] E2E：按错误键 → 错误反馈 ← `bbdc716`
+- [x] E2E：双手模式 → 同时按两个正确键 → 通过 ← `bbdc716`
 
 ### P7.3 — 练习流程 MIDI 集成测试
 
