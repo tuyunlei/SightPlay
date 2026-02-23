@@ -276,10 +276,10 @@ Mock `navigator.requestMIDIAccess` 返回假 MIDIAccess/MIDIInput，验证：
 
 vitest + jsdom 环境，mock WebMIDI，渲染 usePracticeSession：
 
-- [ ] 模拟 MIDI Note On → 验证 store 中 detectedNote 更新
-- [ ] 模拟正确音符 → 验证 noteQueue 推进
-- [ ] 模拟错误音符 → 验证 hasMistakeForCurrent 标记
-- [ ] 组件 rerender 后 → MIDI 事件仍正常处理（回归守卫）
+- [x] 模拟 MIDI Note On → 验证 store 中 detectedNote 更新 ← `9fc95cf`
+- [x] 模拟正确音符 → 验证 noteQueue 推进 ← `9fc95cf`
+- [x] 模拟错误音符 → 验证 hasMistakeForCurrent 标记 ← `9fc95cf`
+- [x] 组件 rerender 后 → MIDI 事件仍正常处理（回归守卫） ← `9fc95cf`
 
 ---
 
