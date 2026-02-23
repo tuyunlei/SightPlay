@@ -23,7 +23,7 @@
 - 新增 UI 文本必须走 i18n，不允许硬编码中文或英文
 - 新增样式必须使用 design token（颜色变量），不允许硬编码颜色值
 - 所有用户可见的功能路径必须有 Sentry 日志
-- 传给子组件的 callback prop 必须用 useCallback 包裹（防止引用不稳定导致 render loop）
+- 传给子组件的 callback prop 必须保证引用稳定（React Compiler 自动处理；Compiler bail out 的场景需手动 useCallback 或 ref 模式）
 - 新增功能必须有对应的 E2E 用户路径覆盖（不只是单元测试）
 - **零白屏原则**：任何用户可达的页面/状态组合都不能出现白屏，E2E 必须覆盖验证
 - **TEST_PLAN.md 同步维护**：ROADMAP 新增功能时，必须同步在 `e2e/TEST_PLAN.md` 添加对应场景；开发提交时更新覆盖状态；Review 时检查 TEST_PLAN 一致性
@@ -238,6 +238,48 @@
 - [x] 保留 3 处需要稳定引用的 useCallback（checkSession、initializeQueue、selectSong）
 - [x] 清理 'use no memo' 指令和未使用 import
 - [x] 全量测试回归验证（441 单测 + 51 E2E 全过） ← `0993343`
+
+### P6.3 — MIDI 回调稳定性修复
+
+- [x] useMidiInput 改用 callback ref 模式，MIDI 只初始化一次 ← `05cae97`
+- [x] 更新 useMidiInput 测试（验证 ref 委托行为） ← `05cae97`
+
+---
+
+## P7 — MIDI 输入测试保障
+
+P6.2 移除 useCallback 后 MIDI 输入静默失效，现有测试体系未能捕获。
+根因：MIDI 是硬件接口，之前的测试要么 mock 太浅（只验 initialize 调用），要么完全绕过（E2E 用虚拟键盘）。
+目标：建立完整的 MIDI 输入测试链路，确保"钢琴插上能弹"这个核心用例有回归保障。
+
+### P7.1 — MidiService 集成测试
+
+Mock `navigator.requestMIDIAccess` 返回假 MIDIAccess/MIDIInput，验证：
+
+- [ ] 设备连接/断开 → onConnectionChange 回调
+- [ ] Note On 消息（0x90 + velocity > 0）→ onNoteOn 回调，参数正确
+- [ ] Note Off 消息（0x80 或 velocity=0）→ onNoteOff 回调
+- [ ] 热插拔：运行中连接新设备 → 自动绑定
+- [ ] 回调更新后，MIDI 事件仍能正确传递到最新回调（P6.3 的回归测试）
+
+### P7.2 — E2E WebMIDI 模拟
+
+通过 Playwright `page.addInitScript` 注入 WebMIDI mock：
+
+- [ ] 编写 WebMIDI mock（假 MIDIAccess + MIDIInput + 事件分发）
+- [ ] 暴露 `window.__simulateMidiNoteOn(midi)` / `__simulateMidiNoteOff(midi)` 供 E2E 调用
+- [ ] E2E：MIDI 设备连接 → 按正确键 → 音符高亮 + 得分变化 + 下一个音符
+- [ ] E2E：按错误键 → 错误反馈
+- [ ] E2E：双手模式 → 同时按两个正确键 → 通过
+
+### P7.3 — 练习流程 MIDI 集成测试
+
+vitest + jsdom 环境，mock WebMIDI，渲染 usePracticeSession：
+
+- [ ] 模拟 MIDI Note On → 验证 store 中 detectedNote 更新
+- [ ] 模拟正确音符 → 验证 noteQueue 推进
+- [ ] 模拟错误音符 → 验证 hasMistakeForCurrent 标记
+- [ ] 组件 rerender 后 → MIDI 事件仍正常处理（回归守卫）
 
 ---
 
