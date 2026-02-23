@@ -41,7 +41,7 @@ describe('StaffNote duration rendering', () => {
   it('renders whole note as hollow head without stem', () => {
     const { container } = renderStaffNote(createNote('whole'));
     const ellipse = container.querySelector('ellipse');
-    expect(ellipse?.getAttribute('fill')).toBe('#ffffff');
+    expect(ellipse?.getAttribute('fill')).toBe('var(--color-note-hollow-fill)');
     expect(container.querySelectorAll('line')).toHaveLength(0);
     expect(container.querySelectorAll('path')).toHaveLength(0);
   });
@@ -49,7 +49,7 @@ describe('StaffNote duration rendering', () => {
   it('renders half note as hollow head with stem', () => {
     const { container } = renderStaffNote(createNote('half'));
     const ellipse = container.querySelector('ellipse');
-    expect(ellipse?.getAttribute('fill')).toBe('#ffffff');
+    expect(ellipse?.getAttribute('fill')).toBe('var(--color-note-hollow-fill)');
     expect(container.querySelectorAll('line')).toHaveLength(1);
     expect(container.querySelectorAll('path')).toHaveLength(0);
   });
@@ -57,7 +57,7 @@ describe('StaffNote duration rendering', () => {
   it('renders quarter note as filled head with stem and no flags', () => {
     const { container } = renderStaffNote(createNote('quarter'));
     const ellipse = container.querySelector('ellipse');
-    expect(ellipse?.getAttribute('fill')).not.toBe('#ffffff');
+    expect(ellipse?.getAttribute('fill')).not.toBe('var(--color-note-hollow-fill)');
     expect(container.querySelectorAll('line')).toHaveLength(1);
     expect(container.querySelectorAll('path')).toHaveLength(0);
   });
@@ -77,7 +77,7 @@ describe('StaffNote duration rendering', () => {
   it('defaults to quarter rendering when duration is undefined', () => {
     const { container } = renderStaffNote(createNote(undefined));
     const ellipse = container.querySelector('ellipse');
-    expect(ellipse?.getAttribute('fill')).not.toBe('#ffffff');
+    expect(ellipse?.getAttribute('fill')).not.toBe('var(--color-note-hollow-fill)');
     expect(container.querySelectorAll('line')).toHaveLength(1);
     expect(container.querySelectorAll('path')).toHaveLength(0);
   });

@@ -73,7 +73,7 @@ const NoteGlyph: React.FC<NoteGlyphProps> = ({ note, y, color, isStemUp, layout 
         cy={y}
         rx={layout.NOTE_HEAD_RX}
         ry={layout.NOTE_HEAD_RY}
-        fill={isHollowHead ? '#ffffff' : color}
+        fill={isHollowHead ? 'var(--color-note-hollow-fill)' : color}
         stroke={color}
         strokeWidth={layout.STAFF_LINE_THICKNESS}
         transform={`rotate(-15, 0, ${y})`}
@@ -159,7 +159,7 @@ export const StaffNote: React.FC<StaffNoteProps> = ({
           y1={layout.STAFF_TOP_Y}
           x2={-layout.NOTE_SPACING / 2}
           y2={layout.STAFF_BOTTOM_Y}
-          stroke="#94a3b8"
+          stroke="var(--color-staff-ledger)"
           strokeWidth={layout.STAFF_LINE_THICKNESS * 1.25}
         />
       )}

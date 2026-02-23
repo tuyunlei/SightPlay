@@ -18,7 +18,7 @@ export const StaffLines: React.FC<StaffLinesProps> = ({ layout, contentWidth }) 
           y1={y}
           x2={contentWidth - layout.STAFF_SPACE * 0.5}
           y2={y}
-          stroke="#cbd5e1"
+          stroke="var(--color-staff-line)"
           strokeWidth={layout.STAFF_LINE_THICKNESS}
         />
       );
