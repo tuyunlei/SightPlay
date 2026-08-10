@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page } from './fixtures/app-test';
 
 async function setupRegisterScreen(page: Page) {
   await page.route('**/api/auth/session', (route) => {

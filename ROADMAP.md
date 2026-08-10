@@ -22,9 +22,9 @@
 - 新增样式必须使用 design token（颜色变量），不允许硬编码颜色值
 - 所有用户可见的功能路径必须有 Sentry 日志
 - 传给子组件的 callback prop 必须保证引用稳定（React Compiler 自动处理；Compiler bail out 的场景需手动 useCallback 或 ref 模式）
-- 新增功能必须有对应的 E2E 用户路径覆盖（不只是单元测试）
+- 新增风险必须由能直接观察该风险的最低测试层保护；只有浏览器装配或用户旅程风险才新增 E2E
 - **零白屏原则**：任何用户可达的页面/状态组合都不能出现白屏，E2E 必须覆盖验证
-- **TEST_PLAN.md 同步维护**：ROADMAP 新增功能时，必须同步在 `e2e/TEST_PLAN.md` 添加对应场景；开发提交时更新覆盖状态；Review 时检查 TEST_PLAN 一致性
+- **E2E 风险矩阵同步维护**：新增或移除跨边界证据时更新 `e2e/TEST_PLAN.md`，不维护覆盖百分比
 
 ### CI 分层
 
@@ -32,8 +32,8 @@
 | ---------------------------- | :----------: | :-------: |
 | lint + typecheck + arch      |      ✅      |    ✅     |
 | 单元测试                     |      ✅      |    ✅     |
-| E2E 测试                     |      —       |    ✅     |
-| build（含 Sentry sourcemap） |      —       |    ✅     |
+| E2E 测试                     |      ✅      |    ✅     |
+| build（含 Sentry sourcemap） |      ✅      |    ✅     |
 | 集成测试（组件协作）         |      ✅      |    ✅     |
 
 ### 测试策略分层
@@ -189,7 +189,6 @@
   - [x] 🔴 关键路径 E2E（ErrorBoundary、导航不白屏、歌曲完成、登出） ← `eaf65a8`
   - [x] 🟡 功能验证 E2E（passkey 管理、邀请码、手模式、练习范围） ← `0609143`
   - [x] 🟢 剩余场景 E2E（注册错误、智能提示、语言切换、深浅色） ← `f3bc685`
-  - TEST_PLAN 覆盖率：41/41（100%），51 个 E2E 测试
 - [x] 开发流程绑定：新功能同时更新 TEST_PLAN + E2E
 
 #### P2：集成测试层建立（防住组件交互 bug）
@@ -317,6 +316,18 @@ vitest + jsdom 环境，mock WebMIDI，渲染 usePracticeSession：
 - [x] dependency-cruiser 强制 domain/store 不反向依赖 UI 或运行时实现
 - [x] 删除低价值结构测试，补 reducer、adapter、service seam 和 deterministic scheduler 测试
 - [x] 完整门禁、PR CI 与合入证据记录于 `docs/tasks/ai-development-baseline.md`
+
+## P10 — 自主端到端验证体系
+
+- [x] Playwright 失败即保留 trace/screenshot/video/runtime diagnostics，并生成 AI 可读复现记录
+- [x] 清除固定等待、静默通过和伪“完整旅程”；随机队列使用随失败记录的确定性 seed
+- [x] 建立按 run ID 隔离的 E2E-only KV 与 typed reset/seed/provider controls
+- [x] built preview 中跑真实 auth/KV/HttpOnly Cookie/WebAuthn 注册、登出、刷新和登录验签
+- [x] 真实 chat handler 仅替换 Gemini 上游；真实 Gemini 独立为受信任 provider canary
+- [x] Web MIDI 走浏览器 adapter；麦克风走 fake capture WAV → Web Audio → pitch detection
+- [x] 合入门禁覆盖 stable Chromium、system Chromium/WebKit、audio Chromium
+- [x] 远端 preview smoke、provider canary、真实硬件证据保持独立信任边界
+- [x] 风险矩阵与 AI diagnose/fix/rerun 手册取代功能覆盖百分比
 
 ---
 

@@ -51,7 +51,7 @@ async function issueAuthCookie(platform: PlatformContext): Promise<string> {
   return createCookie('auth_token', token, {
     maxAge: 7 * 24 * 60 * 60,
     httpOnly: true,
-    secure: true,
+    secure: new URL(platform.request.url).protocol === 'https:',
     sameSite: 'Lax',
     path: '/',
   });

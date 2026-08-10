@@ -1,7 +1,11 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures/app-test';
 
 test.describe('ErrorBoundary degraded UI', () => {
-  test('renders fallback UI instead of blank screen and retry recovers', async ({ page }) => {
+  test('renders fallback UI instead of blank screen and retry recovers', async ({
+    page,
+    diagnostics,
+  }) => {
+    diagnostics.allowPageError();
     await page.route('**/api/auth/session', (route) => {
       route.fulfill({
         status: 200,

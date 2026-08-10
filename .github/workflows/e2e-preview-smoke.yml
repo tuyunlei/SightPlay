@@ -1,0 +1,36 @@
+name: E2E Preview Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      preview_url:
+        description: Trusted HTTPS preview URL
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.node-version'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Run remote smoke
+        env:
+          SIGHTPLAY_E2E_EXTERNAL_BASE_URL: ${{ inputs.preview_url }}
+        run: pnpm run test:e2e:preview
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: preview-smoke-${{ github.run_attempt }}
+          path: test-results/
+          retention-days: 7

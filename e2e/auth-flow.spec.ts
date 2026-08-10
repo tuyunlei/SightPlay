@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page } from './fixtures/app-test';
 
 async function mockBypassAuth(page: Page, scenario: 'register' | 'login') {
   let isAuthenticatedNow = false;
@@ -137,7 +137,8 @@ test.describe('Authentication Flow E2E', () => {
       await expect(page.getByText('SightPlay')).toBeVisible();
     });
 
-    test('should handle registration failure gracefully', async ({ page }) => {
+    test('should handle registration failure gracefully', async ({ page, diagnostics }) => {
+      diagnostics.allowHttpError('/api/auth/register-options', 500);
       await page.route('**/api/auth/session', (route) => {
         route.fulfill({
           status: 200,
@@ -162,9 +163,8 @@ test.describe('Authentication Flow E2E', () => {
       await expect(registerButton).toBeEnabled();
       await registerButton.click();
 
-      await page.waitForTimeout(1000);
-
       await expect(page.getByTestId('register-section')).toBeVisible();
+      await expect(page.getByText('Server error')).toBeVisible();
     });
 
     test('should open /register route with pre-filled invite code', async ({ page }) => {
@@ -200,7 +200,8 @@ test.describe('Authentication Flow E2E', () => {
       await expect(page.getByTestId('toggle-clef-button')).toBeVisible();
     });
 
-    test('should handle login failure gracefully', async ({ page }) => {
+    test('should handle login failure gracefully', async ({ page, diagnostics }) => {
+      diagnostics.allowHttpError('/api/auth/login-options', 500);
       await page.route('**/api/auth/session', (route) => {
         route.fulfill({
           status: 200,
@@ -222,9 +223,8 @@ test.describe('Authentication Flow E2E', () => {
       const loginButton = page.getByRole('button', { name: /use passkey|sign in|登录/i });
       await loginButton.click();
 
-      await page.waitForTimeout(1000);
-
       await expect(page.getByTestId('login-screen')).toBeVisible();
+      await expect(page.getByText(/failed to start sign-in|获取登录选项失败/i)).toBeVisible();
     });
 
     test('should persist session across page reloads', async ({ page }) => {
@@ -243,24 +243,6 @@ test.describe('Authentication Flow E2E', () => {
       await page.reload();
 
       await expect(page.getByTestId('staff-display')).toBeVisible({ timeout: 10000 });
-    });
-  });
-
-  test.describe('Full User Journey', () => {
-    test('should complete registration → practice → logout → login flow', async ({ page }) => {
-      await mockBypassAuth(page, 'register');
-
-      await page.goto('/');
-      await page.getByRole('button', { name: /register with invite code|使用邀请码注册/i }).click();
-      await expect(page.getByTestId('register-section')).toBeVisible();
-
-      await page.locator('#invite-code').fill('ABCD-EFGH');
-      const registerButton = page.getByRole('button', { name: /passkey/i });
-      await expect(registerButton).toBeEnabled();
-      await registerButton.click();
-
-      await expect(page.getByTestId('staff-display')).toBeVisible({ timeout: 10000 });
-      await expect(page.getByTestId('piano-display')).toBeVisible();
     });
   });
 });

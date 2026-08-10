@@ -196,10 +196,6 @@ async function performLogin(): Promise<boolean> {
   return true;
 }
 
-function clearAuthCookie(): void {
-  document.cookie = 'auth_token=; Max-Age=0; path=/';
-}
-
 export function useAuth() {
   const lang = useUiStore((store) => store.lang);
   const t = translations[lang];
@@ -268,8 +264,10 @@ export function useAuth() {
     }
   };
 
-  const logout = () => {
-    clearAuthCookie();
+  const logout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    window.history.replaceState(null, '', '/');
+    window.dispatchEvent(new PopStateEvent('popstate'));
     setState({ isAuthenticated: false, hasPasskeys: state.hasPasskeys, isLoading: false });
   };
 

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/app-test';
 
 test.describe('Logout Flow', () => {
   test('should logout to login screen and remain logged out after refresh', async ({

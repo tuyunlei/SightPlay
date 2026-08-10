@@ -1,20 +1,10 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page, mockAuthenticatedSession } from './fixtures/app-test';
 
 type PracticeState = {
   handMode?: 'right-hand' | 'left-hand' | 'both-hands';
   practiceRange?: 'central' | 'upper' | 'combined';
   noteQueue?: Array<{ midi: number }>;
 };
-
-async function mockAuthenticatedSession(page: Page) {
-  await page.route('**/api/auth/session', (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ authenticated: true, hasPasskeys: true }),
-    });
-  });
-}
 
 async function getPracticeState(page: Page): Promise<PracticeState> {
   return page.evaluate(() => {

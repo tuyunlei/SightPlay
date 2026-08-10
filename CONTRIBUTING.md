@@ -34,6 +34,9 @@ pnpm audit
 
 CI does not collect or gate line coverage. Follow [`docs/guides/testing-strategy.md`](docs/guides/testing-strategy.md):
 tests must protect observable behavior, decisions, contracts, or known regressions.
+The merge-gating E2E command includes stable Chromium, built-preview Chromium/WebKit system journeys,
+and deterministic fake-capture audio. Provider, remote-preview, and physical-hardware evidence remain
+separate trust tiers; see [`docs/guides/autonomous-e2e.md`](docs/guides/autonomous-e2e.md).
 
 ## Commits
 

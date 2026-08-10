@@ -1,30 +1,22 @@
-import { test, expect, Page } from '@playwright/test';
-
-async function mockAuthenticatedSession(page: Page) {
-  await page.route('**/api/auth/session', (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ authenticated: true, hasPasskeys: true }),
-    });
-  });
-}
+import { test, expect, Page, mockAuthenticatedSession } from './fixtures/app-test';
 
 type ChatMockOptions = {
   shouldFail?: boolean;
-  delayMs?: number;
+  deferred?: boolean;
 };
 
 async function mockChatApi(page: Page, options: ChatMockOptions = {}) {
   const aiReplies = ['Mock AI reply - round 1', 'Mock AI reply - round 2'];
   let callCount = 0;
+  let releaseResponse = () => undefined;
+  const responseGate = new Promise<void>((resolve) => {
+    releaseResponse = resolve;
+  });
 
   await page.route('**/api/chat', async (route) => {
     callCount += 1;
 
-    if (options.delayMs) {
-      await page.waitForTimeout(options.delayMs);
-    }
+    if (options.deferred) await responseGate;
 
     if (options.shouldFail) {
       await route.fulfill({
@@ -54,6 +46,7 @@ async function mockChatApi(page: Page, options: ChatMockOptions = {}) {
 
   return {
     getCallCount: () => callCount,
+    releaseResponse,
   };
 }
 
@@ -111,7 +104,11 @@ test.describe('AI conversation E2E', () => {
     );
   });
 
-  test('should show localized AI connection error when API fails', async ({ page }) => {
+  test('should show localized AI connection error when API fails', async ({
+    page,
+    diagnostics,
+  }) => {
+    diagnostics.allowHttpError('/api/chat', 500);
     await mockAuthenticatedSession(page);
     await mockChatApi(page, { shouldFail: true });
     await page.goto('/');
@@ -160,7 +157,7 @@ test.describe('AI conversation E2E', () => {
     page,
   }) => {
     await mockAuthenticatedSession(page);
-    await mockChatApi(page, { delayMs: 1200 });
+    const chatMock = await mockChatApi(page, { deferred: true });
     await page.goto('/');
     await openChatDrawer(page);
 
@@ -172,6 +169,7 @@ test.describe('AI conversation E2E', () => {
     await expect(page.getByText(longMessage, { exact: true })).toBeVisible();
     await expect(loadingDots.first()).toBeVisible();
 
+    chatMock.releaseResponse();
     await expect(page.getByText('Mock AI reply - round 1', { exact: true })).toBeVisible();
     await expect(loadingDots.first()).not.toBeVisible();
   });

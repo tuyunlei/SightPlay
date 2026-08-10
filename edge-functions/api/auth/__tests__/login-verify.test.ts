@@ -126,6 +126,7 @@ describe('login-verify endpoint', () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ verified: true });
     expect(response.headers.get('Set-Cookie')).toContain('auth_token=');
+    expect(response.headers.get('Set-Cookie')).toContain('Secure');
 
     const saved = await kv.get('passkeys');
     expect(saved).toContain('"counter":42');

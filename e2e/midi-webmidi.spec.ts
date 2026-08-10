@@ -10,21 +10,16 @@
  * READ state — that's fine because we're testing the INPUT path.
  */
 
-import { expect, Page, test } from '@playwright/test';
-
+import {
+  expect,
+  Page,
+  test,
+  mockAuthenticatedSession,
+  waitForPracticeInputReady,
+} from './fixtures/app-test';
 import { webmidiMockScript } from './fixtures/webmidi-mock';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
-
-async function mockAuthenticatedSession(page: Page) {
-  await page.route('**/api/auth/session', (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ authenticated: true, hasPasskeys: true }),
-    });
-  });
-}
 
 async function getTargetMidi(page: Page): Promise<number | null> {
   return page.evaluate(() => {
@@ -62,9 +57,15 @@ async function noteOff(page: Page, midi: number) {
 }
 
 async function playNote(page: Page, midi: number, holdMs = 80) {
-  await noteOn(page, midi);
-  await page.waitForTimeout(holdMs);
-  await noteOff(page, midi);
+  await waitForPracticeInputReady(page);
+  await page.evaluate(
+    async ({ note, duration }) => {
+      (window as any).__simulateMidiNoteOn(note);
+      await new Promise((resolve) => setTimeout(resolve, duration));
+      (window as any).__simulateMidiNoteOff(note);
+    },
+    { note: midi, duration: holdMs }
+  );
 }
 
 // ── test setup ────────────────────────────────────────────────────────────────
@@ -109,10 +110,8 @@ test.describe('WebMIDI pipeline E2E (addInitScript mock)', () => {
     const targetMidi = await requireTargetMidi(page);
 
     await playNote(page, targetMidi);
-    await page.waitForTimeout(500);
-
+    await expect.poll(() => getScore(page)).toBeGreaterThan(initialScore);
     const newScore = await getScore(page);
-    expect(newScore).toBeGreaterThan(initialScore);
 
     // Also verify the DOM score display reflects the new value
     const scoreText = await page.getByTestId('score-display').first().textContent();
@@ -128,16 +127,15 @@ test.describe('WebMIDI pipeline E2E (addInitScript mock)', () => {
     // Send a note that is definitely not the target
     const wrongMidi = targetMidi + 2;
     await playNote(page, wrongMidi);
-    await page.waitForTimeout(200);
 
     // Target should remain the same (no advancement on wrong note)
-    const stillTarget = await getTargetMidi(page);
-    expect(stillTarget).toBe(targetMidi);
+    await expect.poll(() => getTargetMidi(page)).toBe(targetMidi);
 
     // Now play the correct note to complete the attempt
     await playNote(page, targetMidi);
-    await page.waitForTimeout(500);
-
+    await expect
+      .poll(async () => (await getSessionStats(page)).totalAttempts)
+      .toBeGreaterThan(beforeStats.totalAttempts);
     const afterStats = await getSessionStats(page);
     expect(afterStats.totalAttempts).toBeGreaterThan(beforeStats.totalAttempts);
 
@@ -154,9 +152,9 @@ test.describe('WebMIDI pipeline E2E (addInitScript mock)', () => {
 
     for (let i = 0; i < 3; i++) {
       const targetMidi = await requireTargetMidi(page);
+      const scoreBefore = await getScore(page);
       await playNote(page, targetMidi);
-      // Wait for state transition (auto-advance to next note)
-      await page.waitForTimeout(450);
+      await expect.poll(() => getScore(page)).toBeGreaterThan(scoreBefore);
     }
 
     const finalScore = await getScore(page);
@@ -169,29 +167,31 @@ test.describe('WebMIDI pipeline E2E (addInitScript mock)', () => {
     // Switch to both-hands mode via the HandModeSelector UI button.
     // Button label varies by locale (English: "Both Hands", Chinese: "双手").
     await page.getByRole('button', { name: /Both Hands|双手/i }).click();
-    await page.waitForTimeout(300); // allow mode change to settle
 
     // Verify the mode changed in state
-    const handMode = await page.evaluate(
-      () => (window as any).__sightplayTestAPI?.getState().handMode
-    );
-    expect(handMode).toBe('both-hands');
+    await expect
+      .poll(() => page.evaluate(() => (window as any).__sightplayTestAPI?.getState().handMode))
+      .toBe('both-hands');
 
     // Both-hands queue: noteQueue[0]=right-hand (midi>=60), noteQueue[1]=left-hand (midi<=60)
-    const targets = await page.evaluate(() => {
-      const api = (window as any).__sightplayTestAPI;
-      const state = api?.getState();
-      const queue = state?.noteQueue ?? [];
-      return {
-        right: (queue[0]?.midi ?? null) as number | null,
-        left: (queue[1]?.midi ?? null) as number | null,
-      };
-    });
-
-    if (targets.right === null || targets.left === null) {
-      // Queue not populated — both-hands generation may be empty in this env
-      return;
-    }
+    const readTargets = () =>
+      page.evaluate(() => {
+        const queue = (window as any).__sightplayTestAPI?.getState().noteQueue ?? [];
+        return {
+          right: (queue[0]?.midi ?? null) as number | null,
+          left: (queue[1]?.midi ?? null) as number | null,
+        };
+      });
+    await expect
+      .poll(async () => {
+        const targets = await readTargets();
+        return targets.right !== null && targets.left !== null;
+      })
+      .toBe(true);
+    const targets = await readTargets();
+    expect(targets.right, 'both-hands right target must be populated').not.toBeNull();
+    expect(targets.left, 'both-hands left target must be populated').not.toBeNull();
+    if (targets.right === null || targets.left === null) throw new Error('unreachable');
 
     // Verify the queue layout matches the both-hands contract
     expect(targets.right).toBeGreaterThanOrEqual(60); // treble / right hand
@@ -199,24 +199,18 @@ test.describe('WebMIDI pipeline E2E (addInitScript mock)', () => {
 
     // Send the right-hand note via WebMIDI and verify it is detected in state
     await noteOn(page, targets.right);
-    await page.waitForTimeout(150);
-
-    const detectedMidi = await page.evaluate(
-      () => (window as any).__sightplayTestAPI?.getState().detectedNote?.midi ?? null
-    );
-    expect(detectedMidi).toBe(targets.right);
+    const readDetectedMidi = () =>
+      page.evaluate(
+        () => (window as any).__sightplayTestAPI?.getState().detectedNote?.midi ?? null
+      );
+    await expect.poll(readDetectedMidi).toBe(targets.right);
 
     await noteOff(page, targets.right);
-    await page.waitForTimeout(100);
+    await expect.poll(readDetectedMidi).toBeNull();
 
     // Send the left-hand note and verify detection as well
     await noteOn(page, targets.left);
-    await page.waitForTimeout(150);
-
-    const detectedLeft = await page.evaluate(
-      () => (window as any).__sightplayTestAPI?.getState().detectedNote?.midi ?? null
-    );
-    expect(detectedLeft).toBe(targets.left);
+    await expect.poll(readDetectedMidi).toBe(targets.left);
 
     await noteOff(page, targets.left);
   });

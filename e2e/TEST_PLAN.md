@@ -1,186 +1,27 @@
-# E2E Test Plan
+# E2E Risk and Evidence Matrix
 
-> 这是一份活文档，跟随功能演进持续更新。
->
-> **规则：**
->
-> - ROADMAP 新增功能时，必须同步在此文档添加对应测试场景
-> - 开发 PR 提交时，必须更新对应场景的覆盖状态
-> - Review 时必须检查：新功能的核心场景是否已有 E2E 覆盖
-> - 每个大阶段结束时，审计此文档与实际代码的一致性
+This inventory tracks production risks and the evidence that protects them. It is not a feature
+percentage or test-count target. Add a scenario only when it detects a named regression that a lower
+test layer cannot detect more directly.
 
-## 场景类型说明
+| Risk boundary                      | Required evidence                                                                                                                            | Automated tier           | Named gap                                                                |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------ |
+| App boot/navigation                | Entry states render; key navigation does not blank the app; unexpected page errors, same-origin request failures, and HTTP 5xx fail the test | stable Chromium          | Visual fidelity is not certified                                         |
+| Registration/session/login/logout  | Real handlers, isolated KV, virtual WebAuthn credential, HttpOnly cookie, refresh, logout, and signature verification                        | system Chromium + WebKit | Face ID/Touch ID prompt UX requires real hardware                        |
+| AI chat wiring                     | UI through the real chat handler with a deterministic upstream; failure and loading behavior with controlled boundaries                      | stable + system          | Provider availability is a canary, not a merge gate                      |
+| Practice state transitions         | Correct/wrong notes, score, streak, settings, song progress, and completion observed through UI/state contracts                              | stable Chromium          | Physical timing/feel is not certified                                    |
+| Web MIDI adapter                   | Browser Web MIDI initialization, hot input events, both-hands queue, detection, and scoring                                                  | stable Chromium          | Real keyboard/driver/permission behavior requires an opt-in hardware run |
+| Microphone adapter                 | Generated A4 WAV through Chromium fake capture, real `getUserMedia`, Web Audio analyser, pitch detection, and scoring                        | audio Chromium           | Real room noise, latency, devices, and permission UX require hardware    |
+| Production bundle/browser variance | Built Vite preview plus real auth/chat handlers in Chromium and WebKit                                                                       | system Chromium + WebKit | Safari/iOS hardware remains opt-in                                       |
+| Deployed preview                   | Trusted HTTPS URL serves a usable entry state without unexpected runtime failures                                                            | manual preview workflow  | Auth mutation is intentionally excluded from arbitrary preview URLs      |
+| Gemini provider                    | Trusted scheduled/manual job calls the real provider through SightPlay's real authenticated handler and validates the response contract      | provider canary          | Never runs with secrets on pull requests                                 |
 
-| 类型         | 含义                         | 优先级 |
-| ------------ | ---------------------------- | ------ |
-| 🔴 核心路径  | 用户最常走的主流程，必须覆盖 | 最高   |
-| 🟡 功能验证  | 独立功能点，确保可用         | 高     |
-| 🟢 边界/异常 | 错误处理、极端输入、降级     | 中     |
-| ⚪ 视觉/适配 | 响应式、主题、布局           | 按需   |
+## Admission rule
 
-## 覆盖状态
+A new E2E scenario must name the regression it catches, use the lowest necessary tier, control every
+non-target dependency, and wait on observable state rather than a guessed delay. Static copy,
+implementation shape, mock behavior, and inventory completeness are not E2E acceptance criteria.
 
-- ✅ 已覆盖（标注测试文件）
-- ❌ 待补
-- 🚫 不可测（标注原因）
-
----
-
-## 1. 认证模块
-
-### 1.1 未登录状态
-
-| #     | 场景                                         | 类型 | 状态 | 测试文件         |
-| ----- | -------------------------------------------- | ---- | ---- | ---------------- |
-| 1.1.1 | 首页加载 → 显示登录页（登录按钮 + 注册入口） | 🔴   | ✅   | practice.spec.ts |
-| 1.1.2 | 有已注册 passkey → 显示登录按钮              | 🔴   | ✅   | practice.spec.ts |
-| 1.1.3 | 无 passkey → 显示注册引导                    | 🔴   | ✅   | practice.spec.ts |
-
-### 1.2 注册流程
-
-| #     | 场景                                       | 类型 | 状态 | 测试文件                |
-| ----- | ------------------------------------------ | ---- | ---- | ----------------------- |
-| 1.2.1 | 有效邀请码 → passkey 注册成功 → 进入练习页 | 🔴   | ✅   | auth-flow.spec.ts       |
-| 1.2.2 | 注册失败 → 错误提示                        | 🟢   | ✅   | auth-flow.spec.ts       |
-| 1.2.3 | `/register?code=XXXX` → 邀请码预填         | 🟡   | ✅   | auth-flow.spec.ts       |
-| 1.2.4 | 无效邀请码 → 错误提示                      | 🟢   | ✅   | register-errors.spec.ts |
-| 1.2.5 | 过期邀请码 → 错误提示                      | 🟢   | ✅   | register-errors.spec.ts |
-
-### 1.3 登录流程
-
-| #     | 场景                                | 类型 | 状态 | 测试文件          |
-| ----- | ----------------------------------- | ---- | ---- | ----------------- |
-| 1.3.1 | passkey 登录成功 → 进入练习页       | 🔴   | ✅   | auth-flow.spec.ts |
-| 1.3.2 | 登录失败 → 错误提示                 | 🟢   | ✅   | auth-flow.spec.ts |
-| 1.3.3 | session 持久化（刷新页面后仍登录）  | 🔴   | ✅   | auth-flow.spec.ts |
-| 1.3.4 | 完整旅程：注册 → 练习 → 登出 → 登录 | 🔴   | ✅   | auth-flow.spec.ts |
-
-### 1.4 登出
-
-| #     | 场景                                | 类型 | 状态 | 测试文件       |
-| ----- | ----------------------------------- | ---- | ---- | -------------- |
-| 1.4.1 | 点击登出 → 回到登录页，session 清除 | 🔴   | ✅   | logout.spec.ts |
-
-### 1.5 账户管理
-
-| #     | 场景                        | 类型 | 状态 | 测试文件                   |
-| ----- | --------------------------- | ---- | ---- | -------------------------- |
-| 1.5.1 | 查看已有 passkey 列表       | 🟡   | ✅   | account-management.spec.ts |
-| 1.5.2 | 删除 passkey（非最后一个）  | 🟡   | ✅   | account-management.spec.ts |
-| 1.5.3 | 删除最后一个 passkey → 拒绝 | 🟢   | ✅   | account-management.spec.ts |
-| 1.5.4 | 生成邀请码 → 显示有效码     | 🟡   | ✅   | account-management.spec.ts |
-
----
-
-## 2. 随机练习模块
-
-### 2.1 基础 UI
-
-| #     | 场景                               | 类型 | 状态 | 测试文件         |
-| ----- | ---------------------------------- | ---- | ---- | ---------------- |
-| 2.1.1 | 登录后 → 五线谱 + 钢琴键盘正常显示 | 🔴   | ✅   | practice.spec.ts |
-| 2.1.2 | 分数计数器显示                     | 🟡   | ✅   | practice.spec.ts |
-| 2.1.3 | 所有关键 UI 元素可见               | 🔴   | ✅   | practice.spec.ts |
-
-### 2.2 练习交互
-
-| #     | 场景                       | 类型 | 状态 | 测试文件                     |
-| ----- | -------------------------- | ---- | ---- | ---------------------------- |
-| 2.2.1 | 弹对音 → 分数 +1，音符推进 | 🔴   | ✅   | practice-interaction.spec.ts |
-| 2.2.2 | 弹错音 → 标记错误          | 🔴   | ✅   | practice-interaction.spec.ts |
-| 2.2.3 | 连续弹对 → streak 计数     | 🟡   | ✅   | practice-interaction.spec.ts |
-
-### 2.3 设置控制
-
-| #     | 场景                         | 类型 | 状态 | 测试文件                  |
-| ----- | ---------------------------- | ---- | ---- | ------------------------- |
-| 2.3.1 | 谱号切换（高音 ⇌ 低音）      | 🟡   | ✅   | practice.spec.ts          |
-| 2.3.2 | 钢琴键盘显示/隐藏            | 🟡   | ✅   | practice.spec.ts          |
-| 2.3.3 | 手模式切换（左手/右手/双手） | 🟡   | ✅   | practice-settings.spec.ts |
-| 2.3.4 | 练习范围调整 → 音符在范围内  | 🟡   | ✅   | practice-settings.spec.ts |
-
-### 2.4 智能辅助
-
-| #     | 场景                                   | 类型 | 状态 | 测试文件                     |
-| ----- | -------------------------------------- | ---- | ---- | ---------------------------- |
-| 2.4.1 | 弹错音 → HintBubble 出现，提示内容相关 | 🟡   | ✅   | practice-interaction.spec.ts |
-| 2.4.2 | 练习后出现推荐卡片                     | 🟡   | ✅   | navigation.spec.ts           |
-| 2.4.3 | 点击推荐 → 应用对应设置                | 🟡   | ✅   | navigation.spec.ts           |
-
----
-
-## 3. 曲库练习模块
-
-| #   | 场景                                | 类型 | 状态 | 测试文件              |
-| --- | ----------------------------------- | ---- | ---- | --------------------- |
-| 3.1 | 切换到曲库 → 歌曲列表按难度分类显示 | 🔴   | ✅   | song-practice.spec.ts |
-| 3.2 | 选歌 → 进入练习 UI                  | 🔴   | ✅   | song-practice.spec.ts |
-| 3.3 | 练习中 → 进度更新                   | 🔴   | ✅   | song-practice.spec.ts |
-| 3.4 | 退出练习 → 返回曲库                 | 🔴   | ✅   | song-practice.spec.ts |
-| 3.5 | 完成歌曲 → 评分画面 → 返回曲库      | 🔴   | ✅   | song-practice.spec.ts |
-
----
-
-## 4. AI 对话模块
-
-| #   | 场景                         | 类型 | 状态 | 测试文件                |
-| --- | ---------------------------- | ---- | ---- | ----------------------- |
-| 4.1 | 打开对话 → 发消息 → 收到回复 | 🔴   | ✅   | ai-conversation.spec.ts |
-| 4.2 | 多轮对话顺序正确             | 🔴   | ✅   | ai-conversation.spec.ts |
-| 4.3 | API 失败 → 本地化错误提示    | 🟢   | ✅   | ai-conversation.spec.ts |
-| 4.4 | 空/纯空格消息 → 不发送       | 🟢   | ✅   | ai-conversation.spec.ts |
-| 4.5 | 切换页面 → 聊天历史保持      | 🟡   | ✅   | ai-conversation.spec.ts |
-| 4.6 | 长消息 + 加载态显示          | 🟡   | ✅   | ai-conversation.spec.ts |
-
----
-
-## 5. 偏好与显示
-
-| #   | 场景                                                 | 类型 | 状态 | 测试文件            |
-| --- | ---------------------------------------------------- | ---- | ---- | ------------------- |
-| 5.1 | 语言切换 → 全页文本变化                              | 🟡   | ✅   | preferences.spec.ts |
-| 5.2 | 深色模式（prefers-color-scheme: dark）→ CSS 变量切换 | ⚪   | ✅   | preferences.spec.ts |
-| 5.3 | 浅色模式 → CSS 变量切换                              | ⚪   | ✅   | preferences.spec.ts |
-
----
-
-## 6. 响应式与适配
-
-| #   | 场景                           | 类型 | 状态 | 测试文件                |
-| --- | ------------------------------ | ---- | ---- | ----------------------- |
-| 6.1 | 手机竖屏 → 正确渲染，无溢出    | ⚪   | ✅   | mobile-viewport.spec.ts |
-| 6.2 | iPad 横屏 → 正确渲染，间距合理 | ⚪   | ✅   | mobile-viewport.spec.ts |
-| 6.3 | 无水平滚动条                   | ⚪   | ✅   | mobile-viewport.spec.ts |
-| 6.4 | safe area insets               | ⚪   | ✅   | mobile-viewport.spec.ts |
-
----
-
-## 7. 容错与降级
-
-| #   | 场景                                           | 类型 | 状态 | 测试文件               |
-| --- | ---------------------------------------------- | ---- | ---- | ---------------------- |
-| 7.1 | 组件崩溃 → ErrorBoundary 展示降级 UI（不白屏） | 🔴   | ✅   | error-boundary.spec.ts |
-| 7.2 | 页面间导航（练习 ⇌ 曲库 ⇌ 设置）不白屏         | 🔴   | ✅   | navigation.spec.ts     |
-
----
-
-## 8. 不可测场景
-
-| 场景                               | 原因                         |
-| ---------------------------------- | ---------------------------- |
-| passkey 生物认证（Face ID / 指纹） | 硬件依赖，E2E 中用 mock 替代 |
-| 真实 MIDI 设备输入                 | 硬件依赖，用 testAPI 模拟    |
-
----
-
-## 统计
-
-> 自动更新时请同步更新此表。
-
-| 状态       | 数量     |
-| ---------- | -------- |
-| ✅ 已覆盖  | 41       |
-| ❌ 待补    | 0        |
-| 🚫 不可测  | 2        |
-| **总计**   | **41**   |
-| **覆盖率** | **100%** |
+Hardware checks are named evidence gaps, not silent passes. Record device/browser identity and the
+observed path when they are run; do not claim hardware certification from synthetic Web MIDI or fake
+audio capture.

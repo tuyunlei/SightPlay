@@ -1,35 +1,20 @@
-import { test, expect, Page } from '@playwright/test';
+import {
+  test,
+  expect,
+  Page,
+  mockAuthenticatedSession,
+  waitForPracticeInputReady,
+} from './fixtures/app-test';
 
-async function mockAuthenticatedSession(page: Page) {
-  await page.route('**/api/auth/session', (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ authenticated: true, hasPasskeys: true }),
-    });
-  });
-}
-
-async function simulateMidiNote(
-  page: Page,
-  midiNumber: number,
-  action: 'on' | 'off'
-): Promise<void> {
-  await page.evaluate(
-    ({ midi, act }) => {
-      const api = (window as any).__sightplayTestAPI;
-      if (!api) {
-        throw new Error('Test API not available - make sure test mode is enabled');
-      }
-
-      if (act === 'on') {
-        api.simulateMidiNoteOn(midi);
-      } else {
-        api.simulateMidiNoteOff(midi);
-      }
-    },
-    { midi: midiNumber, act: action }
-  );
+async function playMidiNote(page: Page, midiNumber: number): Promise<void> {
+  await waitForPracticeInputReady(page);
+  await page.evaluate(async (midi) => {
+    const api = (window as any).__sightplayTestAPI;
+    if (!api) throw new Error('Test API not available');
+    api.simulateMidiNoteOn(midi);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    api.simulateMidiNoteOff(midi);
+  }, midiNumber);
 }
 
 async function getTargetNoteMidi(page: Page): Promise<number | null> {
@@ -68,14 +53,10 @@ async function playWrongThenCorrect(page: Page): Promise<void> {
   const targetMidi = await requireTargetMidi(page);
 
   const wrongMidi = targetMidi + 2;
-  await simulateMidiNote(page, wrongMidi, 'on');
-  await page.waitForTimeout(100);
-  await simulateMidiNote(page, wrongMidi, 'off');
-
-  await simulateMidiNote(page, targetMidi, 'on');
-  await page.waitForTimeout(100);
-  await simulateMidiNote(page, targetMidi, 'off');
-  await page.waitForTimeout(350);
+  await playMidiNote(page, wrongMidi);
+  const scoreBeforeCorrect = await getScore(page);
+  await playMidiNote(page, targetMidi);
+  await expect.poll(() => getScore(page)).toBeGreaterThan(scoreBeforeCorrect);
 }
 
 test.describe('Practice Interaction E2E', () => {
@@ -90,13 +71,9 @@ test.describe('Practice Interaction E2E', () => {
     const initialScore = await getScore(page);
     const targetMidi = await requireTargetMidi(page);
 
-    await simulateMidiNote(page, targetMidi, 'on');
-    await page.waitForTimeout(100);
-    await simulateMidiNote(page, targetMidi, 'off');
-    await page.waitForTimeout(500);
-
+    await playMidiNote(page, targetMidi);
+    await expect.poll(() => getScore(page)).toBeGreaterThan(initialScore);
     const newScore = await getScore(page);
-    expect(newScore).toBeGreaterThan(initialScore);
 
     const scoreDisplayText = await page.getByTestId('score-display').first().textContent();
     expect(parseInt(scoreDisplayText ?? '0', 10)).toBe(newScore);
@@ -111,18 +88,19 @@ test.describe('Practice Interaction E2E', () => {
     });
 
     const wrongMidi = targetMidi + 2;
-    await simulateMidiNote(page, wrongMidi, 'on');
-    await page.waitForTimeout(100);
-    await simulateMidiNote(page, wrongMidi, 'off');
-    await page.waitForTimeout(200);
+    await playMidiNote(page, wrongMidi);
 
     const newTargetMidi = await getTargetNoteMidi(page);
     expect(newTargetMidi).toBe(targetMidi);
 
-    await simulateMidiNote(page, targetMidi, 'on');
-    await page.waitForTimeout(100);
-    await simulateMidiNote(page, targetMidi, 'off');
-    await page.waitForTimeout(500);
+    await playMidiNote(page, targetMidi);
+    await expect
+      .poll(
+        async () =>
+          (await page.evaluate(() => (window as any).__sightplayTestAPI?.getSessionStats()))
+            ?.totalAttempts
+      )
+      .toBeGreaterThan(initialStats.totalAttempts);
 
     const finalStats = await page.evaluate(() => {
       const api = (window as any).__sightplayTestAPI;
@@ -148,13 +126,8 @@ test.describe('Practice Interaction E2E', () => {
       const targetMidi = await getTargetNoteMidi(page);
       expect(targetMidi).not.toBeNull();
 
-      await simulateMidiNote(page, targetMidi, 'on');
-      await page.waitForTimeout(100);
-      await simulateMidiNote(page, targetMidi, 'off');
-      await page.waitForTimeout(500);
-
-      const currentStreak = await getStreak(page);
-      expect(currentStreak).toBe(initialStreak + i + 1);
+      await playMidiNote(page, targetMidi);
+      await expect.poll(() => getStreak(page)).toBe(initialStreak + i + 1);
     }
 
     const finalScore = await getScore(page);

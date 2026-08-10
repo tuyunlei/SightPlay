@@ -8,6 +8,7 @@ type PracticeSessionWithTestHandlers = ReturnType<typeof usePracticeSession> & {
   __testHandlers?: {
     handleMidiNoteOn: (midi: number) => void;
     handleMidiNoteOff: (midi: number) => void;
+    isReadyForInput: () => boolean;
   };
 };
 
@@ -32,6 +33,7 @@ export function useTestAPI(practiceSession: PracticeSessionWithTestHandlers) {
         getTargetNoteMidi: () => derived.targetNote?.midi ?? null,
         getScore: () => state.score,
         getSessionStats: () => state.sessionStats,
+        isReadyForInput: testHandlers.isReadyForInput,
       });
     }
   }, [state, derived, practiceSession]);
