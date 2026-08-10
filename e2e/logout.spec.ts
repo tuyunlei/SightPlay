@@ -9,7 +9,7 @@ test.describe('Logout Flow', () => {
       {
         name: 'auth_token',
         value: 'mock-token',
-        domain: 'localhost',
+        domain: '127.0.0.1',
         path: '/',
       },
     ]);

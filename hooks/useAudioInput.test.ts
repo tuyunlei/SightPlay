@@ -20,9 +20,9 @@ describe('useAudioInput', () => {
       stop: vi.fn(),
       getPitch: vi.fn().mockReturnValue(null),
     };
-    vi.mocked(AudioProcessor).mockImplementation(
-      () => mockAudioProcessor as unknown as AudioProcessor
-    );
+    vi.mocked(AudioProcessor).mockImplementation(function AudioProcessorMock() {
+      return mockAudioProcessor as unknown as AudioProcessor;
+    });
 
     // Mock requestAnimationFrame
     vi.stubGlobal(

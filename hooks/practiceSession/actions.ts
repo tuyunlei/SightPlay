@@ -7,6 +7,10 @@ import { useAudioInput } from '../useAudioInput';
 
 import type { PracticeActions, PracticeRefs, PracticeStoreState } from './slices';
 
+function markHitTime(lastHitTime: PracticeRefs['lastHitTime']): void {
+  lastHitTime.current = Date.now();
+}
+
 export const useQueueInitialization = ({
   clef,
   practiceRange,
@@ -39,7 +43,7 @@ export const useQueueInitialization = ({
 
   useEffect(() => {
     initializeQueue();
-    lastHitTime.current = Date.now();
+    markHitTime(lastHitTime);
   }, [initializeQueue, lastHitTime]);
 
   useEffect(() => {
@@ -72,7 +76,7 @@ export const useResetSessionStats = (
 ) => {
   return () => {
     resetStats();
-    lastHitTime.current = Date.now();
+    markHitTime(lastHitTime);
   };
 };
 

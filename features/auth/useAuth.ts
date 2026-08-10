@@ -196,6 +196,10 @@ async function performLogin(): Promise<boolean> {
   return true;
 }
 
+function clearAuthCookie(): void {
+  document.cookie = 'auth_token=; Max-Age=0; path=/';
+}
+
 export function useAuth() {
   const lang = useUiStore((store) => store.lang);
   const t = translations[lang];
@@ -265,7 +269,7 @@ export function useAuth() {
   };
 
   const logout = () => {
-    document.cookie = 'auth_token=; Max-Age=0; path=/';
+    clearAuthCookie();
     setState({ isAuthenticated: false, hasPasskeys: state.hasPasskeys, isLoading: false });
   };
 
