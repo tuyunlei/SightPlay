@@ -1,6 +1,6 @@
 # AI Development Baseline
 
-Status: in progress
+Status: complete
 
 Branch: `codex/ai-development-baseline`
 
@@ -52,7 +52,7 @@ implementation-coupled tests with behavior and contract evidence.
 - [x] Unit/integration suite and Playwright E2E suite.
 - [x] Production build and dependency audit.
 - [x] Review remaining warnings, ports/processes, git diff/status, and this checklist.
-- [ ] Commit, push, PR to `develop`, review CI, and merge without deploying `main`.
+- [x] Commit, push, PR to `develop`, review CI, and merge without deploying `main`.
 
 ## Decisions
 
@@ -77,3 +77,7 @@ implementation-coupled tests with behavior and contract evidence.
   the file-size advisory threshold, E2E logs expected controlled MIDI/auth/error-path failures, and the
   589.80 kB minified bundle remains above Vite's 500 kB advisory. Playwright released
   `127.0.0.1:4173`; unrelated `dori-dev` PID 46229 on port 3000 was unchanged.
+- 2026-08-10: Opened ready PR #4 against `develop`. GitHub Actions run `31389072277` passed
+  lint/format, typecheck, architecture, 410 unit/integration tests, 56 Playwright tests, and build;
+  the Cloudflare Pages preview check also passed. The authorized merge completes this task without
+  updating `main` or performing a production deployment.

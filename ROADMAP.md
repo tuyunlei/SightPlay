@@ -316,7 +316,7 @@ vitest + jsdom 环境，mock WebMIDI，渲染 usePracticeSession：
 - [x] Zustand 保留为 React adapter；Audio、MIDI、AI、clock 和 scheduler 可注入
 - [x] dependency-cruiser 强制 domain/store 不反向依赖 UI 或运行时实现
 - [x] 删除低价值结构测试，补 reducer、adapter、service seam 和 deterministic scheduler 测试
-- [ ] 完整门禁、PR CI 与合入证据记录于 `docs/tasks/ai-development-baseline.md`
+- [x] 完整门禁、PR CI 与合入证据记录于 `docs/tasks/ai-development-baseline.md`
 
 ---
 
@@ -353,4 +353,4 @@ vitest + jsdom 环境，mock WebMIDI，渲染 usePracticeSession：
 | 2026-02-16 | P5 CF Pages 项目 + KV + 自定义域名 + 环境变量              | API                             |
 | 2026-02-16 | P5 WEBAUTHN_RP_ID 环境变量 + 预览环境验证通过              | `1a2392f`                       |
 | 2026-08-10 | 项目复活工程基线：工具链、安全升级、端口隔离与零 warning   | —                               |
-| 2026-08-10 | AI 开发上下文治理、练习 core/effect 分离与测试重平衡       | —                               |
+| 2026-08-10 | AI 开发上下文治理、练习 core/effect 分离与测试重平衡       | `1d8cf37`, PR #4                |
