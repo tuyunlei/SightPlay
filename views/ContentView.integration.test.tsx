@@ -7,17 +7,13 @@ import { usePracticeStore } from '../store/practiceStore';
 
 import { ContentView } from './ContentView';
 
-const songLibrarySpy = vi.hoisted(() => ({
-  renderCount: 0,
-  lastOnSongSelect: null as null | ((id: string) => void),
-}));
+const songLibraryRenderSpy = vi.hoisted(() => vi.fn());
 
 vi.mock('../features/library/SongLibrary', async () => {
   const React = await import('react');
   return {
     SongLibrary: React.memo(({ onSongSelect }: { onSongSelect: (id: string) => void }) => {
-      songLibrarySpy.renderCount += 1;
-      songLibrarySpy.lastOnSongSelect = onSongSelect;
+      songLibraryRenderSpy(onSongSelect);
       return (
         <button data-testid="mock-song-library" onClick={() => onSongSelect('twinkle-twinkle')}>
           pick-song
@@ -96,8 +92,6 @@ function ContentViewHarness({ initialMode = 'random' }: { initialMode?: ViewMode
 describe('ContentView integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    songLibrarySpy.renderCount = 0;
-    songLibrarySpy.lastOnSongSelect = null;
     usePracticeStore.setState({
       practiceMode: 'random',
       currentSongId: null,
@@ -156,13 +150,13 @@ describe('ContentView integration', () => {
 
     render(<Wrapper />);
 
-    const firstRef = songLibrarySpy.lastOnSongSelect;
+    const firstRef = songLibraryRenderSpy.mock.calls.at(-1)?.[0];
     expect(firstRef).toBeTruthy();
-    expect(songLibrarySpy.renderCount).toBe(1);
+    expect(songLibraryRenderSpy).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByTestId('force-parent-rerender'));
 
-    expect(songLibrarySpy.renderCount).toBe(1);
-    expect(songLibrarySpy.lastOnSongSelect).toBe(firstRef);
+    expect(songLibraryRenderSpy).toHaveBeenCalledTimes(1);
+    expect(songLibraryRenderSpy.mock.calls.at(-1)?.[0]).toBe(firstRef);
   });
 });

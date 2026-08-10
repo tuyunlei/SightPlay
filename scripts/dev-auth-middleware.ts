@@ -34,9 +34,9 @@ class MemoryKV {
 }
 
 // Convert Node.js IncomingMessage to Web API Request
-async function toWebRequest(req: IncomingMessage, _baseUrl: string): Promise<Request> {
+async function toWebRequest(req: IncomingMessage): Promise<Request> {
   const protocol = 'http'; // localhost dev
-  const host = req.headers.host || 'localhost:3000';
+  const host = req.headers.host || '127.0.0.1';
   const url = `${protocol}://${host}${req.url}`;
 
   // Read body
@@ -162,7 +162,7 @@ export function devAuthMiddleware(projectRoot: string, server: ViteDevServer): C
       }
 
       // Convert to Web Request
-      const webRequest = await toWebRequest(req, url);
+      const webRequest = await toWebRequest(req);
 
       // Create context
       const context = {

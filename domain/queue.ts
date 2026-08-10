@@ -105,6 +105,22 @@ type AdvanceQueueParams = {
   handMode?: HandPracticeMode;
 };
 
+const createNextRandomNote = (
+  handMode: HandPracticeMode,
+  clef: ClefType,
+  nextGlobalIndex: number,
+  practiceRange: PracticeRangeMode | undefined,
+  includeAccidentals: boolean
+): Note => {
+  if (handMode === 'right-hand') {
+    return generateRandomNoteData(ClefType.TREBLE, nextGlobalIndex, undefined, includeAccidentals);
+  }
+  if (handMode === 'left-hand') {
+    return generateRandomNoteData(ClefType.BASS, nextGlobalIndex, undefined, includeAccidentals);
+  }
+  return generateRandomNoteData(clef, nextGlobalIndex, practiceRange, includeAccidentals);
+};
+
 export const advanceQueue = ({
   queue,
   clef,
@@ -150,25 +166,14 @@ export const advanceQueue = ({
       nextNote = challengeSequence[nextSeqIndex];
     }
   } else {
-    // For explicit hand modes, ignore practiceRange to ensure correct clef range
-    if (handMode === 'right-hand') {
-      nextNote = generateRandomNoteData(
-        ClefType.TREBLE,
-        nextGlobalIndex,
-        undefined,
-        includeAccidentals
-      );
-    } else if (handMode === 'left-hand') {
-      nextNote = generateRandomNoteData(
-        ClefType.BASS,
-        nextGlobalIndex,
-        undefined,
-        includeAccidentals
-      );
-    } else {
-      // Fallback for other cases
-      nextNote = generateRandomNoteData(clef, nextGlobalIndex, practiceRange, includeAccidentals);
-    }
+    // Explicit hand modes ignore practiceRange to preserve their clef ranges.
+    nextNote = createNextRandomNote(
+      handMode,
+      clef,
+      nextGlobalIndex,
+      practiceRange,
+      includeAccidentals
+    );
   }
 
   return {

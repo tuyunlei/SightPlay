@@ -67,12 +67,11 @@ describe('usePracticeSession — MIDI integration', () => {
     resetStore();
 
     // MidiService mock: silently swallow initialize(), no hardware needed
-    vi.mocked(MidiService).mockImplementation(
-      () =>
-        ({
-          initialize: vi.fn().mockResolvedValue(undefined),
-        }) as unknown as MidiService
-    );
+    vi.mocked(MidiService).mockImplementation(function MidiServiceMock() {
+      return {
+        initialize: vi.fn().mockResolvedValue(undefined),
+      } as unknown as MidiService;
+    });
   });
 
   afterEach(() => {

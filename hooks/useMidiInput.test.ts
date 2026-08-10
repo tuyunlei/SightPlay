@@ -27,7 +27,9 @@ describe('useMidiInput', () => {
         return Promise.resolve();
       }),
     };
-    vi.mocked(MidiService).mockImplementation(() => mockMidiService as unknown as MidiService);
+    vi.mocked(MidiService).mockImplementation(function MidiServiceMock() {
+      return mockMidiService as unknown as MidiService;
+    });
   });
 
   afterEach(() => {

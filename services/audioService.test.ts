@@ -19,6 +19,11 @@ describe('AudioProcessor', () => {
     getTracks: () => { stop: () => void }[];
   };
 
+  const createAudioContextMock = () =>
+    vi.fn(function AudioContextMock() {
+      return mockAudioContext;
+    });
+
   beforeEach(() => {
     vi.stubGlobal('crypto', {
       randomUUID: () => 'test-uuid-1234',
@@ -55,7 +60,7 @@ describe('AudioProcessor', () => {
         mediaDevices: { getUserMedia },
       });
       vi.stubGlobal('window', {
-        AudioContext: vi.fn(() => mockAudioContext),
+        AudioContext: createAudioContextMock(),
       });
 
       await audioProcessor.start();
@@ -74,7 +79,7 @@ describe('AudioProcessor', () => {
       vi.stubGlobal('navigator', {
         mediaDevices: { getUserMedia },
       });
-      const AudioContextMock = vi.fn(() => mockAudioContext);
+      const AudioContextMock = createAudioContextMock();
       vi.stubGlobal('window', {
         AudioContext: AudioContextMock,
       });
@@ -91,7 +96,7 @@ describe('AudioProcessor', () => {
         mediaDevices: { getUserMedia },
       });
       vi.stubGlobal('window', {
-        AudioContext: vi.fn(() => mockAudioContext),
+        AudioContext: createAudioContextMock(),
       });
 
       await audioProcessor.start();
@@ -117,7 +122,7 @@ describe('AudioProcessor', () => {
       vi.stubGlobal('navigator', {
         mediaDevices: { getUserMedia },
       });
-      const webkitAudioContext = vi.fn(() => mockAudioContext);
+      const webkitAudioContext = createAudioContextMock();
       vi.stubGlobal('window', {
         webkitAudioContext,
       });
@@ -139,7 +144,7 @@ describe('AudioProcessor', () => {
         mediaDevices: { getUserMedia },
       });
       vi.stubGlobal('window', {
-        AudioContext: vi.fn(() => mockAudioContext),
+        AudioContext: createAudioContextMock(),
       });
 
       await audioProcessor.start();
@@ -154,7 +159,7 @@ describe('AudioProcessor', () => {
         mediaDevices: { getUserMedia },
       });
       vi.stubGlobal('window', {
-        AudioContext: vi.fn(() => mockAudioContext),
+        AudioContext: createAudioContextMock(),
       });
 
       await audioProcessor.start();
@@ -181,7 +186,7 @@ describe('AudioProcessor', () => {
         mediaDevices: { getUserMedia },
       });
       vi.stubGlobal('window', {
-        AudioContext: vi.fn(() => mockAudioContext),
+        AudioContext: createAudioContextMock(),
       });
 
       mockAnalyser.getFloatTimeDomainData = (arr: Float32Array) => {
@@ -201,7 +206,7 @@ describe('AudioProcessor', () => {
         mediaDevices: { getUserMedia },
       });
       vi.stubGlobal('window', {
-        AudioContext: vi.fn(() => mockAudioContext),
+        AudioContext: createAudioContextMock(),
       });
 
       // Generate a simple sine wave at 440Hz (A4)
@@ -233,7 +238,7 @@ describe('AudioProcessor', () => {
         mediaDevices: { getUserMedia },
       });
       vi.stubGlobal('window', {
-        AudioContext: vi.fn(() => mockAudioContext),
+        AudioContext: createAudioContextMock(),
       });
 
       // Generate a very high frequency (above 1500Hz threshold)
@@ -259,7 +264,7 @@ describe('AudioProcessor', () => {
         mediaDevices: { getUserMedia },
       });
       vi.stubGlobal('window', {
-        AudioContext: vi.fn(() => mockAudioContext),
+        AudioContext: createAudioContextMock(),
       });
 
       const sampleRate = 44100;

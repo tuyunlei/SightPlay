@@ -17,16 +17,21 @@ SightPlay (视弹) is a piano sight-reading practice app built with React + Type
 ## Common Commands
 
 ```bash
-npm install        # Install dependencies
-npm run dev        # Start dev server (port 3000)
-npm run build      # Production build
-npm run preview    # Preview production build
-npm run lint       # ESLint rules check
-npm run format     # Prettier formatting
-npm run typecheck  # TypeScript strict type checking
-npm run test:ci    # Vitest coverage gate
-npm run lint:arch  # Architecture/dead code/file size checks
+pnpm install --frozen-lockfile  # Install pinned dependencies
+pnpm run dev                   # Start localhost dev server (port 5173)
+pnpm run build                 # Production build
+pnpm run preview               # Preview production build
+pnpm run lint                  # ESLint rules check
+pnpm run format                # Prettier formatting
+pnpm run typecheck             # TypeScript strict type checking
+pnpm run test:ci               # Vitest coverage gate
+pnpm run test:e2e              # Playwright E2E gate
+pnpm run lint:arch             # Architecture/dead code/file size checks
 ```
+
+Use the Node and pnpm versions pinned by `.node-version` and `packageManager` in `package.json`.
+Override local ports with `SIGHTPLAY_DEV_PORT` or `SIGHTPLAY_E2E_PORT`; LAN binding requires an
+explicit `SIGHTPLAY_DEV_HOST`.
 
 ## Environment Configuration
 

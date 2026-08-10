@@ -119,6 +119,7 @@ describe('useAuth', () => {
   });
 
   it('clears auth cookie state on logout', async () => {
+    document.cookie = 'auth_token=test-token; path=/';
     (fetch as unknown as ReturnType<typeof vi.fn>).mockImplementation(async (input: string) => {
       if (input === '/api/auth/session') {
         return {
@@ -139,5 +140,6 @@ describe('useAuth', () => {
     expect(result.current.isAuthenticated).toBe(false);
     expect(result.current.isLoading).toBe(false);
     expect(result.current.hasPasskeys).toBe(true);
+    expect(document.cookie).not.toContain('auth_token=');
   });
 });

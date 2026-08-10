@@ -299,6 +299,18 @@ vitest + jsdom 环境，mock WebMIDI，渲染 usePracticeSession：
 
 ---
 
+## P8 — 项目复活工程基线
+
+- [x] 固定 Node 24.18.0 + pnpm 10.34.5，CI 与本地文档统一
+- [x] 升级 Vite 8、Vitest 4 及必要工具依赖，不使用强制 audit fix
+- [x] dev 默认仅绑定 loopback；E2E 独占可配置端口且不复用未知进程
+- [x] 清零 React Compiler warning，并保持 auth、队列、MIDI/音频测试语义
+- [x] 修正覆盖率口径：Vitest 4 源码基线 73/72/62/60；后续通过补测试恢复 80%
+- [x] 清理重复 hook 管理器和陈旧 Knip 配置提示
+- [x] 工程范围、决策与剩余风险记录于 `docs/ENGINEERING_BASELINE.md`
+
+---
+
 ## 进度记录
 
 | 日期       | 内容                                                       | Commit                          |
@@ -331,3 +343,4 @@ vitest + jsdom 环境，mock WebMIDI，渲染 usePracticeSession：
 | 2026-02-16 | P5 CF Pages Functions + 共享 handler 提取                  | `e3f09ad`                       |
 | 2026-02-16 | P5 CF Pages 项目 + KV + 自定义域名 + 环境变量              | API                             |
 | 2026-02-16 | P5 WEBAUTHN_RP_ID 环境变量 + 预览环境验证通过              | `1a2392f`                       |
+| 2026-08-10 | 项目复活工程基线：工具链、安全升级、端口隔离与零 warning   | —                               |

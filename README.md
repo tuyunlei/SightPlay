@@ -17,12 +17,14 @@ A piano sight-reading practice app that helps you improve your ability to read s
 
 ## Run Locally
 
-**Prerequisites:** Node.js
+**Prerequisites:** Node.js 24.18.0 and Corepack. The repository pins pnpm 10.34.5.
 
-1. Install dependencies:
+1. Activate the pinned package manager and install dependencies:
 
    ```bash
-   npm install
+   corepack enable
+   corepack install
+   pnpm install --frozen-lockfile
    ```
 
 2. Set the `GEMINI_API_KEY` in `.env.local` to your Gemini API key
@@ -30,10 +32,14 @@ A piano sight-reading practice app that helps you improve your ability to read s
 3. Run the app:
 
    ```bash
-   npm run dev
+   pnpm run dev
    ```
 
-4. Open http://localhost:3000
+4. Open http://127.0.0.1:5173
+
+The dev server binds only to loopback by default. Set `SIGHTPLAY_DEV_PORT` to choose another port,
+or explicitly set `SIGHTPLAY_DEV_HOST` when LAN access is required. Playwright uses an isolated
+loopback server on port 4173 by default; override it with `SIGHTPLAY_E2E_PORT`.
 
 ## How It Works
 

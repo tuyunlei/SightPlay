@@ -1,13 +1,15 @@
 import { cpSync } from 'fs';
 import path from 'path';
 
+import babel from '@rolldown/plugin-babel';
 import { sentryVitePlugin } from '@sentry/vite-plugin';
-import react from '@vitejs/plugin-react';
+import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import { defineConfig, type Plugin, type ViteDevServer } from 'vite';
 
-import { devAuthMiddleware } from './scripts/dev-auth-middleware';
+import { devAuthMiddleware } from './scripts/dev-auth-middleware.ts';
+import { DEFAULT_DEV_PORT, LOOPBACK_HOST, resolvePort } from './scripts/server-config.ts';
 
-const __projectRoot = path.resolve(__dirname);
+const __projectRoot = path.resolve(import.meta.dirname);
 
 function copyEdgeFunctions(): Plugin {
   return {
@@ -22,21 +24,21 @@ function copyEdgeFunctions(): Plugin {
 export default defineConfig(({ mode }) => {
   const isProd = mode === 'production';
   const hasSentryToken = !!process.env.SENTRY_AUTH_TOKEN;
+  const devPort = resolvePort('SIGHTPLAY_DEV_PORT', DEFAULT_DEV_PORT);
+  const devHost = process.env.SIGHTPLAY_DEV_HOST || LOOPBACK_HOST;
 
   return {
     build: {
       sourcemap: isProd, // Generate sourcemaps in production
     },
     server: {
-      port: 3000,
-      host: '0.0.0.0',
+      port: devPort,
+      host: devHost,
+      strictPort: true,
     },
     plugins: [
-      react({
-        babel: {
-          plugins: ['babel-plugin-react-compiler'],
-        },
-      }),
+      react(),
+      babel({ presets: [reactCompilerPreset()] }),
       copyEdgeFunctions(),
       {
         name: 'dev-auth',
@@ -55,7 +57,7 @@ export default defineConfig(({ mode }) => {
     ].filter(Boolean),
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(import.meta.dirname, '.'),
       },
     },
   };
