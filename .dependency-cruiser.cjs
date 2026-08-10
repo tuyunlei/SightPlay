@@ -18,9 +18,9 @@ module.exports = {
     {
       name: 'domain-no-ui',
       severity: 'error',
-      comment: 'domain/ 禁止依赖 UI 层',
+      comment: 'domain/ 只包含纯决策，不得依赖 UI、状态容器或运行时适配器',
       from: { path: '^domain/' },
-      to: { path: '^(components|features|App\\.tsx|index\\.tsx)' },
+      to: { path: '^(components|features|hooks|services|store|views|App\\.tsx|index\\.tsx)' },
     },
     {
       name: 'services-no-ui',
@@ -32,9 +32,9 @@ module.exports = {
     {
       name: 'store-no-ui',
       severity: 'error',
-      comment: 'store/ 禁止依赖 UI 层',
+      comment: 'store/ 只适配 domain state，不得依赖 UI、hooks 或具体服务',
       from: { path: '^store/' },
-      to: { path: '^(components|features|App\\.tsx|index\\.tsx)' },
+      to: { path: '^(components|features|hooks|services|views|App\\.tsx|index\\.tsx)' },
     },
     {
       name: 'hooks-no-ui',

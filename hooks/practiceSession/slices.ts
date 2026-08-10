@@ -3,10 +3,17 @@ import type { MutableRefObject } from 'react';
 
 import { usePracticeStore } from '../../store/practiceStore';
 import { Note } from '../../types';
+import type { UseAudioInputDependencies } from '../useAudioInput';
+import type { MidiInputPort } from '../useMidiInput';
+
+import type { PracticeRuntime } from './runtime';
 
 export interface UsePracticeSessionOptions {
   onMicError: () => void;
   onChallengeComplete?: () => void;
+  runtime?: PracticeRuntime;
+  audioInputDependencies?: UseAudioInputDependencies;
+  createMidiService?: () => MidiInputPort;
 }
 
 export type PressedKeys = Map<number, { note: Note; isCorrect: boolean; targetId?: string | null }>;
@@ -56,6 +63,7 @@ export const usePracticeStateSlice = () => {
 };
 
 export const usePracticeActionsSlice = () => {
+  const dispatch = usePracticeStore((state) => state.dispatch);
   const setClef = usePracticeStore((state) => state.setClef);
   const setIsListening = usePracticeStore((state) => state.setIsListening);
   const setIsMidiConnected = usePracticeStore((state) => state.setIsMidiConnected);
@@ -74,6 +82,7 @@ export const usePracticeActionsSlice = () => {
   const resetStats = usePracticeStore((state) => state.resetStats);
 
   return {
+    dispatch,
     setClef,
     setPracticeRange,
     setHandMode,

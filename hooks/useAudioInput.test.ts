@@ -1,250 +1,96 @@
-import { renderHook, act } from '@testing-library/react';
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { act, renderHook } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AudioProcessor } from '../services/audioService';
+import { createNoteFromMidi } from '../domain/note';
 
-import { useAudioInput } from './useAudioInput';
-
-vi.mock('../services/audioService');
+import { AudioInputPort, UseAudioInputDependencies, useAudioInput } from './useAudioInput';
 
 describe('useAudioInput', () => {
-  let mockAudioProcessor: {
-    start: ReturnType<typeof vi.fn>;
-    stop: ReturnType<typeof vi.fn>;
-    getPitch: ReturnType<typeof vi.fn>;
-  };
+  let processor: AudioInputPort;
+  let nextFrame: FrameRequestCallback | undefined;
+  let dependencies: UseAudioInputDependencies;
 
   beforeEach(() => {
-    mockAudioProcessor = {
+    processor = {
       start: vi.fn().mockResolvedValue(undefined),
       stop: vi.fn(),
       getPitch: vi.fn().mockReturnValue(null),
     };
-    vi.mocked(AudioProcessor).mockImplementation(function AudioProcessorMock() {
-      return mockAudioProcessor as unknown as AudioProcessor;
-    });
+    nextFrame = undefined;
+    dependencies = {
+      createProcessor: () => processor,
+      requestFrame: vi.fn((callback) => {
+        nextFrame = callback;
+        return 17;
+      }),
+      cancelFrame: vi.fn(),
+    };
+  });
 
-    // Mock requestAnimationFrame
-    vi.stubGlobal(
-      'requestAnimationFrame',
-      vi.fn((_cb) => {
-        // Don't actually call the callback to prevent infinite loop
-        return 1;
-      })
+  it('starts the injected processor and begins pitch detection', async () => {
+    const onStart = vi.fn();
+    const { result } = renderHook(() =>
+      useAudioInput({ onNoteDetected: vi.fn(), onStart, dependencies })
     );
-    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+
+    await act(() => result.current.start());
+
+    expect(processor.start).toHaveBeenCalledOnce();
+    expect(onStart).toHaveBeenCalledOnce();
+    expect(dependencies.requestFrame).toHaveBeenCalledOnce();
   });
 
-  afterEach(() => {
-    vi.clearAllMocks();
-    vi.restoreAllMocks();
+  it('delivers detected pitch to the latest callback', async () => {
+    const note = createNoteFromMidi(69, -1);
+    vi.mocked(processor.getPitch).mockReturnValue(note);
+    const firstCallback = vi.fn();
+    const latestCallback = vi.fn();
+    const { result, rerender } = renderHook(
+      ({ onNoteDetected }) => useAudioInput({ onNoteDetected, dependencies }),
+      { initialProps: { onNoteDetected: firstCallback } }
+    );
+
+    await act(() => result.current.start());
+    firstCallback.mockClear();
+    rerender({ onNoteDetected: latestCallback });
+    act(() => nextFrame?.(0));
+
+    expect(latestCallback).toHaveBeenCalledWith(note);
+    expect(firstCallback).not.toHaveBeenCalled();
   });
 
-  it('creates AudioProcessor instance', () => {
-    const onNoteDetected = vi.fn();
-    renderHook(() => useAudioInput({ onNoteDetected }));
+  it('reports startup failures without entering the detection loop', async () => {
+    vi.mocked(processor.start).mockRejectedValue(new Error('permission denied'));
+    const onError = vi.fn();
+    const { result } = renderHook(() =>
+      useAudioInput({ onNoteDetected: vi.fn(), onError, dependencies })
+    );
 
-    expect(AudioProcessor).toHaveBeenCalledTimes(1);
+    await act(() => result.current.start());
+
+    expect(onError).toHaveBeenCalledWith(expect.any(Error));
+    expect(dependencies.requestFrame).not.toHaveBeenCalled();
   });
 
-  it('returns start and stop functions', () => {
-    const onNoteDetected = vi.fn();
-    const { result } = renderHook(() => useAudioInput({ onNoteDetected }));
+  it('stops the processor and cancels its scheduled frame', async () => {
+    const onStop = vi.fn();
+    const { result } = renderHook(() =>
+      useAudioInput({ onNoteDetected: vi.fn(), onStop, dependencies })
+    );
+    await act(() => result.current.start());
 
-    expect(typeof result.current.start).toBe('function');
-    expect(typeof result.current.stop).toBe('function');
+    act(() => result.current.stop());
+
+    expect(processor.stop).toHaveBeenCalledOnce();
+    expect(dependencies.cancelFrame).toHaveBeenCalledWith(17);
+    expect(onStop).toHaveBeenCalledOnce();
   });
 
-  describe('start', () => {
-    it('calls audioProcessor.start', async () => {
-      const onNoteDetected = vi.fn();
-      const { result } = renderHook(() => useAudioInput({ onNoteDetected }));
+  it('releases the processor when the hook unmounts', () => {
+    const { unmount } = renderHook(() => useAudioInput({ onNoteDetected: vi.fn(), dependencies }));
 
-      await act(async () => {
-        await result.current.start();
-      });
+    unmount();
 
-      expect(mockAudioProcessor.start).toHaveBeenCalled();
-    });
-
-    it('calls onStart callback', async () => {
-      const onNoteDetected = vi.fn();
-      const onStart = vi.fn();
-      const { result } = renderHook(() => useAudioInput({ onNoteDetected, onStart }));
-
-      await act(async () => {
-        await result.current.start();
-      });
-
-      expect(onStart).toHaveBeenCalled();
-    });
-
-    it('starts detection loop', async () => {
-      const onNoteDetected = vi.fn();
-      const { result } = renderHook(() => useAudioInput({ onNoteDetected }));
-
-      await act(async () => {
-        await result.current.start();
-      });
-
-      expect(requestAnimationFrame).toHaveBeenCalled();
-    });
-
-    it('calls onError when start fails', async () => {
-      mockAudioProcessor.start.mockRejectedValue(new Error('Permission denied'));
-
-      const onNoteDetected = vi.fn();
-      const onError = vi.fn();
-      const { result } = renderHook(() => useAudioInput({ onNoteDetected, onError }));
-
-      await act(async () => {
-        await result.current.start();
-      });
-
-      expect(onError).toHaveBeenCalledWith(expect.any(Error));
-    });
-
-    it('does not call onStart when start fails', async () => {
-      mockAudioProcessor.start.mockRejectedValue(new Error('Permission denied'));
-
-      const onNoteDetected = vi.fn();
-      const onStart = vi.fn();
-      const onError = vi.fn();
-      const { result } = renderHook(() => useAudioInput({ onNoteDetected, onStart, onError }));
-
-      await act(async () => {
-        await result.current.start();
-      });
-
-      expect(onStart).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('stop', () => {
-    it('calls audioProcessor.stop', async () => {
-      const onNoteDetected = vi.fn();
-      const { result } = renderHook(() => useAudioInput({ onNoteDetected }));
-
-      await act(async () => {
-        await result.current.start();
-      });
-
-      act(() => {
-        result.current.stop();
-      });
-
-      expect(mockAudioProcessor.stop).toHaveBeenCalled();
-    });
-
-    it('calls onStop callback', async () => {
-      const onNoteDetected = vi.fn();
-      const onStop = vi.fn();
-      const { result } = renderHook(() => useAudioInput({ onNoteDetected, onStop }));
-
-      await act(async () => {
-        await result.current.start();
-      });
-
-      act(() => {
-        result.current.stop();
-      });
-
-      expect(onStop).toHaveBeenCalled();
-    });
-
-    it('cancels animation frame', async () => {
-      const onNoteDetected = vi.fn();
-      const { result } = renderHook(() => useAudioInput({ onNoteDetected }));
-
-      await act(async () => {
-        await result.current.start();
-      });
-
-      act(() => {
-        result.current.stop();
-      });
-
-      expect(cancelAnimationFrame).toHaveBeenCalled();
-    });
-  });
-
-  describe('detection loop', () => {
-    it('calls getPitch and onNoteDetected', async () => {
-      const mockNote = {
-        id: 'test',
-        name: 'A' as const,
-        octave: 4,
-        frequency: 440,
-        midi: 69,
-        globalIndex: -1,
-      };
-      mockAudioProcessor.getPitch.mockReturnValue(mockNote);
-
-      // Make requestAnimationFrame call the callback once
-      vi.mocked(requestAnimationFrame).mockImplementation((cb) => {
-        cb(0);
-        return 1;
-      });
-
-      const onNoteDetected = vi.fn();
-      const { result } = renderHook(() => useAudioInput({ onNoteDetected }));
-
-      await act(async () => {
-        await result.current.start();
-      });
-
-      expect(mockAudioProcessor.getPitch).toHaveBeenCalled();
-      expect(onNoteDetected).toHaveBeenCalledWith(mockNote);
-    });
-
-    it('passes null when no pitch detected', async () => {
-      mockAudioProcessor.getPitch.mockReturnValue(null);
-
-      vi.mocked(requestAnimationFrame).mockImplementation((cb) => {
-        cb(0);
-        return 1;
-      });
-
-      const onNoteDetected = vi.fn();
-      const { result } = renderHook(() => useAudioInput({ onNoteDetected }));
-
-      await act(async () => {
-        await result.current.start();
-      });
-
-      expect(onNoteDetected).toHaveBeenCalledWith(null);
-    });
-  });
-
-  describe('cleanup', () => {
-    it('stops on unmount', async () => {
-      const onNoteDetected = vi.fn();
-      const onStop = vi.fn();
-      const { result, unmount } = renderHook(() => useAudioInput({ onNoteDetected, onStop }));
-
-      await act(async () => {
-        await result.current.start();
-      });
-
-      unmount();
-
-      expect(mockAudioProcessor.stop).toHaveBeenCalled();
-    });
-  });
-
-  describe('callback stability', () => {
-    it('uses same AudioProcessor instance across rerenders', () => {
-      const onNoteDetected = vi.fn();
-
-      const { rerender } = renderHook(({ onNoteDetected }) => useAudioInput({ onNoteDetected }), {
-        initialProps: { onNoteDetected },
-      });
-
-      rerender({ onNoteDetected: vi.fn() });
-      rerender({ onNoteDetected: vi.fn() });
-
-      // AudioProcessor should be constructed (StrictMode may cause multiple calls)
-      expect(AudioProcessor).toHaveBeenCalled();
-    });
+    expect(processor.stop).toHaveBeenCalledOnce();
   });
 });

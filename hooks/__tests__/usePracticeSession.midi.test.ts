@@ -2,25 +2,16 @@
  * P7.3 — Practice Flow MIDI Integration Tests
  *
  * Tests the MIDI → practice session integration at the hook/store level.
- * Renders the real usePracticeSession (no sub-hook mocks), mocks only
- * MidiService (no hardware) and useAudioInput (no mic), then drives
+ * Renders the real usePracticeSession (no sub-hook mocks), injects controlled
+ * MIDI and audio ports, then drives
  * MIDI events via __testHandlers and verifies Zustand store state.
  */
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
-import { MidiService } from '../../services/midiService';
 import { usePracticeStore } from '../../store/practiceStore';
 import { ClefType } from '../../types';
 import { usePracticeSession } from '../usePracticeSession';
-
-// Prevent MidiService from calling navigator.requestMIDIAccess in jsdom
-vi.mock('../../services/midiService');
-
-// Prevent AudioContext / getUserMedia calls from mic integration
-vi.mock('../useAudioInput', () => ({
-  useAudioInput: vi.fn(() => ({ start: vi.fn(), stop: vi.fn() })),
-}));
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -62,16 +53,20 @@ const resetStore = () =>
 // ─── Suite ───────────────────────────────────────────────────────────────────
 
 describe('usePracticeSession — MIDI integration', () => {
+  const createMidiService = () => ({ initialize: vi.fn().mockResolvedValue(undefined) });
+  const audioInputDependencies = {
+    createProcessor: () => ({
+      start: vi.fn().mockResolvedValue(undefined),
+      stop: vi.fn(),
+      getPitch: vi.fn().mockReturnValue(null),
+    }),
+    requestFrame: vi.fn(() => 1),
+    cancelFrame: vi.fn(),
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     resetStore();
-
-    // MidiService mock: silently swallow initialize(), no hardware needed
-    vi.mocked(MidiService).mockImplementation(function MidiServiceMock() {
-      return {
-        initialize: vi.fn().mockResolvedValue(undefined),
-      } as unknown as MidiService;
-    });
   });
 
   afterEach(() => {
@@ -81,7 +76,9 @@ describe('usePracticeSession — MIDI integration', () => {
   // ── Helper: render and wait for queue ──────────────────────────────────────
 
   const renderAndWait = async () => {
-    const hook = renderHook(() => usePracticeSession({ onMicError: vi.fn() }));
+    const hook = renderHook(() =>
+      usePracticeSession({ onMicError: vi.fn(), createMidiService, audioInputDependencies })
+    );
 
     // useQueueInitialization fires in a useEffect; wait for the queue to fill
     await waitFor(() => {

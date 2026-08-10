@@ -2,12 +2,19 @@ import { useRef, useState } from 'react';
 
 import { Language, translations } from '../i18n';
 import { chatWithAiCoach } from '../services/geminiService';
-import { ChatMessage, GeneratedChallenge } from '../types';
+import { AiResponse, ChatMessage, GeneratedChallenge } from '../types';
+
+export type AiCoachClient = (
+  userMessage: string,
+  clef: string,
+  lang: Language
+) => Promise<AiResponse>;
 
 interface UseAiCoachOptions {
   clef: string;
   lang: Language;
   onLoadChallenge: (challenge: GeneratedChallenge) => number;
+  chat?: AiCoachClient;
 }
 
 const formatTemplate = (template: string, values: Record<string, string | number>) =>
@@ -16,7 +23,12 @@ const formatTemplate = (template: string, values: Record<string, string | number
     template
   );
 
-export const useAiCoach = ({ clef, lang, onLoadChallenge }: UseAiCoachOptions) => {
+export const useAiCoach = ({
+  clef,
+  lang,
+  onLoadChallenge,
+  chat = chatWithAiCoach,
+}: UseAiCoachOptions) => {
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>(() => [
@@ -36,7 +48,7 @@ export const useAiCoach = ({ clef, lang, onLoadChallenge }: UseAiCoachOptions) =
     setIsLoadingAi(true);
 
     try {
-      const response = await chatWithAiCoach(text, clef, lang);
+      const response = await chat(text, clef, lang);
 
       const aiMsg: ChatMessage = {
         role: 'ai',

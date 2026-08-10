@@ -4,13 +4,8 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { createNoteFromMidi } from '../../../domain/note';
 import { usePracticeStore } from '../../../store/practiceStore';
 import { Note } from '../../../types';
-import {
-  useDetectedNoteUpdater,
-  useHandleCorrectNote,
-  useMicNoteHandler,
-  useMidiNoteHandlers,
-} from '../noteHandlers';
-import type { PracticeActions, PracticeRefs } from '../slices';
+import { useDetectedNoteUpdater, useMicNoteHandler, useMidiNoteHandlers } from '../noteHandlers';
+import type { PracticeRefs } from '../slices';
 
 const makeNote = (midi: number, globalIndex = 0): Note => createNoteFromMidi(midi, globalIndex);
 
@@ -20,25 +15,6 @@ const makeRefs = (): PracticeRefs => ({
   lastHitTime: { current: Date.now() },
   hasMistakeForCurrent: { current: false },
   isProcessingRef: { current: false },
-});
-
-const makeActions = (): PracticeActions => ({
-  setClef: vi.fn(),
-  setPracticeRange: vi.fn(),
-  setHandMode: vi.fn(),
-  setIsListening: vi.fn(),
-  setIsMidiConnected: vi.fn(),
-  setNoteQueue: vi.fn(),
-  setExitingNotes: vi.fn(),
-  setDetectedNote: vi.fn(),
-  setStatus: vi.fn(),
-  setScore: vi.fn(),
-  setStreak: vi.fn(),
-  setSessionStats: vi.fn(),
-  setChallengeSequence: vi.fn(),
-  setChallengeIndex: vi.fn(),
-  setChallengeInfo: vi.fn(),
-  resetStats: vi.fn(),
 });
 
 describe('useDetectedNoteUpdater', () => {
@@ -93,92 +69,6 @@ describe('useDetectedNoteUpdater', () => {
     act(() => result.current(newNote));
 
     expect(setDetectedNote).toHaveBeenCalledWith(newNote);
-  });
-});
-
-describe('useHandleCorrectNote', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('processes correct note: updates score, streak, advances queue', () => {
-    const target = makeNote(60, 0);
-    const next = makeNote(62, 1);
-    usePracticeStore.setState({
-      noteQueue: [target, next],
-      exitingNotes: [],
-      score: 0,
-      streak: 0,
-      sessionStats: { totalAttempts: 0, cleanHits: 0, bpm: 0 },
-      clef: 'treble' as any,
-      practiceRange: 'combined',
-      challengeSequence: [],
-      challengeIndex: 0,
-    });
-
-    const actions = makeActions();
-    const refs = makeRefs();
-
-    const { result } = renderHook(() => useHandleCorrectNote(actions, refs));
-    act(() => result.current());
-
-    expect(actions.setScore).toHaveBeenCalled();
-    expect(actions.setStreak).toHaveBeenCalledWith(1);
-    expect(actions.setNoteQueue).toHaveBeenCalled();
-    expect(actions.setExitingNotes).toHaveBeenCalled();
-    expect(actions.setSessionStats).toHaveBeenCalled();
-  });
-
-  it('does nothing when processing is locked', () => {
-    usePracticeStore.setState({ noteQueue: [makeNote(60)] });
-    const actions = makeActions();
-    const refs = makeRefs();
-    refs.isProcessingRef.current = true;
-
-    const { result } = renderHook(() => useHandleCorrectNote(actions, refs));
-    act(() => result.current());
-
-    expect(actions.setScore).not.toHaveBeenCalled();
-  });
-
-  it('does nothing when queue is empty', () => {
-    usePracticeStore.setState({ noteQueue: [] });
-    const actions = makeActions();
-    const refs = makeRefs();
-
-    const { result } = renderHook(() => useHandleCorrectNote(actions, refs));
-    act(() => result.current());
-
-    expect(actions.setScore).not.toHaveBeenCalled();
-  });
-
-  it('calls onChallengeComplete when challenge should complete', () => {
-    // Queue has 1 note left, challenge sequence exists
-    const target = makeNote(60, 0);
-    const challengeNotes = [makeNote(60, 0), makeNote(62, 1)];
-    usePracticeStore.setState({
-      noteQueue: [target],
-      exitingNotes: [],
-      score: 0,
-      streak: 0,
-      sessionStats: { totalAttempts: 0, cleanHits: 0, bpm: 0 },
-      clef: 'treble' as any,
-      practiceRange: 'combined',
-      challengeSequence: challengeNotes,
-      challengeIndex: 1,
-    });
-
-    const actions = makeActions();
-    const refs = makeRefs();
-    const onComplete = vi.fn();
-
-    const { result } = renderHook(() => useHandleCorrectNote(actions, refs, onComplete));
-    act(() => result.current());
-
-    expect(onComplete).toHaveBeenCalled();
   });
 });
 

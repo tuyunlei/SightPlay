@@ -4,9 +4,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { AiResponse } from '../../types';
 import { useAiCoach } from '../useAiCoach';
 
-import { geminiService, defaultOptions } from './useAiCoach.setup';
-
-vi.mock('../../services/geminiService');
+import { chat, defaultOptions } from './useAiCoach.setup';
 
 describe('useAiCoach - messaging', () => {
   beforeEach(() => {
@@ -62,7 +60,7 @@ describe('useAiCoach - messaging', () => {
 
   describe('sendMessage', () => {
     it('adds user message to chat history', async () => {
-      vi.mocked(geminiService.chatWithAiCoach).mockResolvedValue({
+      chat.mockResolvedValue({
         replyText: 'Hello!',
         challengeData: null,
       });
@@ -79,7 +77,7 @@ describe('useAiCoach - messaging', () => {
     });
 
     it('clears chat input after sending', async () => {
-      vi.mocked(geminiService.chatWithAiCoach).mockResolvedValue({
+      chat.mockResolvedValue({
         replyText: 'Hello!',
         challengeData: null,
       });
@@ -99,7 +97,7 @@ describe('useAiCoach - messaging', () => {
 
     it('sets loading state while processing', async () => {
       let resolvePromise: ((value: AiResponse | PromiseLike<AiResponse>) => void) | undefined;
-      vi.mocked(geminiService.chatWithAiCoach).mockReturnValue(
+      chat.mockReturnValue(
         new Promise<AiResponse>((resolve) => {
           resolvePromise = resolve;
         })
@@ -126,7 +124,7 @@ describe('useAiCoach - messaging', () => {
     });
 
     it('adds AI response to chat history', async () => {
-      vi.mocked(geminiService.chatWithAiCoach).mockResolvedValue({
+      chat.mockResolvedValue({
         replyText: 'I am your AI coach!',
         challengeData: null,
       });
@@ -148,12 +146,12 @@ describe('useAiCoach - messaging', () => {
         await result.current.sendMessage('   ');
       });
 
-      expect(geminiService.chatWithAiCoach).not.toHaveBeenCalled();
+      expect(chat).not.toHaveBeenCalled();
     });
 
     it('does not send while already loading', async () => {
       let resolvePromise: ((value: AiResponse | PromiseLike<AiResponse>) => void) | undefined;
-      vi.mocked(geminiService.chatWithAiCoach).mockReturnValue(
+      chat.mockReturnValue(
         new Promise<AiResponse>((resolve) => {
           resolvePromise = resolve;
         })
@@ -169,7 +167,7 @@ describe('useAiCoach - messaging', () => {
         await result.current.sendMessage('Another message');
       });
 
-      expect(geminiService.chatWithAiCoach).toHaveBeenCalledTimes(1);
+      expect(chat).toHaveBeenCalledTimes(1);
 
       await act(async () => {
         if (!resolvePromise) {
@@ -180,7 +178,7 @@ describe('useAiCoach - messaging', () => {
     });
 
     it('calls chatWithAiCoach with correct parameters', async () => {
-      vi.mocked(geminiService.chatWithAiCoach).mockResolvedValue({
+      chat.mockResolvedValue({
         replyText: 'Response',
         challengeData: null,
       });
@@ -190,6 +188,7 @@ describe('useAiCoach - messaging', () => {
           clef: 'bass',
           lang: 'zh',
           onLoadChallenge: vi.fn(() => 5),
+          chat,
         })
       );
 
@@ -197,7 +196,7 @@ describe('useAiCoach - messaging', () => {
         await result.current.sendMessage('Generate a scale');
       });
 
-      expect(geminiService.chatWithAiCoach).toHaveBeenCalledWith('Generate a scale', 'bass', 'zh');
+      expect(chat).toHaveBeenCalledWith('Generate a scale', 'bass', 'zh');
     });
   });
 

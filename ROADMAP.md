@@ -62,8 +62,8 @@
 
 ### 覆盖率
 
-- [x] 配置 vitest coverage.thresholds（阈值 70%） ← vitest.config.ts
-- [x] 梳理现有未覆盖代码，合理标注排除项 ← vitest.config.ts exclude 列表
+- [x] 历史阶段配置 vitest coverage.thresholds（阈值 70%）；该门禁已在 P8 退役
+- [x] 历史阶段梳理未覆盖代码和排除项；当前不再维护 coverage 排除清单
 - [x] 补充高价值单元测试：usePracticeSession + PasskeyManagement ← `93724a7`
 
 ### 技术债
@@ -307,6 +307,17 @@ vitest + jsdom 环境，mock WebMIDI，渲染 usePracticeSession：
 - [x] 清理重复 hook 管理器和陈旧 Knip 配置提示
 - [x] 工程范围、决策与剩余风险记录于 `docs/ENGINEERING_BASELINE.md`
 
+## P9 — AI 开发上下文与练习核心基线
+
+- [x] 精简根 AGENTS，并建立指令准入、放置、同 PR 更新和删除治理
+- [x] 建立风险导向的测试分层，明确禁止静态文案、返回形状和 mock-only 测试
+- [x] 建立轻量工程决策模板，并明确 Issue/PR 是当前任务状态真源
+- [x] 练习正确音符流程改为 typed Action → pure reducer → explicit Effect
+- [x] Zustand 保留为 React adapter；Audio、MIDI、AI、clock 和 scheduler 可注入
+- [x] dependency-cruiser 强制 domain/store 不反向依赖 UI 或运行时实现
+- [x] 删除低价值结构测试，补 reducer、adapter、service seam 和 deterministic scheduler 测试
+- [x] 完整门禁、PR CI 与合入证据记录于 `docs/tasks/ai-development-baseline.md`
+
 ---
 
 ## 进度记录
@@ -342,3 +353,4 @@ vitest + jsdom 环境，mock WebMIDI，渲染 usePracticeSession：
 | 2026-02-16 | P5 CF Pages 项目 + KV + 自定义域名 + 环境变量              | API                             |
 | 2026-02-16 | P5 WEBAUTHN_RP_ID 环境变量 + 预览环境验证通过              | `1a2392f`                       |
 | 2026-08-10 | 项目复活工程基线：工具链、安全升级、端口隔离与零 warning   | —                               |
+| 2026-08-10 | AI 开发上下文治理、练习 core/effect 分离与测试重平衡       | `1d8cf37`, PR #4                |

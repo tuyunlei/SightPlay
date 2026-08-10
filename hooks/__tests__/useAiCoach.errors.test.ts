@@ -3,9 +3,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 import { useAiCoach } from '../useAiCoach';
 
-import { geminiService, defaultOptions } from './useAiCoach.setup';
-
-vi.mock('../../services/geminiService');
+import { chat, defaultOptions } from './useAiCoach.setup';
 
 describe('useAiCoach - errors', () => {
   beforeEach(() => {
@@ -18,7 +16,7 @@ describe('useAiCoach - errors', () => {
 
   it('handles errors gracefully', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.mocked(geminiService.chatWithAiCoach).mockRejectedValue(new Error('Network error'));
+    chat.mockRejectedValue(new Error('Network error'));
 
     const { result } = renderHook(() => useAiCoach(defaultOptions));
 

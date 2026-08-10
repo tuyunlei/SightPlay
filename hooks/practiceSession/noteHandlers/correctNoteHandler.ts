@@ -1,54 +1,64 @@
-import { DEFAULT_QUEUE_SIZE, advanceQueue } from '../../../domain/queue';
+import { useEffect, useRef } from 'react';
+
+import { TIMINGS } from '../../../config/timings';
+import { createInitialQueue, DEFAULT_QUEUE_SIZE, advanceQueue } from '../../../domain/queue';
 import { usePracticeStore } from '../../../store/practiceStore';
+import { browserPracticeRuntime, PracticeRuntime } from '../runtime';
 import type { PracticeActions, PracticeRefs } from '../slices';
 
-import { enqueueExitAnimation, lockProcessing } from './animations';
-import { handleChallengeProgress, updateScoreAndStats } from './scoring';
+const unlockProcessing = (ref: PracticeRefs['isProcessingRef']) => {
+  ref.current = false;
+};
+
+const lockProcessing = (ref: PracticeRefs['isProcessingRef']) => {
+  ref.current = true;
+};
+
+const resetAcceptedNoteRefs = (
+  lastHitTime: PracticeRefs['lastHitTime'],
+  hasMistakeForCurrent: PracticeRefs['hasMistakeForCurrent'],
+  acceptedAt: number
+) => {
+  lastHitTime.current = acceptedAt;
+  hasMistakeForCurrent.current = false;
+};
 
 export const useHandleCorrectNote = (
   actions: PracticeActions,
   refs: PracticeRefs,
-  onChallengeComplete?: () => void
+  onChallengeComplete?: () => void,
+  runtime: PracticeRuntime = browserPracticeRuntime
 ) => {
-  const {
-    setExitingNotes,
-    setNoteQueue,
-    setScore,
-    setStreak,
-    setSessionStats,
-    setChallengeIndex,
-    setChallengeSequence,
-    setChallengeInfo,
-  } = actions;
+  const { dispatch } = actions;
   const { lastHitTime, hasMistakeForCurrent, isProcessingRef } = refs;
+  const cancellations = useRef(new Set<() => void>());
+
+  useEffect(
+    () => () => {
+      for (const cancel of cancellations.current) cancel();
+      cancellations.current.clear();
+    },
+    []
+  );
+
+  const schedule = (delayMs: number, task: () => void) => {
+    let cancel = () => {};
+    cancel = runtime.schedule(delayMs, () => {
+      cancellations.current.delete(cancel);
+      task();
+    });
+    cancellations.current.add(cancel);
+  };
 
   return () => {
     if (isProcessingRef.current) return;
 
     const state = usePracticeStore.getState();
-    const currentNote = state.noteQueue[0];
-    if (!currentNote) return;
+    if (!state.noteQueue[0]) return;
 
     lockProcessing(isProcessingRef);
-
-    // For both-hands mode, animate both notes exiting
-    if (state.handMode === 'both-hands') {
-      const secondNote = state.noteQueue[1];
-      if (secondNote) {
-        enqueueExitAnimation(currentNote, state.exitingNotes, setExitingNotes);
-        enqueueExitAnimation(secondNote, state.exitingNotes, setExitingNotes);
-      }
-    } else {
-      enqueueExitAnimation(currentNote, state.exitingNotes, setExitingNotes);
-    }
-
-    updateScoreAndStats({
-      state,
-      lastHitTime,
-      hasMistakeForCurrent,
-      setScore,
-      setStreak,
-      setSessionStats,
+    schedule(TIMINGS.PROCESSING_LOCKOUT_MS, () => {
+      unlockProcessing(isProcessingRef);
     });
 
     const { nextQueue, nextChallengeIndex } = advanceQueue({
@@ -60,18 +70,39 @@ export const useHandleCorrectNote = (
       queueSize: DEFAULT_QUEUE_SIZE,
       handMode: state.handMode,
     });
-
-    setNoteQueue(nextQueue);
-    handleChallengeProgress({
-      state,
+    const acceptedAt = runtime.now();
+    const effects = dispatch({
+      type: 'correctNoteAccepted',
+      acceptedAt,
+      previousHitAt: lastHitTime.current,
+      hadMistake: hasMistakeForCurrent.current,
+      nextQueue,
       nextChallengeIndex,
-      setChallengeIndex,
-      setChallengeSequence,
-      setChallengeInfo,
-      setNoteQueue,
-      onChallengeComplete,
     });
 
-    hasMistakeForCurrent.current = false;
+    resetAcceptedNoteRefs(lastHitTime, hasMistakeForCurrent, acceptedAt);
+
+    for (const effect of effects) {
+      if (effect.type === 'scheduleExitCleanup') {
+        schedule(effect.delayMs, () => {
+          dispatch({ type: 'exitAnimationElapsed', noteId: effect.noteId });
+        });
+        continue;
+      }
+
+      onChallengeComplete?.();
+      schedule(effect.delayMs, () => {
+        dispatch({
+          type: 'challengeResetElapsed',
+          noteQueue: createInitialQueue(
+            effect.clef,
+            DEFAULT_QUEUE_SIZE,
+            effect.practiceRange,
+            false,
+            effect.handMode
+          ),
+        });
+      });
+    }
   };
 };

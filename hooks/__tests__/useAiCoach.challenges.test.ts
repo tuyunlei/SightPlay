@@ -3,9 +3,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 import { useAiCoach } from '../useAiCoach';
 
-import { geminiService, defaultOptions } from './useAiCoach.setup';
-
-vi.mock('../../services/geminiService');
+import { chat, defaultOptions } from './useAiCoach.setup';
 
 describe('useAiCoach - challenges', () => {
   beforeEach(() => {
@@ -22,7 +20,7 @@ describe('useAiCoach - challenges', () => {
       notes: ['C4', 'D4', 'E4'],
       description: 'A scale',
     };
-    vi.mocked(geminiService.chatWithAiCoach).mockResolvedValue({
+    chat.mockResolvedValue({
       replyText: 'Here is a scale',
       challengeData: mockChallenge,
     });
@@ -48,7 +46,7 @@ describe('useAiCoach - challenges', () => {
       notes: ['C4', 'D4', 'E4'],
       description: 'A scale',
     };
-    vi.mocked(geminiService.chatWithAiCoach).mockResolvedValue({
+    chat.mockResolvedValue({
       replyText: 'Here is a scale',
       challengeData: mockChallenge,
     });
@@ -77,7 +75,7 @@ describe('useAiCoach - challenges', () => {
       notes: [],
       description: 'Empty',
     };
-    vi.mocked(geminiService.chatWithAiCoach).mockResolvedValue({
+    chat.mockResolvedValue({
       replyText: 'Here is a challenge',
       challengeData: mockChallenge,
     });
@@ -98,7 +96,7 @@ describe('useAiCoach - challenges', () => {
   });
 
   it('marks AI response with hasAction when challenge is present', async () => {
-    vi.mocked(geminiService.chatWithAiCoach).mockResolvedValue({
+    chat.mockResolvedValue({
       replyText: 'Here is your challenge',
       challengeData: {
         title: 'Test',

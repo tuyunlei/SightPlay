@@ -3,7 +3,7 @@ import { useCallback, useEffect } from 'react';
 import { buildChallengeNotes } from '../../domain/challenge';
 import { createInitialQueue, createChallengeQueue, DEFAULT_QUEUE_SIZE } from '../../domain/queue';
 import { ClefType, GeneratedChallenge, HandPracticeMode, Note } from '../../types';
-import { useAudioInput } from '../useAudioInput';
+import { useAudioInput, UseAudioInputDependencies } from '../useAudioInput';
 
 import type { PracticeActions, PracticeRefs, PracticeStoreState } from './slices';
 
@@ -82,22 +82,21 @@ export const useResetSessionStats = (
 
 export const useLoadChallenge =
   (
-    resetSessionStats: () => void,
-    setChallengeInfo: PracticeActions['setChallengeInfo'],
-    setChallengeSequence: PracticeActions['setChallengeSequence'],
-    setChallengeIndex: PracticeActions['setChallengeIndex'],
-    setNoteQueue: PracticeActions['setNoteQueue']
+    dispatch: PracticeActions['dispatch'],
+    lastHitTime: PracticeRefs['lastHitTime'],
+    now: () => number = Date.now
   ) =>
   (challenge: GeneratedChallenge) => {
     const notes = buildChallengeNotes(challenge.notes);
     if (notes.length === 0) return 0;
 
-    setChallengeInfo(challenge);
-    setChallengeSequence(notes);
-    setChallengeIndex(0);
-
-    setNoteQueue(createChallengeQueue(notes, DEFAULT_QUEUE_SIZE));
-    resetSessionStats();
+    dispatch({
+      type: 'challengeLoaded',
+      challenge,
+      challengeSequence: notes,
+      noteQueue: createChallengeQueue(notes, DEFAULT_QUEUE_SIZE),
+    });
+    lastHitTime.current = now();
 
     return notes.length;
   };
@@ -107,7 +106,8 @@ export const useMicInput = (
   setIsListening: PracticeActions['setIsListening'],
   setStatus: PracticeActions['setStatus'],
   setDetectedNote: PracticeActions['setDetectedNote'],
-  onMicError: () => void
+  onMicError: () => void,
+  dependencies?: UseAudioInputDependencies
 ) => {
   const handleStart = () => {
     setIsListening(true);
@@ -129,5 +129,6 @@ export const useMicInput = (
     onStart: handleStart,
     onStop: handleStop,
     onError: handleError,
+    dependencies,
   });
 };

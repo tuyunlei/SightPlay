@@ -29,10 +29,11 @@ const useNoteHandlers = (
   actions: ReturnType<typeof usePracticeActionsSlice>,
   refs: ReturnType<typeof usePracticeRefs>,
   pressedKeysState: ReturnType<typeof usePressedKeysState>,
-  onChallengeComplete?: () => void
+  onChallengeComplete?: () => void,
+  runtime?: UsePracticeSessionOptions['runtime']
 ) => {
   const updateDetectedNote = useDetectedNoteUpdater(actions.setDetectedNote);
-  const handleCorrectNote = useHandleCorrectNote(actions, refs, onChallengeComplete);
+  const handleCorrectNote = useHandleCorrectNote(actions, refs, onChallengeComplete, runtime);
   const handleMicNote = useMicNoteHandler(updateDetectedNote, handleCorrectNote, refs);
   const { handleMidiNoteOn, handleMidiNoteOff } = useMidiNoteHandlers(
     actions.setDetectedNote,
@@ -48,6 +49,9 @@ const useNoteHandlers = (
 export const usePracticeSession = ({
   onMicError,
   onChallengeComplete,
+  runtime,
+  audioInputDependencies,
+  createMidiService,
 }: UsePracticeSessionOptions) => {
   const state = usePracticeStateSlice();
   const actions = usePracticeActionsSlice();
@@ -70,13 +74,15 @@ export const usePracticeSession = ({
     actions,
     refs,
     pressedKeysState,
-    onChallengeComplete
+    onChallengeComplete,
+    runtime
   );
 
   useMidiInput({
     onNoteOn: handleMidiNoteOn,
     onNoteOff: handleMidiNoteOff,
     onConnectionChange: actions.setIsMidiConnected,
+    createService: createMidiService,
   });
 
   const { start: startMic, stop: stopMic } = useMicInput(
@@ -84,19 +90,14 @@ export const usePracticeSession = ({
     actions.setIsListening,
     actions.setStatus,
     actions.setDetectedNote,
-    onMicError
+    onMicError,
+    audioInputDependencies
   );
 
   const toggleMic = useToggleMic(state.isListening, startMic, stopMic);
   const toggleClef = useToggleClef(state.clef, actions.setClef);
   const resetSessionStats = useResetSessionStats(actions.resetStats, refs.lastHitTime);
-  const loadChallenge = useLoadChallenge(
-    resetSessionStats,
-    actions.setChallengeInfo,
-    actions.setChallengeSequence,
-    actions.setChallengeIndex,
-    actions.setNoteQueue
-  );
+  const loadChallenge = useLoadChallenge(actions.dispatch, refs.lastHitTime, runtime?.now);
 
   const sessionActions = {
     toggleMic,
