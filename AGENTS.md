@@ -24,7 +24,7 @@ pnpm run preview               # Preview production build
 pnpm run lint                  # ESLint rules check
 pnpm run format                # Prettier formatting
 pnpm run typecheck             # TypeScript strict type checking
-pnpm run test:ci               # Vitest coverage gate
+pnpm run test:ci               # Vitest unit/integration gate
 pnpm run test:e2e              # Playwright E2E gate
 pnpm run lint:arch             # Architecture/dead code/file size checks
 ```
@@ -90,7 +90,7 @@ Gemini returns `challengeData` containing a note sequence (scientific pitch nota
 
 - ESLint + Prettier: `eslint.config.js`, `.prettierrc`, `.prettierignore`
 - TypeScript strict: `tsconfig.json`
-- Tests and coverage: `vitest.config.ts`
+- Unit and integration tests: `vitest.config.ts`
 - Architecture constraints: `.dependency-cruiser.cjs`
 - Dead code: `knip.json`
 - File size gate: `scripts/check-file-size.js`
