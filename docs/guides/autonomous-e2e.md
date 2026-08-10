@@ -46,6 +46,9 @@ not reuse an unknown process. Override them with `SIGHTPLAY_E2E_PORT` and
   small real provider call.
 - Remote preview smoke is read-only and accepts an explicit trusted HTTPS URL. It does not register,
   delete, or write preview data.
+- Real Passkey evidence needs a trusted HTTPS origin at `sightplay.xclz.org` or one of its subdomains:
+  the deployed WebAuthn RP ID is `sightplay.xclz.org`. A `*.pages.dev` smoke check may prove delivery,
+  but cannot prove this credential boundary; record the tested URL and deployment SHA with the result.
 - Chromium local system tests use real WebAuthn crypto verification, cookies, handlers, and isolated
   state. The virtual authenticator adapter only fills browser fields absent from Playwright's
   synthetic credential and normalizes the counter to the valid sync-passkey value of zero.

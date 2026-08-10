@@ -2,6 +2,8 @@
 
 `AGENTS.md` supplies judgment that a capable agent will not reliably derive from the code it is about
 to change. It is not a project overview, command reference, directory inventory, or status report.
+The agent host discovers and supplies applicable instruction files; repository documents must not
+prescribe their discovery or reading order.
 
 ## Admission test
 
@@ -23,12 +25,13 @@ Use the first applicable location:
 1. Type system, module ownership, or dependency graph.
 2. A code comment when the warning and mistake occur at the same line.
 3. Lint, CI, or another deterministic check.
-4. The nearest `AGENTS.md` ancestor shared by everyone who could make the mistake.
+4. The root or scoped `AGENTS.md` that covers everyone who could make the mistake.
 5. A guide for procedures, a decision record for rationale, or a commit/PR for one-time history.
 
 A scoped `AGENTS.md` may add or tighten a parent rule, never relax or duplicate it. Do not create one
 pre-emptively; add it after a real repeated mistake or when a settled module boundary contains a
-non-obvious constraint.
+non-obvious constraint. It must not explain instruction-file loading, mirror its parent, or become a
+directory guide.
 
 ## Maintenance
 

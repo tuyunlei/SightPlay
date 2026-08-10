@@ -1,15 +1,7 @@
-# Cloudflare Pages Functions (placeholder)
+# Cloudflare Pages Functions
 
-This directory is reserved for Cloudflare Pages Functions file-based routing.
+This directory provides the deployed file-based `/api/*` routes for Cloudflare Pages. Each route is a
+thin Cloudflare adapter over a shared handler in `edge-functions/`; runtime configuration, including
+the WebAuthn RP ID, lives in `wrangler.toml`.
 
-## Current status
-
-- Not active yet.
-- Runtime endpoints currently use EdgeOne handlers under `edge-functions/`.
-
-## Migration note (future step)
-
-When migrating endpoints to Cloudflare Pages Functions:
-
-1. Copy endpoint logic into this `functions/` directory using file-based routes.
-2. Replace platform adapter usage from `createEdgeOneContext(...)` to `createCloudflareContext(...)`.
+See [`AGENTS.md`](AGENTS.md) before changing a route boundary.

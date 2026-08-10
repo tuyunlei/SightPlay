@@ -42,6 +42,12 @@ or explicitly set `SIGHTPLAY_DEV_HOST` when LAN access is required. Playwright u
 loopback dev/API server on port 4173 and built preview on 4174; override them with
 `SIGHTPLAY_E2E_PORT` and `SIGHTPLAY_E2E_PREVIEW_PORT`.
 
+## Deployment
+
+The public application is [sightplay.xclz.org](https://sightplay.xclz.org), deployed through
+Cloudflare Pages and its Pages Functions. `wrangler.toml` owns the runtime configuration; see the
+E2E guide for the boundary between a remote smoke check and real Passkey evidence.
+
 ## How It Works
 
 1. Choose a clef (treble or bass)
