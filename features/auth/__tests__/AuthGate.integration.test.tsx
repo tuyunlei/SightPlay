@@ -59,19 +59,38 @@ describe('AuthGate integration', () => {
     expect(screen.queryByTestId('main-app')).not.toBeTruthy();
   });
 
-  it('shows login options error and register option when the options request fails', async () => {
+  it('lets the user retry and complete sign-in after passkey authentication is canceled', async () => {
     const user = userEvent.setup();
+    let sessionChecks = 0;
+    const cancellation = new Error('The operation was canceled.');
+    cancellation.name = 'NotAllowedError';
+    authenticateMock
+      .mockRejectedValueOnce(cancellation)
+      .mockResolvedValueOnce({ id: 'assertion-1' });
+
     vi.stubGlobal(
       'fetch',
       vi.fn(async (input: string) => {
         if (input === '/api/auth/session') {
+          sessionChecks += 1;
           return {
             ok: true,
-            json: async () => ({ authenticated: false, hasPasskeys: true }),
+            json: async () => ({ authenticated: sessionChecks >= 2, hasPasskeys: true }),
           } as Response;
         }
         if (input === '/api/auth/login-options') {
-          return { ok: false, json: async () => ({}) } as Response;
+          return {
+            ok: true,
+            json: async () => ({
+              challenge: 'challenge',
+              allowCredentials: [{ id: 'cred-1', transports: ['internal'] }],
+              userVerification: 'preferred',
+              timeout: 10000,
+            }),
+          } as Response;
+        }
+        if (input === '/api/auth/login-verify') {
+          return { ok: true, json: async () => ({}) } as Response;
         }
         return { ok: true, json: async () => ({}) } as Response;
       })
@@ -86,8 +105,63 @@ describe('AuthGate integration', () => {
     await screen.findByTestId('login-screen');
     await user.click(screen.getByRole('button', { name: translations.zh.authLoginButton }));
 
-    expect(await screen.findByText(translations.zh.authErrorLoginOptionsFailed)).toBeTruthy();
+    await waitFor(() => expect(authenticateMock).toHaveBeenCalledTimes(1));
+    await user.click(screen.getByRole('button', { name: translations.zh.authLoginButton }));
+
+    expect(await screen.findByTestId('main-app')).toBeTruthy();
+  });
+
+  it('lets a user return to passkey login after opening invite registration', async () => {
+    const user = userEvent.setup();
+    let sessionChecks = 0;
+    authenticateMock.mockResolvedValue({ id: 'assertion-1' });
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string) => {
+        if (input === '/api/auth/session') {
+          sessionChecks += 1;
+          return {
+            ok: true,
+            json: async () => ({ authenticated: sessionChecks >= 2, hasPasskeys: true }),
+          } as Response;
+        }
+        if (input === '/api/auth/login-options') {
+          return {
+            ok: true,
+            json: async () => ({
+              challenge: 'challenge',
+              allowCredentials: [{ id: 'cred-1', transports: ['internal'] }],
+              userVerification: 'preferred',
+              timeout: 10000,
+            }),
+          } as Response;
+        }
+        if (input === '/api/auth/login-verify') {
+          return { ok: true, json: async () => ({}) } as Response;
+        }
+        return { ok: true, json: async () => ({}) } as Response;
+      })
+    );
+
+    render(
+      <AuthGate>
+        <div data-testid="main-app">main-app</div>
+      </AuthGate>
+    );
+
+    await screen.findByTestId('login-screen');
+    await user.click(
+      screen.getByRole('button', { name: translations.zh.authNoAccountRegisterLink })
+    );
     expect(screen.getByTestId('register-section')).toBeTruthy();
+
+    await user.click(
+      screen.getByRole('button', { name: translations.zh.authHaveAccountLoginLink })
+    );
+    await user.click(screen.getByRole('button', { name: translations.zh.authLoginButton }));
+
+    expect(await screen.findByTestId('main-app')).toBeTruthy();
   });
 
   it('registers with invite code via RegisterCard flow', async () => {

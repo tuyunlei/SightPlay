@@ -97,6 +97,7 @@ export const en = {
   authLoginButton: 'Sign In',
   authLoginLoading: 'Authenticating...',
   authNoAccountRegisterLink: "Don't have an account? Register with invite code",
+  authHaveAccountLoginLink: 'Already have an account? Return to sign in',
   authRegisterTitle: 'Welcome to SightPlay',
   authRegisterSubtitle: 'Enter your invite code to set up your passkey',
   authInviteCodeLabel: 'Invite Code',

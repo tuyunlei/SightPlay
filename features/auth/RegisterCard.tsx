@@ -18,6 +18,7 @@ interface RegisterCardProps {
   initialInviteCode?: string;
   highlighted?: boolean;
   dataTestId?: string;
+  onReturnToLogin?: () => void;
 }
 
 interface RegisterCardViewProps {
@@ -28,6 +29,7 @@ interface RegisterCardViewProps {
   error: string | null;
   dataTestId?: string;
   highlighted: boolean;
+  onReturnToLogin?: () => void;
   onInviteCodeChange: (value: string) => void;
   onRegister: () => void;
 }
@@ -40,6 +42,7 @@ function RegisterCardView({
   error,
   dataTestId,
   highlighted,
+  onReturnToLogin,
   onInviteCodeChange,
   onRegister,
 }: RegisterCardViewProps) {
@@ -103,6 +106,16 @@ function RegisterCardView({
           t.authRegisterButton
         )}
       </button>
+
+      {onReturnToLogin && (
+        <button
+          type="button"
+          onClick={onReturnToLogin}
+          className="mt-4 w-full text-center text-sm text-indigo-600 underline decoration-indigo-400/60 underline-offset-4 transition hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200"
+        >
+          {t.authHaveAccountLoginLink}
+        </button>
+      )}
     </div>
   );
 }
@@ -111,6 +124,7 @@ export function RegisterCard({
   initialInviteCode,
   highlighted = false,
   dataTestId,
+  onReturnToLogin,
 }: RegisterCardProps) {
   const { register } = useAuthContext();
   const lang = useUiStore((state) => state.lang);
@@ -143,6 +157,7 @@ export function RegisterCard({
       error={error}
       dataTestId={dataTestId}
       highlighted={highlighted}
+      onReturnToLogin={onReturnToLogin}
       onInviteCodeChange={(value) => setInviteCode(formatInviteInput(value))}
       onRegister={handleRegister}
     />

@@ -97,6 +97,7 @@ export const zh = {
   authLoginButton: '登录',
   authLoginLoading: '认证中...',
   authNoAccountRegisterLink: '还没有账号？使用邀请码注册',
+  authHaveAccountLoginLink: '已有账号？返回登录',
   authRegisterTitle: '欢迎来到 SightPlay',
   authRegisterSubtitle: '请输入邀请码来创建 Passkey',
   authInviteCodeLabel: '邀请码',
