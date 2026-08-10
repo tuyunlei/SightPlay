@@ -23,6 +23,11 @@ Before adding or keeping a test, identify the production regression it detects. 
 when a business branch, public contract, or user path is broken. Remove tests whose only signal is an
 intentional refactor of wording or implementation shape.
 
+Partition failures by the recovery behavior visible to the user, not under a generic "failure" case. A
+test proves only the controlled stimulus and recovery action it asserts. When a real bug escapes, first
+ask whether the nearest existing test would fail for the intended behavior; replace a wrong oracle
+instead of adding parallel coverage that preserves it.
+
 Do not test:
 
 - system prompt or static copy containment;
@@ -42,6 +47,8 @@ timeout.
 - Adapter changes include success, failure, and lifecycle contract tests relevant to that adapter.
 - User-visible path changes update the corresponding Playwright scenario or explain why another layer is
   sufficient.
+- An escaped regression strengthens or replaces the nearest existing proof before it adds a new or
+  higher-layer scenario.
 - A deleted low-value test needs no replacement unless it was the only proof of a real behavior.
 - Test count and coverage percentage are diagnostics, never targets or acceptance criteria.
 

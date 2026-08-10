@@ -200,7 +200,7 @@ test.describe('Authentication Flow E2E', () => {
       await expect(page.getByTestId('toggle-clef-button')).toBeVisible();
     });
 
-    test('should handle login failure gracefully', async ({ page, diagnostics }) => {
+    test('login options failure leaves a retryable login path', async ({ page, diagnostics }) => {
       diagnostics.allowHttpError('/api/auth/login-options', 500);
       await page.route('**/api/auth/session', (route) => {
         route.fulfill({
@@ -225,6 +225,7 @@ test.describe('Authentication Flow E2E', () => {
 
       await expect(page.getByTestId('login-screen')).toBeVisible();
       await expect(page.getByText(/failed to start sign-in|获取登录选项失败/i)).toBeVisible();
+      await expect(loginButton).toBeEnabled();
     });
 
     test('should persist session across page reloads', async ({ page }) => {
