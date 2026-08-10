@@ -59,7 +59,7 @@ describe('AuthGate integration', () => {
     expect(screen.queryByTestId('main-app')).not.toBeTruthy();
   });
 
-  it('shows login error and register option when login fails', async () => {
+  it('shows login options error and register option when the options request fails', async () => {
     const user = userEvent.setup();
     vi.stubGlobal(
       'fetch',
