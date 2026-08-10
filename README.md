@@ -57,3 +57,28 @@ loopback server on port 4173 by default; override it with `SIGHTPLAY_E2E_PORT`.
 - Zustand (state management)
 - Web MIDI API / Web Audio API
 - Google Gemini AI
+
+## Development
+
+The pinned Node and pnpm versions are the repository contract. Common quality commands:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm run format:check
+pnpm run lint
+pnpm run typecheck
+pnpm run lint:arch
+pnpm run test:ci
+pnpm run test:e2e
+pnpm run build
+pnpm audit
+```
+
+- Engineering setup and known baseline risks: [`docs/ENGINEERING_BASELINE.md`](docs/ENGINEERING_BASELINE.md)
+- Risk-based test layers: [`docs/guides/testing-strategy.md`](docs/guides/testing-strategy.md)
+- Agent instruction governance: [`docs/guides/agents-md-governance.md`](docs/guides/agents-md-governance.md)
+- Durable engineering decisions: [`docs/decisions/`](docs/decisions/)
+
+GitHub Issues and pull requests own live work status. A repository task document is appropriate only
+for a cross-cutting migration that needs a durable execution record; it must not become a second issue
+tracker.

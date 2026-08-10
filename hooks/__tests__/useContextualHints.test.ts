@@ -3,11 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useContextualHints } from '../useContextualHints';
 
-vi.mock('../../services/geminiService', () => ({
-  chatWithAiCoach: vi.fn().mockResolvedValue({ replyText: 'AI hint', challengeData: null }),
-}));
-
 describe('useContextualHints', () => {
+  const dependencies = {
+    chat: vi.fn().mockResolvedValue({ replyText: 'AI hint', challengeData: null }),
+    now: () => Date.now(),
+    random: () => 0,
+    schedule: (delayMs: number, task: () => void) => setTimeout(task, delayMs),
+    cancel: (timer: ReturnType<typeof setTimeout>) => clearTimeout(timer),
+  };
+
   beforeEach(() => {
     vi.useFakeTimers({ now: 100_000 });
   });
@@ -18,12 +22,12 @@ describe('useContextualHints', () => {
   });
 
   it('returns null hint initially', () => {
-    const { result } = renderHook(() => useContextualHints('en', 'treble'));
+    const { result } = renderHook(() => useContextualHints('en', 'treble', dependencies));
     expect(result.current.currentHint).toBeNull();
   });
 
   it('shows hint after streak threshold', async () => {
-    const { result } = renderHook(() => useContextualHints('en', 'treble'));
+    const { result } = renderHook(() => useContextualHints('en', 'treble', dependencies));
 
     // Simulate reaching streak of 5
     for (let i = 1; i <= 5; i++) {
@@ -39,7 +43,7 @@ describe('useContextualHints', () => {
   });
 
   it('shows hint after mistake threshold', async () => {
-    const { result } = renderHook(() => useContextualHints('en', 'treble'));
+    const { result } = renderHook(() => useContextualHints('en', 'treble', dependencies));
 
     act(() => result.current.onPracticeUpdate(0, true));
     act(() => result.current.onPracticeUpdate(0, true));
@@ -54,7 +58,7 @@ describe('useContextualHints', () => {
   });
 
   it('dismisses hint when dismissHint is called', async () => {
-    const { result } = renderHook(() => useContextualHints('en', 'treble'));
+    const { result } = renderHook(() => useContextualHints('en', 'treble', dependencies));
 
     act(() => result.current.onPracticeUpdate(0, true));
     act(() => result.current.onPracticeUpdate(0, true));
@@ -70,7 +74,7 @@ describe('useContextualHints', () => {
   });
 
   it('rate-limits hints to one per 30 seconds', async () => {
-    const { result } = renderHook(() => useContextualHints('en', 'treble'));
+    const { result } = renderHook(() => useContextualHints('en', 'treble', dependencies));
 
     act(() => result.current.onPracticeUpdate(0, true));
     act(() => result.current.onPracticeUpdate(0, true));
@@ -95,7 +99,7 @@ describe('useContextualHints', () => {
   });
 
   it('auto-dismisses hint after display timeout', async () => {
-    const { result } = renderHook(() => useContextualHints('en', 'treble'));
+    const { result } = renderHook(() => useContextualHints('en', 'treble', dependencies));
 
     act(() => result.current.onPracticeUpdate(0, true));
     act(() => result.current.onPracticeUpdate(0, true));

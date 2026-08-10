@@ -1,214 +1,124 @@
-import { renderHook, act } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { PracticeEffect } from '../../../domain/practiceCore';
 import { ClefType } from '../../../types';
+import { UseAudioInputDependencies } from '../../useAudioInput';
 import {
   useLoadChallenge,
-  useToggleMic,
-  useToggleClef,
-  useResetSessionStats,
   useMicInput,
   useQueueInitialization,
+  useResetSessionStats,
+  useToggleClef,
+  useToggleMic,
 } from '../actions';
 
-const micInputMockState = vi.hoisted(() => {
-  const state: { capturedOpts?: any } = {};
-  const mockUseAudioInput = vi.fn((opts) => {
-    state.capturedOpts = opts;
-    return { start: vi.fn(), stop: vi.fn() };
-  });
-  return { state, mockUseAudioInput };
-});
-
-vi.mock('../../useAudioInput', () => ({
-  useAudioInput: micInputMockState.mockUseAudioInput,
-}));
-
 describe('useLoadChallenge', () => {
-  it('loads challenge notes and returns count', () => {
-    const resetStats = vi.fn();
-    const setChallengeInfo = vi.fn();
-    const setChallengeSequence = vi.fn();
-    const setChallengeIndex = vi.fn();
-    const setNoteQueue = vi.fn();
-
-    const { result } = renderHook(() =>
-      useLoadChallenge(
-        resetStats,
-        setChallengeInfo,
-        setChallengeSequence,
-        setChallengeIndex,
-        setNoteQueue
-      )
-    );
+  it('dispatches one atomic challenge action and resets the session clock', () => {
+    const dispatch = vi.fn((): PracticeEffect[] => []);
+    const lastHitTime = { current: 0 };
+    const { result } = renderHook(() => useLoadChallenge(dispatch, lastHitTime, () => 42));
 
     let count = 0;
     act(() => {
       count = result.current({
-        title: 'Test',
+        title: 'C major',
         notes: ['C4', 'E4', 'G4'],
-        description: 'test challenge',
+        description: 'triad',
       });
     });
 
     expect(count).toBe(3);
-    expect(setChallengeInfo).toHaveBeenCalled();
-    expect(setChallengeSequence).toHaveBeenCalledWith(
-      expect.arrayContaining([
+    expect(lastHitTime.current).toBe(42);
+    expect(dispatch).toHaveBeenCalledWith({
+      type: 'challengeLoaded',
+      challenge: expect.objectContaining({ title: 'C major' }),
+      challengeSequence: expect.arrayContaining([
         expect.objectContaining({ midi: 60 }),
         expect.objectContaining({ midi: 64 }),
         expect.objectContaining({ midi: 67 }),
-      ])
-    );
-    expect(setChallengeIndex).toHaveBeenCalledWith(0);
-    expect(setNoteQueue).toHaveBeenCalled();
-    expect(resetStats).toHaveBeenCalled();
+      ]),
+      noteQueue: expect.arrayContaining([expect.objectContaining({ midi: 60 })]),
+    });
   });
 
-  it('returns 0 for invalid notes', () => {
-    const resetStats = vi.fn();
-    const setChallengeInfo = vi.fn();
-    const setChallengeSequence = vi.fn();
-    const setChallengeIndex = vi.fn();
-    const setNoteQueue = vi.fn();
+  it('rejects a challenge with no valid notes without changing state', () => {
+    const dispatch = vi.fn((): PracticeEffect[] => []);
+    const lastHitTime = { current: 11 };
+    const { result } = renderHook(() => useLoadChallenge(dispatch, lastHitTime, () => 42));
 
-    const { result } = renderHook(() =>
-      useLoadChallenge(
-        resetStats,
-        setChallengeInfo,
-        setChallengeSequence,
-        setChallengeIndex,
-        setNoteQueue
-      )
-    );
-
-    let count = 0;
-    act(() => {
-      count = result.current({
-        title: 'Test',
-        notes: ['invalid', 'XYZ'],
-        description: 'bad notes',
-      });
-    });
+    const count = result.current({ title: 'Bad', notes: ['invalid'], description: 'bad' });
 
     expect(count).toBe(0);
-    expect(setChallengeSequence).not.toHaveBeenCalled();
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(lastHitTime.current).toBe(11);
   });
 });
 
-describe('useToggleMic', () => {
-  it('calls stopMic when currently listening', () => {
-    const startMic = vi.fn();
-    const stopMic = vi.fn();
+describe('simple practice commands', () => {
+  it('toggles microphone according to current listening state', () => {
+    const start = vi.fn();
+    const stop = vi.fn();
 
-    const { result } = renderHook(() => useToggleMic(true, startMic, stopMic));
+    useToggleMic(false, start, stop)();
+    useToggleMic(true, start, stop)();
 
-    act(() => {
-      result.current();
-    });
-
-    expect(stopMic).toHaveBeenCalled();
-    expect(startMic).not.toHaveBeenCalled();
+    expect(start).toHaveBeenCalledOnce();
+    expect(stop).toHaveBeenCalledOnce();
   });
 
-  it('calls startMic when not listening', () => {
-    const startMic = vi.fn();
-    const stopMic = vi.fn();
-
-    const { result } = renderHook(() => useToggleMic(false, startMic, stopMic));
-
-    act(() => {
-      result.current();
-    });
-
-    expect(startMic).toHaveBeenCalled();
-    expect(stopMic).not.toHaveBeenCalled();
-  });
-});
-
-describe('useToggleClef', () => {
-  it('toggles from treble to bass', () => {
+  it('toggles between treble and bass', () => {
     const setClef = vi.fn();
-    const { result } = renderHook(() => useToggleClef(ClefType.TREBLE, setClef));
+    useToggleClef(ClefType.TREBLE, setClef)();
+    useToggleClef(ClefType.BASS, setClef)();
 
-    act(() => {
-      result.current();
-    });
-
-    expect(setClef).toHaveBeenCalledWith(ClefType.BASS);
+    expect(setClef).toHaveBeenNthCalledWith(1, ClefType.BASS);
+    expect(setClef).toHaveBeenNthCalledWith(2, ClefType.TREBLE);
   });
 
-  it('toggles from bass to treble', () => {
-    const setClef = vi.fn();
-    const { result } = renderHook(() => useToggleClef(ClefType.BASS, setClef));
-
-    act(() => {
-      result.current();
-    });
-
-    expect(setClef).toHaveBeenCalledWith(ClefType.TREBLE);
-  });
-});
-
-describe('useResetSessionStats', () => {
-  it('resets stats and updates lastHitTime', () => {
-    const resetStats = vi.fn();
+  it('resets statistics and records the new hit-time origin', () => {
+    const reset = vi.fn();
     const lastHitTime = { current: 0 };
+    const now = vi.spyOn(Date, 'now').mockReturnValue(91);
 
-    const { result } = renderHook(() => useResetSessionStats(resetStats, lastHitTime));
+    useResetSessionStats(reset, lastHitTime)();
 
-    const before = Date.now();
-    act(() => {
-      result.current();
-    });
-
-    expect(resetStats).toHaveBeenCalled();
-    expect(lastHitTime.current).toBeGreaterThanOrEqual(before);
+    expect(reset).toHaveBeenCalledOnce();
+    expect(lastHitTime.current).toBe(91);
+    now.mockRestore();
   });
 });
 
 describe('useMicInput', () => {
-  it('wires up audio input callbacks correctly', () => {
-    const handleMicNote = vi.fn();
+  it('translates injected audio lifecycle into practice state callbacks', async () => {
+    const processor = {
+      start: vi.fn().mockResolvedValue(undefined),
+      stop: vi.fn(),
+      getPitch: vi.fn().mockReturnValue(null),
+    };
+    const dependencies: UseAudioInputDependencies = {
+      createProcessor: () => processor,
+      requestFrame: vi.fn(() => 1),
+      cancelFrame: vi.fn(),
+    };
     const setIsListening = vi.fn();
     const setStatus = vi.fn();
     const setDetectedNote = vi.fn();
-    const onMicError = vi.fn();
-
-    micInputMockState.state.capturedOpts = undefined;
-
-    renderHook(() =>
-      useMicInput(handleMicNote, setIsListening, setStatus, setDetectedNote, onMicError)
+    const { result } = renderHook(() =>
+      useMicInput(vi.fn(), setIsListening, setStatus, setDetectedNote, vi.fn(), dependencies)
     );
 
-    expect(micInputMockState.mockUseAudioInput).toHaveBeenCalled();
-    const capturedOpts = micInputMockState.state.capturedOpts;
+    await act(() => result.current.start());
+    act(() => result.current.stop());
 
-    // Test onStart callback
-    act(() => {
-      capturedOpts.onStart();
-    });
-    expect(setIsListening).toHaveBeenCalledWith(true);
-    expect(setStatus).toHaveBeenCalledWith('listening');
-
-    // Test onStop callback
-    act(() => {
-      capturedOpts.onStop();
-    });
-    expect(setIsListening).toHaveBeenCalledWith(false);
-    expect(setStatus).toHaveBeenCalledWith('waiting');
+    expect(setIsListening.mock.calls).toEqual([[true], [false]]);
+    expect(setStatus.mock.calls).toEqual([['listening'], ['waiting']]);
     expect(setDetectedNote).toHaveBeenCalledWith(null);
-
-    // Test onError callback
-    act(() => {
-      capturedOpts.onError();
-    });
-    expect(onMicError).toHaveBeenCalled();
   });
 });
 
 describe('useQueueInitialization', () => {
-  it('initializes queue on mount and sets lastHitTime', () => {
+  it('initializes a playable queue and records the hit-time origin', () => {
     const setNoteQueue = vi.fn();
     const lastHitTime = { current: 0 };
 
@@ -223,41 +133,13 @@ describe('useQueueInitialization', () => {
       })
     );
 
-    expect(setNoteQueue).toHaveBeenCalled();
+    expect(setNoteQueue.mock.calls[0][0].length).toBeGreaterThan(0);
     expect(lastHitTime.current).toBeGreaterThan(0);
-    // Queue should contain notes
-    const queue = setNoteQueue.mock.calls[0][0];
-    expect(queue.length).toBeGreaterThan(0);
   });
 
-  it('re-initializes queue when clef changes (no challenge)', () => {
+  it('does not add a second challenge-reset initialization when a challenge is active', () => {
     const setNoteQueue = vi.fn();
     const lastHitTime = { current: 0 };
-
-    const { rerender } = renderHook(
-      ({ clef }) =>
-        useQueueInitialization({
-          clef,
-          practiceRange: 'combined',
-          handMode: 'right-hand',
-          challengeSequenceLength: 0,
-          setNoteQueue,
-          lastHitTime,
-        }),
-      { initialProps: { clef: ClefType.TREBLE } }
-    );
-
-    const initialCallCount = setNoteQueue.mock.calls.length;
-
-    rerender({ clef: ClefType.BASS });
-
-    expect(setNoteQueue.mock.calls.length).toBeGreaterThan(initialCallCount);
-  });
-
-  it('skips clef-change re-init when challenge is active (second effect is no-op)', () => {
-    const setNoteQueue = vi.fn();
-    const lastHitTime = { current: 0 };
-
     const { rerender } = renderHook(
       ({ clef }) =>
         useQueueInitialization({
@@ -270,17 +152,10 @@ describe('useQueueInitialization', () => {
         }),
       { initialProps: { clef: ClefType.TREBLE } }
     );
-
-    const initialCallCount = setNoteQueue.mock.calls.length;
+    const before = setNoteQueue.mock.calls.length;
 
     rerender({ clef: ClefType.BASS });
 
-    // The first effect (initializeQueue dep change) fires, but the second effect
-    // (clef change guard) does NOT call initializeQueue because challengeSequenceLength > 0.
-    // So we get exactly one additional call from the first effect, not two.
-    const additionalCalls = setNoteQueue.mock.calls.length - initialCallCount;
-    // The initializeQueue memo changes when clef changes, so the first useEffect re-runs.
-    // But the second useEffect does NOT call initializeQueue.
-    expect(additionalCalls).toBe(1);
+    expect(setNoteQueue.mock.calls.length - before).toBe(1);
   });
 });

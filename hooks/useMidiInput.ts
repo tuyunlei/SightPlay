@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { MidiService } from '../services/midiService';
 
@@ -6,10 +6,26 @@ interface UseMidiInputOptions {
   onNoteOn: (midiNumber: number) => void;
   onNoteOff?: (midiNumber: number) => void;
   onConnectionChange?: (connected: boolean) => void;
+  createService?: () => MidiInputPort;
 }
 
-export const useMidiInput = ({ onNoteOn, onNoteOff, onConnectionChange }: UseMidiInputOptions) => {
-  const midiService = useRef<MidiService>(new MidiService());
+export interface MidiInputPort {
+  initialize: (
+    onNoteOn: (midi: number) => void,
+    onConnectionChange?: (connected: boolean) => void,
+    onNoteOff?: (midi: number) => void
+  ) => Promise<void>;
+}
+
+const createBrowserMidiService = (): MidiInputPort => new MidiService();
+
+export const useMidiInput = ({
+  onNoteOn,
+  onNoteOff,
+  onConnectionChange,
+  createService = createBrowserMidiService,
+}: UseMidiInputOptions) => {
+  const [midiService] = useState(createService);
 
   // Store callbacks in refs so MIDI binding doesn't depend on their identity
   const onNoteOnRef = useRef(onNoteOn);
@@ -20,10 +36,10 @@ export const useMidiInput = ({ onNoteOn, onNoteOff, onConnectionChange }: UseMid
   onConnectionChangeRef.current = onConnectionChange;
 
   useEffect(() => {
-    midiService.current.initialize(
+    void midiService.initialize(
       (midi: number) => onNoteOnRef.current(midi),
       (connected: boolean) => onConnectionChangeRef.current?.(connected),
       (midi: number) => onNoteOffRef.current?.(midi)
     );
-  }, []); // Only initialize once — callbacks are accessed via refs
+  }, [midiService]); // Service is created once; callbacks are accessed via refs
 };

@@ -3,10 +3,28 @@ import { useEffect, useRef, useState } from 'react';
 import { translations, Language } from '../i18n';
 import { chatWithAiCoach } from '../services/geminiService';
 
+import type { AiCoachClient } from './useAiCoach';
+
 const RATE_LIMIT_MS = 30_000;
 const HINT_DISPLAY_MS = 5_000;
 const MISTAKE_THRESHOLD = 3;
 const STREAK_THRESHOLD = 5;
+
+interface ContextualHintDependencies {
+  chat: AiCoachClient;
+  now: () => number;
+  random: () => number;
+  schedule: (delayMs: number, task: () => void) => ReturnType<typeof setTimeout>;
+  cancel: (timer: ReturnType<typeof setTimeout>) => void;
+}
+
+const browserHintDependencies: ContextualHintDependencies = {
+  chat: chatWithAiCoach,
+  now: Date.now,
+  random: Math.random,
+  schedule: (delayMs, task) => setTimeout(task, delayMs),
+  cancel: (timer) => clearTimeout(timer),
+};
 
 export interface Hint {
   id: number;
@@ -19,7 +37,11 @@ const getLocalHints = (t: typeof translations.en) => ({
   tip: [t.hintTrySlower, t.hintKeepGoing, t.hintPracticeRange],
 });
 
-export const useContextualHints = (lang: Language, clef: string) => {
+export const useContextualHints = (
+  lang: Language,
+  clef: string,
+  dependencies: ContextualHintDependencies = browserHintDependencies
+) => {
   const [currentHint, setCurrentHint] = useState<Hint | null>(null);
   const lastHintTime = useRef(0);
   const hintIdCounter = useRef(0);
@@ -29,33 +51,33 @@ export const useContextualHints = (lang: Language, clef: string) => {
   const t = translations[lang];
 
   const showHint = (text: string, type: Hint['type']) => {
-    const now = Date.now();
+    const now = dependencies.now();
     if (now - lastHintTime.current < RATE_LIMIT_MS) return;
     lastHintTime.current = now;
 
     const id = ++hintIdCounter.current;
     setCurrentHint({ id, text, type });
 
-    if (dismissTimer.current) clearTimeout(dismissTimer.current);
-    dismissTimer.current = setTimeout(() => setCurrentHint(null), HINT_DISPLAY_MS);
+    if (dismissTimer.current) dependencies.cancel(dismissTimer.current);
+    dismissTimer.current = dependencies.schedule(HINT_DISPLAY_MS, () => setCurrentHint(null));
   };
 
   const dismissHint = () => {
     setCurrentHint(null);
-    if (dismissTimer.current) clearTimeout(dismissTimer.current);
+    if (dismissTimer.current) dependencies.cancel(dismissTimer.current);
   };
 
   const showLocalHint = (type: Hint['type']) => {
     const hints = getLocalHints(t);
     const pool = hints[type];
-    const text = pool[Math.floor(Math.random() * pool.length)];
+    const text = pool[Math.floor(dependencies.random() * pool.length)];
     showHint(text, type);
   };
 
   const fetchAiHint = async (context: string, type: Hint['type']) => {
     try {
       const prompt = `Give a very brief (under 15 words) ${type === 'encouragement' ? 'encouraging' : 'helpful tip'} message for a piano student who ${context}. Be warm and concise.`;
-      const response = await chatWithAiCoach(prompt, clef, lang);
+      const response = await dependencies.chat(prompt, clef, lang);
       if (response.replyText) {
         showHint(response.replyText, type);
         return;
@@ -90,9 +112,9 @@ export const useContextualHints = (lang: Language, clef: string) => {
 
   useEffect(() => {
     return () => {
-      if (dismissTimer.current) clearTimeout(dismissTimer.current);
+      if (dismissTimer.current) dependencies.cancel(dismissTimer.current);
     };
-  }, []);
+  }, [dependencies]);
 
   return { currentHint, dismissHint, onPracticeUpdate };
 };

@@ -1,35 +1,21 @@
 import { create } from 'zustand';
 
+import {
+  initialPracticeState,
+  PracticeAction,
+  PracticeEffect,
+  PracticeMode,
+  PracticeState,
+  PracticeStatus,
+  reducePractice,
+} from '../domain/practiceCore';
 import { ClefType, GeneratedChallenge, HandPracticeMode, Note, PracticeRangeMode } from '../types';
 import { SessionStats } from '../types/session';
 
-export type PracticeStatus = 'waiting' | 'listening' | 'correct' | 'incorrect';
-export type PracticeMode = 'random' | 'song';
+export type { PracticeMode, PracticeState, PracticeStatus } from '../domain/practiceCore';
 
-export interface PracticeState {
-  clef: ClefType;
-  practiceRange: PracticeRangeMode;
-  handMode: HandPracticeMode;
-  isListening: boolean;
-  isMidiConnected: boolean;
-  noteQueue: Note[];
-  exitingNotes: Note[];
-  detectedNote: Note | null;
-  status: PracticeStatus;
-  score: number;
-  streak: number;
-  sessionStats: SessionStats;
-  challengeSequence: Note[];
-  challengeIndex: number;
-  challengeInfo: GeneratedChallenge | null;
-  practiceMode: PracticeMode;
-  currentSongId: string | null;
-  songProgress: number;
-  songTotalNotes: number;
-  songStartTime: number | null;
-}
-
-interface PracticeActions {
+export interface PracticeStoreActions {
+  dispatch: (action: PracticeAction) => PracticeEffect[];
   setClef: (clef: ClefType) => void;
   setPracticeRange: (practiceRange: PracticeRangeMode) => void;
   setHandMode: (handMode: HandPracticeMode) => void;
@@ -53,59 +39,47 @@ interface PracticeActions {
   resetStats: () => void;
 }
 
-const initialStats: SessionStats = {
-  totalAttempts: 0,
-  cleanHits: 0,
-  bpm: 0,
-};
+export const usePracticeStore = create<PracticeState & PracticeStoreActions>((set) => {
+  const dispatch = (action: PracticeAction): PracticeEffect[] => {
+    let effects: PracticeEffect[] = [];
+    set((current) => {
+      const reduction = reducePractice(current, action);
+      effects = reduction.effects;
+      return reduction.state;
+    });
+    return effects;
+  };
 
-export const usePracticeStore = create<PracticeState & PracticeActions>((set) => ({
-  clef: ClefType.TREBLE,
-  practiceRange: 'combined',
-  handMode: 'right-hand',
-  isListening: false,
-  isMidiConnected: false,
-  noteQueue: [],
-  exitingNotes: [],
-  detectedNote: null,
-  status: 'waiting',
-  score: 0,
-  streak: 0,
-  sessionStats: initialStats,
-  challengeSequence: [],
-  challengeIndex: 0,
-  challengeInfo: null,
-  practiceMode: 'random',
-  currentSongId: null,
-  songProgress: 0,
-  songTotalNotes: 0,
-  songStartTime: null,
-  setClef: (clef) => set({ clef }),
-  setPracticeRange: (practiceRange) => set({ practiceRange }),
-  setHandMode: (handMode) => set({ handMode }),
-  setIsListening: (isListening) => set({ isListening }),
-  setIsMidiConnected: (isMidiConnected) => set({ isMidiConnected }),
-  setNoteQueue: (noteQueue) => set({ noteQueue }),
-  setExitingNotes: (exitingNotes) => set({ exitingNotes }),
-  setDetectedNote: (detectedNote) => set({ detectedNote }),
-  setStatus: (status) => set({ status }),
-  setScore: (score) => set({ score }),
-  setStreak: (streak) => set({ streak }),
-  setSessionStats: (sessionStats) => set({ sessionStats }),
-  setChallengeSequence: (challengeSequence) => set({ challengeSequence }),
-  setChallengeIndex: (challengeIndex) => set({ challengeIndex }),
-  setChallengeInfo: (challengeInfo) => set({ challengeInfo }),
-  setPracticeMode: (practiceMode) => set({ practiceMode }),
-  setCurrentSongId: (currentSongId) => set({ currentSongId }),
-  setSongProgress: (songProgress) => set({ songProgress }),
-  setSongTotalNotes: (songTotalNotes) => set({ songTotalNotes }),
-  setSongStartTime: (songStartTime) => set({ songStartTime }),
-  resetStats: () =>
-    set({
-      score: 0,
-      streak: 0,
-      sessionStats: initialStats,
-      songProgress: 0,
-      songStartTime: null,
-    }),
-}));
+  return {
+    ...initialPracticeState,
+    dispatch,
+    setClef: (clef) => void dispatch({ type: 'clefChanged', clef }),
+    setPracticeRange: (practiceRange) =>
+      void dispatch({ type: 'practiceRangeChanged', practiceRange }),
+    setHandMode: (handMode) => void dispatch({ type: 'handModeChanged', handMode }),
+    setIsListening: (isListening) => void dispatch({ type: 'listeningChanged', isListening }),
+    setIsMidiConnected: (isMidiConnected) =>
+      void dispatch({ type: 'midiConnectionChanged', isMidiConnected }),
+    setNoteQueue: (noteQueue) => void dispatch({ type: 'queueReplaced', noteQueue }),
+    setExitingNotes: (exitingNotes) =>
+      void dispatch({ type: 'exitingNotesReplaced', exitingNotes }),
+    setDetectedNote: (detectedNote) => void dispatch({ type: 'detectedNoteChanged', detectedNote }),
+    setStatus: (status) => void dispatch({ type: 'statusChanged', status }),
+    setScore: (score) => void dispatch({ type: 'scoreChanged', score }),
+    setStreak: (streak) => void dispatch({ type: 'streakChanged', streak }),
+    setSessionStats: (sessionStats) => void dispatch({ type: 'sessionStatsChanged', sessionStats }),
+    setChallengeSequence: (challengeSequence) =>
+      void dispatch({ type: 'challengeSequenceChanged', challengeSequence }),
+    setChallengeIndex: (challengeIndex) =>
+      void dispatch({ type: 'challengeIndexChanged', challengeIndex }),
+    setChallengeInfo: (challengeInfo) =>
+      void dispatch({ type: 'challengeInfoChanged', challengeInfo }),
+    setPracticeMode: (practiceMode) => void dispatch({ type: 'practiceModeChanged', practiceMode }),
+    setCurrentSongId: (songId) => void dispatch({ type: 'songChanged', songId }),
+    setSongProgress: (songProgress) => void dispatch({ type: 'songProgressChanged', songProgress }),
+    setSongTotalNotes: (songTotalNotes) =>
+      void dispatch({ type: 'songTotalNotesChanged', songTotalNotes }),
+    setSongStartTime: (startedAt) => void dispatch({ type: 'songStarted', startedAt }),
+    resetStats: () => void dispatch({ type: 'sessionStatsReset' }),
+  };
+});
