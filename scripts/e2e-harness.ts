@@ -1,5 +1,6 @@
 import type { KVStore } from '../edge-functions/platform/index.ts';
 import { inviteKey } from '../edge-functions/api/auth/invite-code.ts';
+import { createCookie, signJWT } from '../edge-functions/api/_auth-helpers.ts';
 
 const E2E_RUN_HEADER = 'X-SightPlay-E2E-Run';
 const E2E_CONTROL_HEADER = 'X-SightPlay-E2E-Control';
@@ -57,12 +58,13 @@ type ChatScenario =
 type ControlCommand =
   | { action: 'reset' }
   | { action: 'seedInvite'; code: string; expiresAt?: number }
+  | { action: 'seedAuthenticatedSession' }
   | { action: 'setChatScenario'; scenario: ChatScenario };
 
-const json = (body: object, status = 200) =>
+const json = (body: object, status = 200, headers?: HeadersInit) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
   });
 
 export class E2EHarness {
@@ -71,6 +73,7 @@ export class E2EHarness {
   constructor(
     private readonly kv: MemoryKV,
     private readonly controlToken: string,
+    private readonly jwtSecret: string,
     private readonly allowRealProvider = false
   ) {}
 
@@ -107,6 +110,38 @@ export class E2EHarness {
           { expirationTtl: Math.max(1, Math.ceil((expiresAt - now) / 1000)) }
         );
         return json({ ok: true });
+      }
+      case 'seedAuthenticatedSession': {
+        const now = Math.floor(Date.now() / 1000);
+        const token = await signJWT(
+          { sub: 'owner', iat: now, exp: now + 60 * 60 },
+          this.jwtSecret
+        );
+        await store.put(
+          'passkeys',
+          JSON.stringify([
+            {
+              id: 'e2e-seeded-passkey',
+              publicKey: 'not-used-by-seeded-session',
+              counter: 0,
+              name: 'E2E seeded session',
+              createdAt: Date.now(),
+            },
+          ])
+        );
+        return json(
+          { ok: true },
+          200,
+          {
+            'Set-Cookie': createCookie('auth_token', token, {
+              maxAge: 60 * 60,
+              httpOnly: true,
+              secure: new URL(request.url).protocol === 'https:',
+              sameSite: 'Lax',
+              path: '/',
+            }),
+          }
+        );
       }
       case 'setChatScenario':
         this.chatScenarios.set(runId, command.scenario);

@@ -110,6 +110,7 @@ export function devAuthMiddleware(projectRoot: string, server: ViteDevServer): C
       ? new E2EHarness(
           memoryKV,
           process.env.SIGHTPLAY_E2E_CONTROL_TOKEN || 'sightplay-local-e2e',
+          JWT_SECRET,
           process.env.SIGHTPLAY_E2E_REAL_PROVIDER === '1'
         )
       : null;

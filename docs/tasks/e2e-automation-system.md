@@ -66,7 +66,12 @@ and rerun the same gates without routine human regression testing.
   preview configuration also passed against the local built preview. Final repository gates and PR/CI
   evidence remain below.
 - 2026-08-10: Final local gates passed: frozen install, format, zero-warning lint, typecheck,
-  dependency/size/dead-code checks, 411 unit/integration tests, 60 Playwright tests, production build,
-  and audit with no known vulnerabilities. Critical auth/chat/audio paths passed 15/15 across three
+  dependency/size/dead-code checks, 411 unit/integration tests, 61 Playwright tests plus one explicit
+  unsupported-capability skip, production build, and audit with no known vulnerabilities. The updated
+  critical auth/chat/audio matrix passed 18 tests plus three WebKit Passkey skips across three
   consecutive runs. Ports 4173 and 4174 had no listener after completion. Non-blocking output: three
   files remain within 50 lines of the 300-line limit and the main bundle is 590.27 kB minified.
+- 2026-08-10: The first Linux CI run exposed that Playwright WebKit cannot provide a virtual WebAuthn
+  authenticator. Kept the real ceremony and signature gate in Chromium; WebKit now uses an E2E-only
+  signed HttpOnly session to cover the real built bundle, session/logout, and chat paths without
+  pretending to test unsupported Passkey behavior.

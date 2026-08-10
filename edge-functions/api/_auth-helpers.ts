@@ -1,6 +1,6 @@
 // Auth helper functions for JWT and cookies
 
-import type { PlatformContext } from '../platform';
+import type { PlatformContext } from '../platform/index.ts';
 
 /**
  * Resolve environment variable from platform context.

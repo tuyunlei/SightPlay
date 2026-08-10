@@ -5,6 +5,7 @@ import { test as appTest, expect } from './app-test';
 type ControlCommand =
   | { action: 'reset' }
   | { action: 'seedInvite'; code: string; expiresAt?: number }
+  | { action: 'seedAuthenticatedSession' }
   | {
       action: 'setChatScenario';
       scenario:
@@ -54,52 +55,54 @@ export const test = appTest.extend<{ runId: string; system: SystemControl }>({
     const context = await browser.newContext({
       baseURL: typeof baseURL === 'string' ? baseURL : undefined,
     });
-    await context.credentials.install();
-    await context.exposeBinding(
-      '__sightplayE2EPublicKey',
-      async (_source, credentialId: string) => {
-        const credential = (await context.credentials.get({ id: credentialId }))[0];
-        if (!credential) throw new Error(`Virtual credential not found: ${credentialId}`);
-        return credential.publicKey;
-      }
-    );
-    await context.addInitScript(() => {
-      const credentials = navigator.credentials;
-      const nativeCreate = credentials.create.bind(credentials);
-      const decodeBase64Url = (value: string) => {
-        const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
-        const bytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
-        return bytes.buffer;
-      };
-      const testWindow = window as typeof window & {
-        __sightplayE2EPublicKey: (credentialId: string) => Promise<string>;
-      };
-
-      credentials.create = async (...args) => {
-        const credential = await nativeCreate(...args);
-        if (credential instanceof PublicKeyCredential) {
-          const response = credential.response as AuthenticatorAttestationResponse;
-          if (!response.getPublicKey()) {
-            const publicKey = await testWindow.__sightplayE2EPublicKey(credential.id);
-            const authenticatorData = new Uint8Array(response.getAuthenticatorData());
-            authenticatorData.fill(0, 33, 37);
-            Object.defineProperty(response, 'getPublicKey', {
-              configurable: true,
-              value: () => decodeBase64Url(publicKey),
-            });
-            Object.defineProperty(response, 'getPublicKeyAlgorithm', {
-              configurable: true,
-              value: () => -7,
-            });
-            Object.defineProperty(response, 'getAuthenticatorData', {
-              configurable: true,
-              value: () => authenticatorData.buffer,
-            });
-          }
+    if (testInfo.project.name === 'system-chromium') {
+      await context.credentials.install();
+      await context.exposeBinding(
+        '__sightplayE2EPublicKey',
+        async (_source, credentialId: string) => {
+          const credential = (await context.credentials.get({ id: credentialId }))[0];
+          if (!credential) throw new Error(`Virtual credential not found: ${credentialId}`);
+          return credential.publicKey;
         }
-        return credential;
-      };
-    });
+      );
+      await context.addInitScript(() => {
+        const credentials = navigator.credentials;
+        const nativeCreate = credentials.create.bind(credentials);
+        const decodeBase64Url = (value: string) => {
+          const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+          const bytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
+          return bytes.buffer;
+        };
+        const testWindow = window as typeof window & {
+          __sightplayE2EPublicKey: (credentialId: string) => Promise<string>;
+        };
+
+        credentials.create = async (...args) => {
+          const credential = await nativeCreate(...args);
+          if (credential instanceof PublicKeyCredential) {
+            const response = credential.response as AuthenticatorAttestationResponse;
+            if (!response.getPublicKey()) {
+              const publicKey = await testWindow.__sightplayE2EPublicKey(credential.id);
+              const authenticatorData = new Uint8Array(response.getAuthenticatorData());
+              authenticatorData.fill(0, 33, 37);
+              Object.defineProperty(response, 'getPublicKey', {
+                configurable: true,
+                value: () => decodeBase64Url(publicKey),
+              });
+              Object.defineProperty(response, 'getPublicKeyAlgorithm', {
+                configurable: true,
+                value: () => -7,
+              });
+              Object.defineProperty(response, 'getAuthenticatorData', {
+                configurable: true,
+                value: () => authenticatorData.buffer,
+              });
+            }
+          }
+          return credential;
+        };
+      });
+    }
     await context.route('**/*', async (route) => {
       const requestUrl = new URL(route.request().url());
       if (appOrigin && requestUrl.origin === appOrigin) {

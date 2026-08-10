@@ -32,8 +32,8 @@ that hardware coverage.
 5. Preserve artifacts and report the exact tier, browser, port, and any named evidence gaps.
 
 Each system test gets a unique run ID. The E2E-only control endpoint can reset scoped in-memory KV,
-seed an invite, and select a typed provider response. It is enabled only by `SIGHTPLAY_E2E_MODE=1`; it
-is not part of a production build or deployment.
+seed an invite or authenticated session, and select a typed provider response. It is enabled only by
+`SIGHTPLAY_E2E_MODE=1`; it is not part of a production build or deployment.
 
 The main suite owns loopback ports 4173 (dev/API) and 4174 (built preview), uses strict ports, and does
 not reuse an unknown process. Override them with `SIGHTPLAY_E2E_PORT` and
@@ -46,6 +46,9 @@ not reuse an unknown process. Override them with `SIGHTPLAY_E2E_PORT` and
   small real provider call.
 - Remote preview smoke is read-only and accepts an explicit trusted HTTPS URL. It does not register,
   delete, or write preview data.
-- Local system tests use real crypto verification, cookies, handlers, and isolated state. The virtual
-  authenticator adapter only fills browser fields absent from Playwright's synthetic credential and
-  normalizes the counter to the valid sync-passkey value of zero.
+- Chromium local system tests use real WebAuthn crypto verification, cookies, handlers, and isolated
+  state. The virtual authenticator adapter only fills browser fields absent from Playwright's
+  synthetic credential and normalizes the counter to the valid sync-passkey value of zero.
+- Playwright's Linux WebKit has no virtual WebAuthn implementation. Its system tier receives a signed,
+  HttpOnly session cookie from the E2E-only control plane, then exercises the real session, logout,
+  built-bundle, and chat paths. It does not claim WebKit Passkey coverage.
