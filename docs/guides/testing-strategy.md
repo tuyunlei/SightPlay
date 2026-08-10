@@ -5,13 +5,14 @@ gate coverage.
 
 ## Test layers
 
-| Layer                     | Proves                                                                                     | Does not prove                                          |
-| ------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
-| Pure domain/decision test | State transitions, branches, invariants, error decisions                                   | React wiring or browser APIs                            |
-| Adapter contract test     | SightPlay's behavior against MIDI, audio, network, storage, clock, or scheduler interfaces | The assembled product path                              |
-| React integration test    | Components/hooks/stores collaborate through public behavior                                | Real hardware or production services                    |
-| Playwright stable path    | Browser assembly and important user journeys with controlled dependencies                  | Real MIDI/microphone quality or production availability |
-| Opt-in real check         | A named real hardware/provider boundary                                                    | Deterministic CI regression coverage                    |
+| Layer                     | Proves                                                                                     | Does not prove                                       |
+| ------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| Pure domain/decision test | State transitions, branches, invariants, error decisions                                   | React wiring or browser APIs                         |
+| Adapter contract test     | SightPlay's behavior against MIDI, audio, network, storage, clock, or scheduler interfaces | The assembled product path                           |
+| React integration test    | Components/hooks/stores collaborate through public behavior                                | Real hardware or production services                 |
+| Playwright stable path    | Browser assembly and important user journeys with controlled dependencies                  | Real hardware or production availability             |
+| Playwright local system   | Built bundle, handlers, storage, cookies, crypto ceremonies, and browser adapters          | Physical device UX or external-provider availability |
+| Opt-in real check         | A named preview, hardware, or provider boundary                                            | Deterministic CI regression coverage                 |
 
 Use the lowest layer that directly observes the behavior, and add a higher-layer test only for wiring or
 runtime risks that the lower layer cannot prove.
@@ -43,3 +44,6 @@ timeout.
   sufficient.
 - A deleted low-value test needs no replacement unless it was the only proof of a real behavior.
 - Test count and coverage percentage are diagnostics, never targets or acceptance criteria.
+
+The E2E risk/evidence matrix lives in [`../../e2e/TEST_PLAN.md`](../../e2e/TEST_PLAN.md); operational
+tiers and artifact-driven agent workflow live in [`autonomous-e2e.md`](autonomous-e2e.md).

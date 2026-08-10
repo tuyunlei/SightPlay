@@ -1,14 +1,10 @@
-import { expect, Page, test } from '@playwright/test';
-
-async function mockAuthenticatedSession(page: Page) {
-  await page.route('**/api/auth/session', (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ authenticated: true, hasPasskeys: true }),
-    });
-  });
-}
+import {
+  expect,
+  Page,
+  test,
+  mockAuthenticatedSession,
+  waitForPracticeInputReady,
+} from './fixtures/app-test';
 
 async function openSongLibrary(page: Page) {
   await page.getByRole('button', { name: /song library|曲库/i }).click();
@@ -27,6 +23,7 @@ async function getSongProgress(page: Page): Promise<number> {
 }
 
 async function playCorrectTargetNote(page: Page) {
+  await waitForPracticeInputReady(page);
   const targetMidi = await page.evaluate(() => {
     const api = (window as any).__sightplayTestAPI;
     return api?.getTargetNoteMidi?.() ?? null;
@@ -34,19 +31,18 @@ async function playCorrectTargetNote(page: Page) {
 
   expect(targetMidi).not.toBeNull();
 
-  await page.evaluate((midi) => {
+  const scoreBefore = await page.evaluate(
+    () => (window as any).__sightplayTestAPI?.getScore() ?? 0
+  );
+  await page.evaluate(async (midi) => {
     const api = (window as any).__sightplayTestAPI;
     api?.simulateMidiNoteOn?.(midi);
-  }, targetMidi);
-
-  await page.waitForTimeout(100);
-
-  await page.evaluate((midi) => {
-    const api = (window as any).__sightplayTestAPI;
+    await new Promise((resolve) => setTimeout(resolve, 100));
     api?.simulateMidiNoteOff?.(midi);
   }, targetMidi);
-
-  await page.waitForTimeout(300);
+  await expect
+    .poll(() => page.evaluate(() => (window as any).__sightplayTestAPI?.getScore() ?? 0))
+    .toBeGreaterThan(scoreBefore);
 }
 
 async function completeSongViaTestApi(page: Page) {
@@ -56,29 +52,22 @@ async function completeSongViaTestApi(page: Page) {
       return;
     }
 
-    const targetMidi = await page.evaluate(() => {
-      const api = (window as any).__sightplayTestAPI;
-      return api?.getTargetNoteMidi?.() ?? null;
-    });
-
-    if (targetMidi == null) {
-      await page.waitForTimeout(100);
+    const targetMidi = await page.evaluate(
+      () => (window as any).__sightplayTestAPI?.getTargetNoteMidi?.() ?? null
+    );
+    if (targetMidi === null) {
+      await expect
+        .poll(async () => {
+          if (await completeHeading.isVisible()) return 'complete';
+          const nextTarget = await page.evaluate(
+            () => (window as any).__sightplayTestAPI?.getTargetNoteMidi?.() ?? null
+          );
+          return nextTarget === null ? 'waiting' : 'ready';
+        })
+        .not.toBe('waiting');
       continue;
     }
-
-    await page.evaluate((midi) => {
-      const api = (window as any).__sightplayTestAPI;
-      api?.simulateMidiNoteOn?.(midi);
-    }, targetMidi);
-
-    await page.waitForTimeout(50);
-
-    await page.evaluate((midi) => {
-      const api = (window as any).__sightplayTestAPI;
-      api?.simulateMidiNoteOff?.(midi);
-    }, targetMidi);
-
-    await page.waitForTimeout(100);
+    await playCorrectTargetNote(page);
   }
 
   throw new Error('Song did not complete within expected number of simulated notes');
@@ -122,11 +111,17 @@ test.describe('Song Library Practice flow', () => {
     await playCorrectTargetNote(page);
     await playCorrectTargetNote(page);
 
-    const updatedProgress = await getSongProgress(page);
-    expect(updatedProgress).toBeGreaterThan(initialProgress);
+    await expect.poll(() => getSongProgress(page)).toBeGreaterThan(initialProgress);
   });
 
   test('complete a song then return to library from score screen', async ({ page }) => {
+    await page.route('**/api/chat', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ replyText: 'Nice work.', challengeData: null }),
+      })
+    );
     await openSongLibrary(page);
     await page.getByText('Twinkle Twinkle Little Star').click();
 

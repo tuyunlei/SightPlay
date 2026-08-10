@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/app-test';
 
 test.describe('Phone Portrait', () => {
   test('homepage renders correctly on phone portrait', async ({ page }) => {

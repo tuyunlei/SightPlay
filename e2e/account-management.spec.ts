@@ -1,16 +1,6 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page, mockAuthenticatedSession } from './fixtures/app-test';
 
 type Passkey = { id: string; name: string; createdAt: number };
-
-async function mockAuthenticatedSession(page: Page) {
-  await page.route('**/api/auth/session', (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ authenticated: true, hasPasskeys: true }),
-    });
-  });
-}
 
 async function openPasskeyManagement(page: Page) {
   await page.goto('/');

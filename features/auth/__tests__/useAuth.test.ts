@@ -118,7 +118,8 @@ describe('useAuth', () => {
     expect(authenticateMock).not.toHaveBeenCalled();
   });
 
-  it('clears auth cookie state on logout', async () => {
+  it('ends the server session and returns to the login route on logout', async () => {
+    window.history.replaceState(null, '', '/register?code=ABCD-EFGH');
     document.cookie = 'auth_token=test-token; path=/';
     (fetch as unknown as ReturnType<typeof vi.fn>).mockImplementation(async (input: string) => {
       if (input === '/api/auth/session') {
@@ -133,13 +134,19 @@ describe('useAuth', () => {
     const { result } = renderHook(() => useAuth());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    act(() => {
-      result.current.logout();
+    await act(async () => {
+      await result.current.logout();
     });
 
     expect(result.current.isAuthenticated).toBe(false);
     expect(result.current.isLoading).toBe(false);
     expect(result.current.hasPasskeys).toBe(true);
-    expect(document.cookie).not.toContain('auth_token=');
+    expect(fetch).toHaveBeenCalledWith('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+    });
+    expect(window.location.pathname).toBe('/');
+    expect(window.location.search).toBe('');
+    document.cookie = 'auth_token=; max-age=0; path=/';
   });
 });

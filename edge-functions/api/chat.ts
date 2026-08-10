@@ -94,9 +94,10 @@ function buildGeminiRequestBody(message: string, systemInstruction: string) {
 async function callGemini(
   apiKey: string,
   requestBody: object,
-  requestContext: { requestId: string; method: string; path: string }
+  requestContext: { requestId: string; method: string; path: string },
+  fetcher: typeof fetch
 ): Promise<Response> {
-  const response = await fetch(
+  const response = await fetcher(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
@@ -143,7 +144,12 @@ export async function handlePostChat(platform: PlatformContext): Promise<Respons
   try {
     const systemInstruction = buildSystemInstruction(clef, lang);
     const requestBody = buildGeminiRequestBody(message, systemInstruction);
-    return await callGemini(apiKey, requestBody, requestContext);
+    return await callGemini(
+      apiKey,
+      requestBody,
+      requestContext,
+      platform.fetch ?? globalThis.fetch.bind(globalThis)
+    );
   } catch (error) {
     logError('chat.post', error, requestContext);
     return jsonResponse(

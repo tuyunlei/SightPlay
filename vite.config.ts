@@ -7,7 +7,12 @@ import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import { defineConfig, type Plugin, type ViteDevServer } from 'vite';
 
 import { devAuthMiddleware } from './scripts/dev-auth-middleware.ts';
-import { DEFAULT_DEV_PORT, LOOPBACK_HOST, resolvePort } from './scripts/server-config.ts';
+import {
+  DEFAULT_DEV_PORT,
+  DEFAULT_E2E_PREVIEW_PORT,
+  LOOPBACK_HOST,
+  resolvePort,
+} from './scripts/server-config.ts';
 
 const __projectRoot = path.resolve(import.meta.dirname);
 
@@ -26,6 +31,8 @@ export default defineConfig(({ mode }) => {
   const hasSentryToken = !!process.env.SENTRY_AUTH_TOKEN;
   const devPort = resolvePort('SIGHTPLAY_DEV_PORT', DEFAULT_DEV_PORT);
   const devHost = process.env.SIGHTPLAY_DEV_HOST || LOOPBACK_HOST;
+  const previewPort = resolvePort('SIGHTPLAY_E2E_PREVIEW_PORT', DEFAULT_E2E_PREVIEW_PORT);
+  const e2eApiOrigin = process.env.SIGHTPLAY_E2E_API_ORIGIN;
 
   return {
     build: {
@@ -35,6 +42,17 @@ export default defineConfig(({ mode }) => {
       port: devPort,
       host: devHost,
       strictPort: true,
+    },
+    preview: {
+      port: previewPort,
+      host: LOOPBACK_HOST,
+      strictPort: true,
+      proxy: e2eApiOrigin
+        ? {
+            '/api': { target: e2eApiOrigin, changeOrigin: false },
+            '/__e2e': { target: e2eApiOrigin, changeOrigin: false },
+          }
+        : undefined,
     },
     plugins: [
       react(),

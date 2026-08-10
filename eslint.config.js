@@ -89,5 +89,13 @@ export default tseslint.config(
       'max-lines-per-function': 'off',
     },
   },
+  {
+    files: ['e2e/fixtures/**/*.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-invalid-void-type': 'off',
+      'no-empty-pattern': 'off',
+      'react-hooks/rules-of-hooks': 'off',
+    },
+  },
   prettier
 );

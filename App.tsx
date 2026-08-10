@@ -18,9 +18,9 @@ const App = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('random');
   const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
   const [showSongComplete, setShowSongComplete] = useState(false);
+  const [pathname, setPathname] = useState(() => window.location.pathname);
   const challengeCompleteRef = useRef<() => void>(() => {});
 
-  const pathname = window.location.pathname;
   const urlParams = new URLSearchParams(window.location.search);
   const initialAuthView = pathname === '/register' ? 'register' : 'login';
   const inviteCodeFromUrl = urlParams.get('code') ?? undefined;
@@ -32,6 +32,12 @@ const App = () => {
 
   const { state, derived, actions, pressedKeys } = practiceSession;
   useTestAPI(practiceSession);
+
+  useEffect(() => {
+    const syncPathname = () => setPathname(window.location.pathname);
+    window.addEventListener('popstate', syncPathname);
+    return () => window.removeEventListener('popstate', syncPathname);
+  }, []);
 
   const { chatInput, setChatInput, chatHistory, isLoadingAi, sendMessage, chatEndRef } = useAiCoach(
     {

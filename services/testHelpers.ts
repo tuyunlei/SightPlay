@@ -33,6 +33,9 @@ interface TestAPI {
    */
   getScore: () => number;
 
+  /** Whether the practice engine can accept the next note. */
+  isReadyForInput: () => boolean;
+
   /**
    * Get session stats
    */

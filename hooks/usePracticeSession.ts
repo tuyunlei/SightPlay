@@ -120,7 +120,14 @@ export const usePracticeSession = ({
   };
 
   if (import.meta.env.MODE === 'test' || import.meta.env.DEV) {
-    return { ...result, __testHandlers: { handleMidiNoteOn, handleMidiNoteOff } };
+    return {
+      ...result,
+      __testHandlers: {
+        handleMidiNoteOn,
+        handleMidiNoteOff,
+        isReadyForInput: () => !refs.isProcessingRef.current,
+      },
+    };
   }
 
   return result;

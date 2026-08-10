@@ -8,4 +8,5 @@ export interface PlatformContext {
   request: Request;
   kv: KVStore;
   env(key: string): string | undefined;
+  fetch?: typeof globalThis.fetch;
 }

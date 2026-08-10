@@ -1,37 +1,7 @@
 import type { Connect, ViteDevServer } from 'vite';
 import type { IncomingMessage, ServerResponse } from 'http';
 
-// In-memory KV store to simulate EdgeOne KV
-class MemoryKV {
-  private store = new Map<string, { value: string; expiresAt?: number }>();
-
-  async get(key: string): Promise<string | null> {
-    const entry = this.store.get(key);
-    if (!entry) return null;
-
-    // Check expiration
-    if (entry.expiresAt && Date.now() > entry.expiresAt) {
-      this.store.delete(key);
-      return null;
-    }
-
-    return entry.value;
-  }
-
-  async put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void> {
-    const entry: { value: string; expiresAt?: number } = { value };
-
-    if (options?.expirationTtl) {
-      entry.expiresAt = Date.now() + options.expirationTtl * 1000;
-    }
-
-    this.store.set(key, entry);
-  }
-
-  async delete(key: string): Promise<void> {
-    this.store.delete(key);
-  }
-}
+import { E2EHarness, MemoryKV } from './e2e-harness.ts';
 
 // Convert Node.js IncomingMessage to Web API Request
 async function toWebRequest(req: IncomingMessage): Promise<Request> {
@@ -110,6 +80,11 @@ const ROUTES = [
     methods: ['GET', 'OPTIONS'],
   },
   {
+    path: '/api/auth/logout',
+    module: 'edge-functions/api/auth/logout.ts',
+    methods: ['POST', 'OPTIONS'],
+  },
+  {
     path: '/api/auth/passkeys',
     module: 'edge-functions/api/auth/passkeys.ts',
     methods: ['GET', 'DELETE', 'OPTIONS'],
@@ -130,9 +105,26 @@ export function devAuthMiddleware(projectRoot: string, server: ViteDevServer): C
   const memoryKV = new MemoryKV();
   const JWT_SECRET = 'dev-jwt-secret-sightplay';
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
+  const e2eHarness =
+    process.env.SIGHTPLAY_E2E_MODE === '1'
+      ? new E2EHarness(
+          memoryKV,
+          process.env.SIGHTPLAY_E2E_CONTROL_TOKEN || 'sightplay-local-e2e',
+          JWT_SECRET,
+          process.env.SIGHTPLAY_E2E_REAL_PROVIDER === '1'
+        )
+      : null;
 
   return async (req: IncomingMessage, res: ServerResponse, next: Connect.NextFunction) => {
     const url = req.url || '';
+
+    if (e2eHarness && url.startsWith('/__e2e/')) {
+      const controlResponse = await e2eHarness.handleControl(await toWebRequest(req));
+      if (controlResponse) {
+        await fromWebResponse(res, controlResponse);
+        return;
+      }
+    }
 
     // Find matching route
     const route = ROUTES.find((r) => url.startsWith(r.path));
@@ -167,8 +159,9 @@ export function devAuthMiddleware(projectRoot: string, server: ViteDevServer): C
       // Create context
       const context = {
         request: webRequest,
+        fetch: e2eHarness?.getFetch(webRequest),
         env: {
-          AUTH_STORE: memoryKV,
+          AUTH_STORE: e2eHarness?.getStore(webRequest) ?? memoryKV,
           JWT_SECRET,
           GEMINI_API_KEY,
         },

@@ -1,14 +1,4 @@
-import { expect, test, Page } from '@playwright/test';
-
-async function mockAuthenticatedSession(page: Page) {
-  await page.route('**/api/auth/session', (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ authenticated: true, hasPasskeys: true }),
-    });
-  });
-}
+import { expect, test, mockAuthenticatedSession } from './fixtures/app-test';
 
 test.describe('Critical navigation smoke (no blank screens)', () => {
   test('random practice ↔ song library, open/close AI chat with meaningful content', async ({

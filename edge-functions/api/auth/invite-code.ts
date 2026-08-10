@@ -1,4 +1,4 @@
-import type { KVStore } from '../../platform';
+import type { KVStore } from '../../platform/index.ts';
 
 const INVITE_CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const INVITE_RAW_LENGTH = 8;

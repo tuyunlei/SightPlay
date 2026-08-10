@@ -39,7 +39,8 @@ A piano sight-reading practice app that helps you improve your ability to read s
 
 The dev server binds only to loopback by default. Set `SIGHTPLAY_DEV_PORT` to choose another port,
 or explicitly set `SIGHTPLAY_DEV_HOST` when LAN access is required. Playwright uses an isolated
-loopback server on port 4173 by default; override it with `SIGHTPLAY_E2E_PORT`.
+loopback dev/API server on port 4173 and built preview on 4174; override them with
+`SIGHTPLAY_E2E_PORT` and `SIGHTPLAY_E2E_PREVIEW_PORT`.
 
 ## How It Works
 
@@ -76,6 +77,7 @@ pnpm audit
 
 - Engineering setup and known baseline risks: [`docs/ENGINEERING_BASELINE.md`](docs/ENGINEERING_BASELINE.md)
 - Risk-based test layers: [`docs/guides/testing-strategy.md`](docs/guides/testing-strategy.md)
+- Autonomous browser/system test operations: [`docs/guides/autonomous-e2e.md`](docs/guides/autonomous-e2e.md)
 - Agent instruction governance: [`docs/guides/agents-md-governance.md`](docs/guides/agents-md-governance.md)
 - Durable engineering decisions: [`docs/decisions/`](docs/decisions/)
 

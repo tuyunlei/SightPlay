@@ -17,6 +17,7 @@ export function createCloudflareContext(context: CFPagesContext): PlatformContex
   return {
     request: context.request,
     kv: context.env.AUTH_STORE,
+    fetch: globalThis.fetch.bind(globalThis),
     env(key: string): string | undefined {
       const value = context.env[key];
       return typeof value === 'string' ? value : undefined;

@@ -2,6 +2,7 @@ import type { KVStore, PlatformContext } from './types';
 
 export interface EdgeOneRequestContext {
   request: Request;
+  fetch?: typeof globalThis.fetch;
   env?: Record<string, unknown> & {
     AUTH_STORE?: KVStore;
     JWT_SECRET?: string;
@@ -18,6 +19,7 @@ export function createEdgeOneContext(context: EdgeOneRequestContext): PlatformCo
   return {
     request: context.request,
     kv: kv as KVStore,
+    fetch: context.fetch ?? globalThis.fetch.bind(globalThis),
     env(key: string): string | undefined {
       const value = context.env?.[key] ?? (globalThis as Record<string, unknown>)[key];
       return typeof value === 'string' ? value : undefined;
