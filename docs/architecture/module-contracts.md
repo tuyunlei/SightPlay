@@ -43,7 +43,8 @@ type Route =
 Parsing, serialization, and authorization redirects are pure. Browser history implements a
 `NavigationPort`; components request navigation through semantic intents. No component may mirror a
 route in booleans or nullable identifiers. Modal routes carry a validated content return route and
-render that content underneath; closing replaces the modal history entry so Back cannot reopen it.
+render that content underneath. Closing an application-opened modal removes its history entry;
+closing a direct modal deep link replaces it with the validated fallback route.
 
 ## Exercise and Practice
 

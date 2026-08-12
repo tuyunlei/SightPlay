@@ -29,7 +29,9 @@ test.describe('Account Management E2E', () => {
       });
     });
 
-    await page.goto('/library?difficulty=intermediate');
+    await page.goto('/practice');
+    await page.getByRole('button', { name: /song library|曲库/i }).click();
+    await page.getByRole('button', { name: /intermediate|中级/i }).click();
     await expect(page.getByRole('heading', { name: /song library|曲库/i })).toBeVisible();
 
     await page.getByTitle(/manage passkeys|管理 passkey/i).click();
@@ -42,8 +44,11 @@ test.describe('Account Management E2E', () => {
     await expect(page).toHaveURL(/\/library\?difficulty=intermediate$/);
 
     await page.goBack();
-    await expect(page).toHaveURL(/\/library\?difficulty=intermediate$/);
+    await expect(page).toHaveURL(/\/library$/);
     await expect(page.getByRole('heading', { name: /manage passkeys|管理 passkey/i })).toBeHidden();
+
+    await page.goBack();
+    await expect(page).toHaveURL(/\/practice$/);
   });
 
   test('1.5.1 should show passkey list after opening passkey management', async ({ page }) => {

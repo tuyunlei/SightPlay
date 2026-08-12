@@ -133,6 +133,9 @@ production release remains a separate explicitly authorized operation.
   construction; passkey management, library difficulty, and song selection no longer use parallel
   React booleans/IDs. URL difficulty is decoded into a closed union, logout no longer writes browser
   history from Identity, and one exhaustive App interpreter preserves all recommendation payloads.
+- Passkey management now retains its validated source content as an overlay. Application-opened
+  overlays remove their own history entry on close, while direct deep links replace to a safe fallback;
+  active-route navigation is a no-op and song completion cannot leak across route lifecycles.
 - 2026-08-13: Navigation checkpoint passed zero-warning lint, application and no-DOM/no-Node model
   typechecks, dependency/legacy/file-size/dead-code gates, 441 unit/integration tests, production
   build, and the complete Playwright matrix (61 passed, one documented WebKit virtual-WebAuthn skip).

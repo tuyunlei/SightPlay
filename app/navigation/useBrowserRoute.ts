@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { parseAppRoute, serializeAppRoute, type AppRoute } from '@sightplay/app-shell';
 
+const OVERLAY_ENTRY_KEY = '__sightplayOverlayEntry';
+
 function readRoute(): AppRoute {
   return parseAppRoute(window.location);
 }
@@ -20,10 +22,22 @@ export function useBrowserRoute() {
     const currentHref = `${window.location.pathname}${window.location.search}`;
     if (href === currentHref) return;
 
-    if (replace) window.history.replaceState(null, '', href);
-    else window.history.pushState(null, '', href);
+    const state = !replace && nextRoute.kind === 'passkeys' ? { [OVERLAY_ENTRY_KEY]: true } : null;
+    if (replace) window.history.replaceState(state, '', href);
+    else window.history.pushState(state, '', href);
     setRoute(nextRoute);
   }, []);
 
-  return { route, navigate };
+  const dismissOverlay = useCallback(
+    (fallbackRoute: AppRoute) => {
+      if (window.history.state?.[OVERLAY_ENTRY_KEY] === true) {
+        window.history.back();
+        return;
+      }
+      navigate(fallbackRoute, true);
+    },
+    [navigate]
+  );
+
+  return { route, navigate, dismissOverlay };
 }

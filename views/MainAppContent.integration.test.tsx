@@ -34,23 +34,23 @@ function Harness() {
     kind: 'songPractice',
     songId: 'twinkle-twinkle',
   });
-  const [lastReplace, setLastReplace] = useState(false);
 
-  const navigate = (nextRoute: AppRoute, replace = false) => {
+  const navigate = (nextRoute: AppRoute) => {
     if (nextRoute.kind === 'login' || nextRoute.kind === 'register') {
       throw new Error('Authenticated content cannot navigate to a public route');
     }
-    setLastReplace(replace);
     setRoute(nextRoute);
   };
+
+  const dismissOverlay = (fallbackRoute: AppRoute) => navigate(fallbackRoute);
 
   return (
     <>
       <output data-testid="shell-route">{JSON.stringify(route)}</output>
-      <output data-testid="last-replace">{String(lastReplace)}</output>
       <MainAppContent
         route={route}
         navigate={navigate}
+        dismissOverlay={dismissOverlay}
         state={{} as never}
         derived={{} as never}
         actions={{} as never}
@@ -70,7 +70,7 @@ function Harness() {
 }
 
 describe('MainAppContent passkey route overlay', () => {
-  it('preserves the source content and replaces back to it when closed', () => {
+  it('preserves the source content and delegates overlay dismissal when closed', () => {
     contentUnmounted.mockClear();
     render(<Harness />);
 
@@ -92,7 +92,6 @@ describe('MainAppContent passkey route overlay', () => {
     expect(screen.getByTestId('shell-route').textContent).toBe(
       JSON.stringify({ kind: 'songPractice', songId: 'twinkle-twinkle' })
     );
-    expect(screen.getByTestId('last-replace').textContent).toBe('true');
     expect(contentUnmounted).not.toHaveBeenCalled();
   });
 });

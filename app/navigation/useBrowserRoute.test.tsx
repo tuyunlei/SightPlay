@@ -32,4 +32,32 @@ describe('browser route adapter', () => {
 
     expect(pushState).not.toHaveBeenCalled();
   });
+
+  it('removes an application-opened overlay entry instead of duplicating its source', () => {
+    const back = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+    const { result } = renderHook(() => useBrowserRoute());
+
+    act(() =>
+      result.current.navigate({
+        kind: 'passkeys',
+        returnTo: { kind: 'library', difficulty: 'intermediate' },
+      })
+    );
+    act(() => result.current.dismissOverlay({ kind: 'library', difficulty: 'intermediate' }));
+
+    expect(back).toHaveBeenCalledOnce();
+    expect(replaceState).not.toHaveBeenCalled();
+  });
+
+  it('replaces a direct overlay deep link with its safe fallback', () => {
+    window.history.replaceState(null, '', '/passkeys?from=library&difficulty=intermediate');
+    const { result } = renderHook(() => useBrowserRoute());
+
+    act(() => result.current.dismissOverlay({ kind: 'library', difficulty: 'intermediate' }));
+
+    expect(window.location.pathname).toBe('/library');
+    expect(window.location.search).toBe('?difficulty=intermediate');
+    expect(result.current.route).toEqual({ kind: 'library', difficulty: 'intermediate' });
+  });
 });
