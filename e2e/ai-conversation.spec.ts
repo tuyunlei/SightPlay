@@ -109,7 +109,6 @@ test.describe('AI conversation E2E', () => {
     diagnostics,
   }) => {
     diagnostics.allowHttpError('/api/chat', 500);
-    diagnostics.allowConsoleError();
     await mockAuthenticatedSession(page);
     await mockChatApi(page, { shouldFail: true });
     await page.goto('/');

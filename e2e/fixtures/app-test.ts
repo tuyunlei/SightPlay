@@ -4,30 +4,24 @@ type RuntimeEvent =
   | { kind: 'pageError'; message: string }
   | { kind: 'requestFailed'; method: string; url: string; failure: string | null }
   | { kind: 'httpError'; method: string; url: string; status: number }
-  | { kind: 'consoleError'; text: string };
+  | { kind: 'consoleError'; text: string; url: string | null };
 
 type ExpectedHttpError = { pathname: string; status: number };
 
 export type RuntimeDiagnostics = {
   allowPageError: () => void;
-  allowConsoleError: () => void;
   allowHttpError: (pathname: string, status: number) => void;
 };
 
 class DiagnosticsController implements RuntimeDiagnostics {
   readonly state: DiagnosticsState = {
     allowPageError: false,
-    expectedConsoleErrors: 0,
     expectedHttpErrors: [],
     events: [],
   };
 
   allowPageError = () => {
     this.state.allowPageError = true;
-  };
-
-  allowConsoleError = () => {
-    this.state.expectedConsoleErrors += 1;
   };
 
   allowHttpError = (pathname: string, status: number) => {
@@ -37,7 +31,6 @@ class DiagnosticsController implements RuntimeDiagnostics {
 
 type DiagnosticsState = {
   allowPageError: boolean;
-  expectedConsoleErrors: number;
   expectedHttpErrors: ExpectedHttpError[];
   events: RuntimeEvent[];
 };
@@ -71,19 +64,30 @@ const installDiagnostics = (page: Page, state: DiagnosticsState) => {
   });
   page.on('console', (message) => {
     if (message.type() === 'error') {
-      state.events.push({ kind: 'consoleError', text: message.text() });
+      state.events.push({
+        kind: 'consoleError',
+        text: message.text(),
+        url: message.location().url || null,
+      });
     }
   });
 };
 
 const unexpectedEvents = (state: DiagnosticsState) => {
-  let remainingExpectedConsoleErrors = state.expectedConsoleErrors;
   return state.events.filter((event) => {
     if (event.kind === 'consoleError') {
       if (state.allowPageError) return false;
-      if (remainingExpectedConsoleErrors > 0) {
-        remainingExpectedConsoleErrors -= 1;
-        return false;
+      if (event.url) {
+        const pathname = new URL(event.url).pathname;
+        const matchesObservedExpectedHttpError = state.events.some(
+          (candidate) =>
+            candidate.kind === 'httpError' &&
+            new URL(candidate.url).pathname === pathname &&
+            state.expectedHttpErrors.some(
+              (expected) => expected.pathname === pathname && expected.status === candidate.status
+            )
+        );
+        if (matchesObservedExpectedHttpError) return false;
       }
       return true;
     }

@@ -165,5 +165,6 @@ production release remains a separate explicitly authorized operation.
   management browser paths pass with the stricter oracle.
 - 2026-08-13: Phase 1 clean checkpoint passed both TypeScript projects, all architecture gates,
   zero-warning ESLint, 459 unit/integration tests, production build, and the complete Playwright matrix
-  (58 passed, one documented WebKit virtual-WebAuthn skip). One intentional AI 500 now consumes an
-  explicit one-event console-error allowance; no test can silently suppress unrelated console errors.
+  (58 passed, one documented WebKit virtual-WebAuthn skip). Browser-generated console errors are
+  exempt only when their source URL matches an explicitly expected and actually observed HTTP failure;
+  no test can silently suppress an unrelated console error.
