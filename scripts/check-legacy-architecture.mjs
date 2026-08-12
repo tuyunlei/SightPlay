@@ -7,9 +7,9 @@ const allowlistPath = path.join(projectRoot, 'architecture/legacy-business-files
 
 function isProductionSource(relativePath) {
   return (
-    /\.(ts|tsx)$/.test(relativePath) &&
+    /\.(?:[cm]?[jt]s|[jt]sx)$/.test(relativePath) &&
     !relativePath.includes('/__tests__/') &&
-    !/\.(test|spec)\.(ts|tsx)$/.test(relativePath) &&
+    !/\.(test|spec)\.(?:[cm]?[jt]s|[jt]sx)$/.test(relativePath) &&
     !relativePath.endsWith('/testHelpers.ts')
   );
 }

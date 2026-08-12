@@ -53,6 +53,7 @@ export default tseslint.config(
       complexity: ['error', { max: 15 }],
       'max-lines-per-function': ['error', { max: 80, skipBlankLines: true, skipComments: true }],
       'import/no-default-export': 'error',
+      'import/no-relative-packages': 'error',
       'import/order': [
         'error',
         {
@@ -119,6 +120,19 @@ export default tseslint.config(
         { object: 'Date', property: 'now', message: 'Inject a clock.' },
         { object: 'Math', property: 'random', message: 'Inject a random source.' },
         { object: 'performance', property: 'now', message: 'Inject a clock.' },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        { selector: 'JSXElement', message: 'Feature models cannot render UI.' },
+        { selector: 'JSXFragment', message: 'Feature models cannot render UI.' },
+        {
+          selector: "NewExpression[callee.name='Date'][arguments.length=0]",
+          message: 'Inject a clock instead of reading the current time.',
+        },
+        {
+          selector: "CallExpression[callee.name='Date'][arguments.length=0]",
+          message: 'Inject a clock instead of reading the current time.',
+        },
       ],
     },
   },

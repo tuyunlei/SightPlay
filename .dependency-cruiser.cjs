@@ -1,13 +1,27 @@
+const { readdirSync } = require('node:fs');
+const path = require('node:path');
+
+const packageNames = readdirSync(path.join(__dirname, 'packages'), { withFileTypes: true })
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => entry.name);
+
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const capabilityPrivateRules = packageNames.map((packageName) => {
+  const packagePath = `packages/${escapeRegex(packageName)}`;
+  return {
+    name: `${packageName}-internals-private`,
+    severity: 'error',
+    comment: 'Capability internals are private; consumers import the package public API only',
+    from: { pathNot: `^${packagePath}/` },
+    to: { path: `^${packagePath}/src/(?!public\\.ts$)` },
+  };
+});
+
 /** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {
   forbidden: [
-    {
-      name: 'capability-internals-private',
-      severity: 'error',
-      comment: 'Capability internals are private; consumers import the package public API only',
-      from: { pathNot: '^packages/app-shell/' },
-      to: { path: '^packages/app-shell/src/(?!public\.ts$)' },
-    },
+    ...capabilityPrivateRules,
     {
       name: 'capability-model-is-pure',
       severity: 'error',
