@@ -39,12 +39,22 @@ if (allowlist.join('\n') !== sortedAllowlist.join('\n')) {
   process.exitCode = 1;
 } else {
   const allowed = new Set(allowlist);
-  const unexpected = legacyRoots.flatMap(findSourceFiles).sort().filter((file) => !allowed.has(file));
+  const currentFiles = legacyRoots.flatMap(findSourceFiles).sort();
+  const current = new Set(currentFiles);
+  const unexpected = currentFiles.filter((file) => !allowed.has(file));
+  const stale = allowlist.filter((file) => !current.has(file));
 
   if (unexpected.length > 0) {
     console.error('New production files cannot be added to legacy business directories:');
     for (const file of unexpected) console.error(`- ${file}`);
     console.error('Create or extend a capability package instead; the allowlist may only shrink.');
+    process.exitCode = 1;
+  }
+
+  if (stale.length > 0) {
+    console.error('Deleted legacy files must also be removed from the migration baseline:');
+    for (const file of stale) console.error(`- ${file}`);
+    console.error('The manifest must exactly match the remaining legacy production sources.');
     process.exitCode = 1;
   }
 }
