@@ -82,6 +82,47 @@ export default tseslint.config(
     },
   },
   {
+    files: ['packages/*/src/model/**/*.{ts,tsx}', 'packages/*/src/domain/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            { name: 'react', message: 'Feature models must remain independent of React.' },
+            { name: 'react-dom', message: 'Feature models must remain independent of React.' },
+            { name: 'zustand', message: 'Feature models own state transitions directly.' },
+          ],
+          patterns: [
+            {
+              group: ['@sentry/*', '@passwordless-id/*'],
+              message: 'Use an injected port outside the feature model.',
+            },
+          ],
+        },
+      ],
+      'no-restricted-globals': [
+        'error',
+        { name: 'window', message: 'Move browser access to an adapter.' },
+        { name: 'document', message: 'Move browser access to an adapter.' },
+        { name: 'navigator', message: 'Move browser access to an adapter.' },
+        { name: 'fetch', message: 'Inject a network port.' },
+        { name: 'localStorage', message: 'Inject a storage port.' },
+        { name: 'sessionStorage', message: 'Inject a storage port.' },
+        { name: 'setTimeout', message: 'Return a typed effect and inject a scheduler.' },
+        { name: 'clearTimeout', message: 'Return a typed effect and inject a scheduler.' },
+        { name: 'setInterval', message: 'Return a typed effect and inject a scheduler.' },
+        { name: 'clearInterval', message: 'Return a typed effect and inject a scheduler.' },
+        { name: 'crypto', message: 'Inject an identifier or randomness port.' },
+      ],
+      'no-restricted-properties': [
+        'error',
+        { object: 'Date', property: 'now', message: 'Inject a clock.' },
+        { object: 'Math', property: 'random', message: 'Inject a random source.' },
+        { object: 'performance', property: 'now', message: 'Inject a clock.' },
+      ],
+    },
+  },
+  {
     files: ['**/__tests__/**', '**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',

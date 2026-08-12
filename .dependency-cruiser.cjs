@@ -2,6 +2,23 @@
 module.exports = {
   forbidden: [
     {
+      name: 'capability-internals-private',
+      severity: 'error',
+      comment: 'Capability internals are private; consumers import the package public API only',
+      from: { pathNot: '^packages/app-shell/' },
+      to: { path: '^packages/app-shell/src/(?!public\.ts$)' },
+    },
+    {
+      name: 'capability-model-is-pure',
+      severity: 'error',
+      comment:
+        'Capability models cannot depend on UI, adapters, stores, or application composition',
+      from: { path: '^packages/[^/]+/src/(model|domain)/' },
+      to: {
+        path: '^(app|components|domain|edge-functions|features|functions|hooks|services|store|views|App\.tsx|index\.tsx)',
+      },
+    },
+    {
       name: 'shared-no-upper',
       severity: 'error',
       comment: 'shared 文件禁止依赖上层模块',

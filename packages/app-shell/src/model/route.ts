@@ -6,7 +6,7 @@ export type AppRoute =
   | { kind: 'songPractice'; songId: string }
   | { kind: 'passkeys' };
 
-interface RouteLocation {
+export interface RouteLocation {
   pathname: string;
   search?: string;
 }

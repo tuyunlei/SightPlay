@@ -2,9 +2,9 @@
 
 Status: in progress
 
-Branch: `codex/architecture-rebuild`
+Current branch: `codex/architecture-boundaries`
 
-Base: `origin/develop` at `4477bc4`
+Current base: `origin/develop` at `a1d9614` (PR #9)
 
 ## Goal
 
@@ -25,7 +25,7 @@ alone are not progress. This document is updated in the same change as implement
 - [x] Define identity, transactional data, WebAuthn, session, and telemetry policy.
 - [x] Define the proof ladder and cross-system invariants.
 - [x] Record the capability-module and transactional-identity decisions.
-- [ ] Establish workspace package boundaries and CI fitness rules.
+- [x] Establish workspace package boundaries and CI fitness rules.
 
 Exit evidence: target documents reviewed as one coherent contract; new implementation has one approved
 home and cannot add business ownership to legacy horizontal directories.
@@ -118,3 +118,11 @@ production release remains a separate explicitly authorized operation.
 - 2026-08-13: PR #9 review identified that malformed percent-encoding in a song deep link could throw
   before the App ErrorBoundary mounted. The pure route parser now classifies malformed paths as unknown
   routes, with regression cases for incomplete and invalid UTF-8 encodings.
+- 2026-08-13: PR #9 was squash-merged to `develop` at `a1d9614`. The next slice established the pnpm
+  workspace and moved the App Shell route model behind `@sightplay/app-shell`'s public export. ESLint
+  now rejects React, browser globals, timers, and implicit time/randomness inside package models;
+  dependency-cruiser rejects deep imports and upward model dependencies.
+- 2026-08-13: Captured the 25 remaining production files under top-level `hooks/`, `services/`,
+  `store/`, and `views/` as a shrinking migration baseline. `lint:boundaries` rejects any new business
+  source in those directories, so new capability ownership must enter the package architecture while
+  each migration removes entries from the baseline.

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { parseAppRoute, serializeAppRoute, type AppRoute } from './route';
+import { parseAppRoute, serializeAppRoute, type AppRoute } from '@sightplay/app-shell';
 
 function readRoute(): AppRoute {
   return parseAppRoute(window.location);
