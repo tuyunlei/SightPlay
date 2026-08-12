@@ -1,8 +1,5 @@
 # AGENTS.md — SightPlay
 
-Read this file first, then read the nearest scoped `AGENTS.md` for the area you change. Repository
-commands and current engineering status live in `README.md` and `docs/`, not here.
-
 ## Instruction governance
 
 Keep instructions limited to stable constraints that a capable cold agent would otherwise miss and
