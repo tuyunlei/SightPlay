@@ -13,16 +13,16 @@ import { useUiStore } from './store/uiStore';
 import { MainAppContent } from './views/MainAppContent';
 
 type Navigate = (route: AppRoute, replace?: boolean) => void;
-type DismissOverlay = (fallbackRoute: AppRoute) => void;
+type DismissEntry = (fallbackRoute: AppRoute) => void;
 
 function AuthenticatedApp({
   route,
   navigate,
-  dismissOverlay,
+  dismissEntry,
 }: {
   route: ProtectedAppRoute;
   navigate: Navigate;
-  dismissOverlay: DismissOverlay;
+  dismissEntry: DismissEntry;
 }) {
   const lang = useUiStore((state) => state.lang);
   const toggleLang = useUiStore((state) => state.toggleLang);
@@ -72,14 +72,14 @@ function AuthenticatedApp({
         lang={lang}
         route={route}
         navigate={navigate}
-        dismissOverlay={dismissOverlay}
+        dismissEntry={dismissEntry}
       />
     </div>
   );
 }
 
 function AppRuntime() {
-  const { route, navigate, dismissOverlay } = useBrowserRoute();
+  const { route, navigate, dismissEntry } = useBrowserRoute();
 
   if (
     (import.meta.env.MODE === 'test' || import.meta.env.DEV) &&
@@ -91,11 +91,7 @@ function AppRuntime() {
   return (
     <AuthGate route={route} navigate={navigate}>
       {(protectedRoute) => (
-        <AuthenticatedApp
-          route={protectedRoute}
-          navigate={navigate}
-          dismissOverlay={dismissOverlay}
-        />
+        <AuthenticatedApp route={protectedRoute} navigate={navigate} dismissEntry={dismissEntry} />
       )}
     </AuthGate>
   );

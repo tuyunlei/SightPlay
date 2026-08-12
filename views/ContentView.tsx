@@ -17,6 +17,7 @@ import { SongPracticeSection } from './SongPracticeSection';
 type ContentViewProps = {
   route: AppContentRoute;
   navigate: (route: AppContentRoute, replace?: boolean) => void;
+  dismissEntry: (fallbackRoute: AppContentRoute) => void;
   state: ReturnType<typeof usePracticeSession>['state'];
   derived: ReturnType<typeof usePracticeSession>['derived'];
   actions: ReturnType<typeof usePracticeSession>['actions'];
@@ -68,7 +69,7 @@ export const ContentView: React.FC<ContentViewProps> = (props) => {
 
   const exitSong = () => {
     setCompletedSongId(null);
-    navigate({ kind: 'library' });
+    props.dismissEntry({ kind: 'library' });
   };
 
   const completeSong = () => {

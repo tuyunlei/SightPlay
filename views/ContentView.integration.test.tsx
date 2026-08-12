@@ -55,6 +55,7 @@ function ContentViewHarness({ initialRoute }: { initialRoute: AppContentRoute })
       <ContentView
         route={route}
         navigate={navigate}
+        dismissEntry={navigate}
         state={{ challenge: null } as never}
         derived={{ targetNote: null } as never}
         actions={actions as never}

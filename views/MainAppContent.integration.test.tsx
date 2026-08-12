@@ -42,7 +42,7 @@ function Harness() {
     setRoute(nextRoute);
   };
 
-  const dismissOverlay = (fallbackRoute: AppRoute) => navigate(fallbackRoute);
+  const dismissEntry = (fallbackRoute: AppRoute) => navigate(fallbackRoute);
 
   return (
     <>
@@ -50,7 +50,7 @@ function Harness() {
       <MainAppContent
         route={route}
         navigate={navigate}
-        dismissOverlay={dismissOverlay}
+        dismissEntry={dismissEntry}
         state={{} as never}
         derived={{} as never}
         actions={{} as never}

@@ -89,6 +89,8 @@ test.describe('Song Library Practice flow', () => {
 
   test('select song, enter practice, and exit back to library', async ({ page }) => {
     await openSongLibrary(page);
+    await page.getByRole('button', { name: /beginner|初级/i }).click();
+    await expect(page).toHaveURL(/\/library\?difficulty=beginner$/);
 
     await page.getByText('Twinkle Twinkle Little Star').click();
 
@@ -99,6 +101,10 @@ test.describe('Song Library Practice flow', () => {
 
     await page.getByRole('button', { name: /exit|退出/i }).click();
     await expect(page.getByRole('heading', { name: /song library|曲库/i })).toBeVisible();
+    await expect(page).toHaveURL(/\/library\?difficulty=beginner$/);
+
+    await page.goBack();
+    await expect(page).toHaveURL(/\/library$/);
   });
 
   test('song progress updates after playing notes', async ({ page }) => {

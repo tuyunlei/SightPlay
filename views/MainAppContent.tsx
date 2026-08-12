@@ -27,7 +27,7 @@ type MainAppContentProps = {
   lang: Language;
   route: ProtectedAppRoute;
   navigate: (route: AppRoute, replace?: boolean) => void;
-  dismissOverlay: (fallbackRoute: AppRoute) => void;
+  dismissEntry: (fallbackRoute: AppRoute) => void;
 };
 
 export const MainAppContent: React.FC<MainAppContentProps> = (props) => {
@@ -43,7 +43,7 @@ export const MainAppContent: React.FC<MainAppContentProps> = (props) => {
 
   const closePasskeys = () => {
     if (props.route.kind !== 'passkeys') return;
-    props.dismissOverlay(props.route.returnTo ?? { kind: 'randomPractice' });
+    props.dismissEntry(props.route.returnTo ?? { kind: 'randomPractice' });
   };
 
   return (
@@ -58,7 +58,7 @@ export const MainAppContent: React.FC<MainAppContentProps> = (props) => {
           t={props.t}
         />
       )}
-      <ContentView {...props} route={contentRoute} />
+      <ContentView {...props} route={contentRoute} dismissEntry={props.dismissEntry} />
     </>
   );
 };

@@ -55,6 +55,7 @@ function Harness() {
       <ContentView
         route={route}
         navigate={setRoute}
+        dismissEntry={setRoute}
         state={{} as never}
         derived={{} as never}
         actions={{} as never}
