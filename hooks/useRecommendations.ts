@@ -5,15 +5,8 @@ import {
   generateRecommendations,
   PracticeSnapshot,
   Recommendation,
-  RecommendationAction,
 } from '../domain/recommendations';
 import { usePracticeStore } from '../store/practiceStore';
-import { PracticeRangeMode } from '../types';
-
-interface PracticeCallbacks {
-  toggleClef: () => void;
-  setPracticeRange: (range: PracticeRangeMode) => void;
-}
 
 export function useRecommendations() {
   const [completedDifficulty, setCompletedDifficulty] = useState<SongDifficulty | undefined>();
@@ -42,18 +35,10 @@ export function useRecommendations() {
 
   const dismiss = () => setDismissed(true);
 
-  const applyAction = (rec: Recommendation, cbs: PracticeCallbacks) => {
-    const action = rec.action as RecommendationAction | undefined;
-    if (!action) return;
-    if (action.kind === 'setClef') cbs.toggleClef();
-    if (action.kind === 'setPracticeRange') cbs.setPracticeRange(action.range);
-    dismiss();
-  };
-
   const reset = () => {
     setDismissed(false);
     setCompletedDifficulty(undefined);
   };
 
-  return { recommendations, onSongComplete, dismiss, applyAction, reset };
+  return { recommendations, onSongComplete, dismiss, reset };
 }

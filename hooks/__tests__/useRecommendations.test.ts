@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { usePracticeStore } from '../../store/practiceStore';
 import { ClefType } from '../../types';
@@ -25,16 +25,13 @@ describe('useRecommendations', () => {
     expect(result.current.recommendations).toEqual([]);
   });
 
-  it('returns recommendations for high-accuracy random practice and applies action', () => {
+  it('selects the exact target for a high-accuracy random practice recommendation', () => {
     usePracticeStore.setState({
       sessionStats: { totalAttempts: 30, cleanHits: 29, bpm: 90 },
       clef: ClefType.TREBLE,
       practiceRange: 'central',
       practiceMode: 'random',
     });
-
-    const toggleClef = vi.fn();
-    const setPracticeRange = vi.fn();
 
     const { result } = renderHook(() => useRecommendations());
 
@@ -46,13 +43,7 @@ describe('useRecommendations', () => {
       throw new Error('Expected clef recommendation to exist');
     }
 
-    act(() => {
-      result.current.applyAction(clefRec, { toggleClef, setPracticeRange });
-    });
-
-    expect(toggleClef).toHaveBeenCalledTimes(1);
-    expect(setPracticeRange).not.toHaveBeenCalled();
-    expect(result.current.recommendations).toEqual([]);
+    expect(clefRec.action).toEqual({ kind: 'setClef', clef: ClefType.BASS });
   });
 
   it('handles song completion flow and reset', () => {
@@ -79,27 +70,5 @@ describe('useRecommendations', () => {
       result.current.reset();
     });
     expect(result.current.recommendations).toEqual([]);
-  });
-
-  it('ignores recommendations without action in applyAction', () => {
-    const { result } = renderHook(() => useRecommendations());
-
-    const toggleClef = vi.fn();
-    const setPracticeRange = vi.fn();
-
-    act(() => {
-      result.current.applyAction(
-        {
-          id: 'no-action',
-          type: 'general',
-          titleKey: 'title',
-          descriptionKey: 'desc',
-        },
-        { toggleClef, setPracticeRange }
-      );
-    });
-
-    expect(toggleClef).not.toHaveBeenCalled();
-    expect(setPracticeRange).not.toHaveBeenCalled();
   });
 });

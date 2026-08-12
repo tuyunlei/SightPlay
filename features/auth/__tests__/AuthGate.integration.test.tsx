@@ -3,10 +3,11 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { AppRoute } from '@sightplay/app-shell';
+
 import { translations } from '../../../i18n';
 import { useUiStore } from '../../../store/uiStore';
 import { AuthGate } from '../AuthGate';
-import { type AuthScene } from '../authScene';
 
 const { registerMock, authenticateMock } = vi.hoisted(() => ({
   registerMock: vi.fn(),
@@ -26,13 +27,20 @@ vi.mock('@sentry/react', () => ({
   captureException: vi.fn(),
 }));
 
-function AuthGateHarness({ initialScene = { kind: 'login' } }: { initialScene?: AuthScene }) {
-  const [scene, setScene] = useState(initialScene);
+function AuthGateHarness({ initialRoute = { kind: 'login' } }: { initialRoute?: AppRoute }) {
+  const [route, setRoute] = useState<AppRoute>(initialRoute);
 
   return (
-    <AuthGate scene={scene} navigate={setScene}>
-      <div data-testid="main-app">main-app</div>
-    </AuthGate>
+    <>
+      <output data-testid="current-route">{JSON.stringify(route)}</output>
+      <AuthGate route={route} navigate={setRoute}>
+        {(protectedRoute) => (
+          <div data-testid="main-app" data-route={JSON.stringify(protectedRoute)}>
+            main-app
+          </div>
+        )}
+      </AuthGate>
+    </>
   );
 }
 
@@ -65,6 +73,38 @@ describe('AuthGate integration', () => {
 
     expect(await screen.findByTestId('login-screen')).toBeTruthy();
     expect(screen.queryByTestId('main-app')).not.toBeTruthy();
+  });
+
+  it('redirects an anonymous protected route before constructing protected children', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ authenticated: false, hasPasskeys: true }),
+      }))
+    );
+
+    render(<AuthGateHarness initialRoute={{ kind: 'library', difficulty: 'advanced' }} />);
+
+    expect(await screen.findByTestId('login-screen')).toBeTruthy();
+    expect(screen.getByTestId('current-route').textContent).toBe(JSON.stringify({ kind: 'login' }));
+    expect(screen.queryByTestId('main-app')).toBeNull();
+  });
+
+  it('delivers an authenticated deep link as the protected scene', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ authenticated: true, hasPasskeys: true }),
+      }))
+    );
+
+    render(<AuthGateHarness initialRoute={{ kind: 'library', difficulty: 'intermediate' }} />);
+
+    expect((await screen.findByTestId('main-app')).getAttribute('data-route')).toBe(
+      JSON.stringify({ kind: 'library', difficulty: 'intermediate' })
+    );
   });
 
   it('lets the user retry and complete sign-in after passkey authentication is canceled', async () => {

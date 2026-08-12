@@ -1,6 +1,9 @@
 import { Wand2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import type { AppRoute } from '@sightplay/app-shell';
+
+import { applyRecommendationAction } from '../app/recommendations/applyRecommendationAction';
 import type { Recommendation } from '../domain/recommendations';
 import { AiChatDrawer } from '../features/ai/AiChatDrawer';
 import TopBar from '../features/controls/TopBar';
@@ -28,6 +31,7 @@ type RandomPracticeViewProps = {
   sendMessage: (message: string) => void;
   chatEndRef: React.RefObject<HTMLDivElement | null>;
   lang: Language;
+  navigate: (route: AppRoute) => void;
 };
 
 const usePracticeHints = (lang: Language, clef: string) => {
@@ -97,10 +101,17 @@ export const RandomPracticeView: React.FC<RandomPracticeViewProps> = (props) => 
   const { state, derived, actions, pressedKeys, t, toggleLang, lang } = props;
   const { chatInput, setChatInput, chatHistory, isLoadingAi, sendMessage, chatEndRef } = props;
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const { recommendations, dismiss, applyAction } = useRecommendations();
+  const { recommendations, dismiss } = useRecommendations();
 
-  const cbs = { toggleClef: actions.toggleClef, setPracticeRange: actions.setPracticeRange };
-  const applyRec = (rec: Recommendation) => applyAction(rec, cbs);
+  const applyRec = (rec: Recommendation) => {
+    if (!rec.action) return;
+    applyRecommendationAction(rec.action, {
+      selectClef: actions.selectClef,
+      setPracticeRange: actions.setPracticeRange,
+      navigate: props.navigate,
+    });
+    dismiss();
+  };
 
   return (
     <>

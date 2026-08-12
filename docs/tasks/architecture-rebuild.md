@@ -2,9 +2,9 @@
 
 Status: in progress
 
-Current branch: `codex/architecture-boundaries`
+Current branch: `codex/app-shell-navigation`
 
-Current base: `origin/develop` at `a1d9614` (PR #9)
+Current base: `origin/develop` at `13532e7` (PR #10)
 
 ## Goal
 
@@ -32,7 +32,7 @@ home and cannot add business ownership to legacy horizontal directories.
 
 ## Phase 1 — App Shell and Identity lifecycle
 
-- [ ] Make typed Route the only navigation fact.
+- [x] Make typed Route the only navigation fact.
 - [ ] Represent booting, login, registration, and authenticated scenes as mutually exclusive states.
 - [x] Move protected Practice, device, and Guidance runtime construction below authentication.
 - [ ] Add structured identity failures and inject API, Passkey, navigation, telemetry, and clock ports.
@@ -127,3 +127,14 @@ production release remains a separate explicitly authorized operation.
   `store/`, and `views/` as a shrinking migration baseline. `lint:boundaries` rejects any new business
   source in those directories, so new capability ownership must enter the package architecture while
   each migration removes entries from the baseline.
+- 2026-08-13: PR #10 was squash-merged to `develop` at `13532e7` after every required CI check passed.
+  The next cutover made App Shell Route the sole page-selection fact: session plus Route now selects a
+  mutually exclusive scene in a pure model; authorization redirects occur before protected runtime
+  construction; passkey management, library difficulty, and song selection no longer use parallel
+  React booleans/IDs. URL difficulty is decoded into a closed union, logout no longer writes browser
+  history from Identity, and one exhaustive App interpreter preserves all recommendation payloads.
+- 2026-08-13: Navigation checkpoint passed zero-warning lint, application and no-DOM/no-Node model
+  typechecks, dependency/legacy/file-size/dead-code gates, 441 unit/integration tests, production
+  build, and the complete Playwright matrix (61 passed, one documented WebKit virtual-WebAuthn skip).
+  The first E2E pass exposed an ErrorBoundary test hook coupled to an auth query; moving fault
+  injection under the real App boundary removed that hidden routing dependency before the clean rerun.

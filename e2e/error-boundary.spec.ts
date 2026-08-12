@@ -13,8 +13,11 @@ test.describe('ErrorBoundary degraded UI', () => {
         body: JSON.stringify({ authenticated: true, hasPasskeys: true }),
       });
     });
+    await page.addInitScript(() => {
+      window.localStorage.setItem('__sightplay_force_render_error', '1');
+    });
 
-    await page.goto('/?__forceErrorBoundary=1');
+    await page.goto('/');
 
     await expect(
       page.getByRole('heading', { name: /something went wrong|出了点问题/i })
@@ -23,7 +26,7 @@ test.describe('ErrorBoundary degraded UI', () => {
     await expect(page.getByRole('button', { name: /retry|重试/i })).toBeVisible();
 
     await page.evaluate(() => {
-      window.history.replaceState({}, '', '/');
+      window.localStorage.removeItem('__sightplay_force_render_error');
     });
 
     await page.getByRole('button', { name: /retry|重试/i }).click();

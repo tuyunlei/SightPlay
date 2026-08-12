@@ -36,6 +36,12 @@ describe('App route', () => {
     });
   });
 
+  it('discards an unrecognized difficulty at the URL boundary', () => {
+    expect(parseAppRoute({ pathname: '/library', search: '?difficulty=expert' })).toEqual({
+      kind: 'library',
+    });
+  });
+
   it.each(['/songs/%', '/songs/%E0'])(
     'falls back to login for a malformed encoded song route: %s',
     (pathname) => {

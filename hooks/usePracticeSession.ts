@@ -102,6 +102,7 @@ export const usePracticeSession = ({
   const sessionActions = {
     toggleMic,
     toggleClef,
+    selectClef: actions.setClef,
     resetSessionStats,
     loadChallenge,
     setPracticeRange: actions.setPracticeRange,

@@ -1,10 +1,14 @@
-export type AppRoute =
-  | { kind: 'login' }
-  | { kind: 'register'; inviteCode?: string }
+export type RouteDifficulty = 'beginner' | 'intermediate' | 'advanced';
+
+export type PublicAppRoute = { kind: 'login' } | { kind: 'register'; inviteCode?: string };
+
+export type ProtectedAppRoute =
   | { kind: 'randomPractice' }
-  | { kind: 'library'; difficulty?: string }
+  | { kind: 'library'; difficulty?: RouteDifficulty }
   | { kind: 'songPractice'; songId: string }
   | { kind: 'passkeys' };
+
+export type AppRoute = PublicAppRoute | ProtectedAppRoute;
 
 export interface RouteLocation {
   pathname: string;
@@ -40,12 +44,21 @@ function serializeQueryParam(key: string, value: string): string {
   return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
 }
 
+function decodeDifficulty(value: string | undefined): RouteDifficulty | undefined {
+  if (value === 'beginner' || value === 'intermediate' || value === 'advanced') return value;
+  return undefined;
+}
+
+export function isPublicAppRoute(route: AppRoute): route is PublicAppRoute {
+  return route.kind === 'login' || route.kind === 'register';
+}
+
 export function parseAppRoute({ pathname, search = '' }: RouteLocation): AppRoute {
   if (pathname === '/register') {
     return { kind: 'register', inviteCode: readQueryParam(search, 'code') };
   }
   if (pathname === '/library') {
-    return { kind: 'library', difficulty: readQueryParam(search, 'difficulty') };
+    return { kind: 'library', difficulty: decodeDifficulty(readQueryParam(search, 'difficulty')) };
   }
   if (pathname.startsWith('/songs/')) {
     const songId = decodePathSegment(pathname.slice('/songs/'.length));
