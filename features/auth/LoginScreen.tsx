@@ -88,8 +88,6 @@ export function LoginScreen({ initialShowRegister = false, initialInviteCode }: 
     const result = await login();
     if (result === true) return;
     setError(result);
-    setShowRegister(true);
-    setHighlightRegister(true);
     setIsLoading(false);
   };
 
@@ -120,6 +118,10 @@ export function LoginScreen({ initialShowRegister = false, initialInviteCode }: 
               dataTestId="register-section"
               highlighted={highlightRegister}
               initialInviteCode={initialInviteCode}
+              onReturnToLogin={() => {
+                setShowRegister(false);
+                setHighlightRegister(false);
+              }}
             />
           </div>
         )}
