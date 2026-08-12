@@ -31,3 +31,9 @@ Which mechanical checks or tests keep the decision true?
 
 Do not record temporary implementation plans, copied chat discussion, or facts already enforced and
 explained at the relevant code boundary.
+
+## Accepted decisions
+
+- [0001 — Practice Decisions and Runtime Effects](0001-practice-reducer-effects.md)
+- [0002 — Capability Modules and Functional Core](0002-capability-modules-and-functional-core.md)
+- [0003 — Transactional Account and Credential Identity](0003-transactional-identity-model.md)

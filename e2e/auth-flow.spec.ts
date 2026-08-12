@@ -123,7 +123,7 @@ test.describe('Authentication Flow E2E', () => {
 
       await expect(page.getByTestId('login-screen')).toBeVisible();
       await page.getByRole('button', { name: /register with invite code|使用邀请码注册/i }).click();
-      await expect(page.getByTestId('register-section')).toBeVisible();
+      await expect(page.getByTestId('register-screen')).toBeVisible();
 
       await page.locator('#invite-code').fill('ABCD-EFGH');
       const registerButton = page.getByRole('button', { name: /passkey/i });
@@ -163,7 +163,7 @@ test.describe('Authentication Flow E2E', () => {
       await expect(registerButton).toBeEnabled();
       await registerButton.click();
 
-      await expect(page.getByTestId('register-section')).toBeVisible();
+      await expect(page.getByTestId('register-screen')).toBeVisible();
       await expect(page.getByText('Server error')).toBeVisible();
     });
 

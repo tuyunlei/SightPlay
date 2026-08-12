@@ -1,10 +1,12 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { translations } from '../../../i18n';
 import { useUiStore } from '../../../store/uiStore';
 import { AuthGate } from '../AuthGate';
+import { type AuthScene } from '../authScene';
 
 const { registerMock, authenticateMock } = vi.hoisted(() => ({
   registerMock: vi.fn(),
@@ -23,6 +25,16 @@ vi.mock('@sentry/react', () => ({
   setContext: vi.fn(),
   captureException: vi.fn(),
 }));
+
+function AuthGateHarness({ initialScene = { kind: 'login' } }: { initialScene?: AuthScene }) {
+  const [scene, setScene] = useState(initialScene);
+
+  return (
+    <AuthGate scene={scene} navigate={setScene}>
+      <div data-testid="main-app">main-app</div>
+    </AuthGate>
+  );
+}
 
 describe('AuthGate integration', () => {
   beforeEach(() => {
@@ -49,11 +61,7 @@ describe('AuthGate integration', () => {
       })
     );
 
-    render(
-      <AuthGate>
-        <div data-testid="main-app">main-app</div>
-      </AuthGate>
-    );
+    render(<AuthGateHarness />);
 
     expect(await screen.findByTestId('login-screen')).toBeTruthy();
     expect(screen.queryByTestId('main-app')).not.toBeTruthy();
@@ -96,11 +104,7 @@ describe('AuthGate integration', () => {
       })
     );
 
-    render(
-      <AuthGate>
-        <div data-testid="main-app">main-app</div>
-      </AuthGate>
-    );
+    render(<AuthGateHarness />);
 
     await screen.findByTestId('login-screen');
     await user.click(screen.getByRole('button', { name: translations.zh.authLoginButton }));
@@ -144,21 +148,19 @@ describe('AuthGate integration', () => {
       })
     );
 
-    render(
-      <AuthGate>
-        <div data-testid="main-app">main-app</div>
-      </AuthGate>
-    );
+    render(<AuthGateHarness />);
 
     await screen.findByTestId('login-screen');
     await user.click(
       screen.getByRole('button', { name: translations.zh.authNoAccountRegisterLink })
     );
-    expect(screen.getByTestId('register-section')).toBeTruthy();
+    expect(await screen.findByTestId('register-screen')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: translations.zh.authLoginButton })).toBeNull();
 
     await user.click(
       screen.getByRole('button', { name: translations.zh.authHaveAccountLoginLink })
     );
+    expect(await screen.findByTestId('login-screen')).toBeTruthy();
     await user.click(screen.getByRole('button', { name: translations.zh.authLoginButton }));
 
     expect(await screen.findByTestId('main-app')).toBeTruthy();
@@ -199,11 +201,7 @@ describe('AuthGate integration', () => {
       })
     );
 
-    render(
-      <AuthGate>
-        <div data-testid="main-app">main-app</div>
-      </AuthGate>
-    );
+    render(<AuthGateHarness />);
 
     await screen.findByTestId('login-screen');
     await user.click(
@@ -254,11 +252,7 @@ describe('AuthGate integration', () => {
       })
     );
 
-    render(
-      <AuthGate>
-        <div data-testid="main-app">main-app</div>
-      </AuthGate>
-    );
+    render(<AuthGateHarness />);
 
     await screen.findByTestId('login-screen');
     await user.click(screen.getByRole('button', { name: translations.zh.authLoginButton }));

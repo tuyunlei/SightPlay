@@ -4,12 +4,10 @@ import { useState } from 'react';
 import { translations } from '../../i18n';
 import { useUiStore } from '../../store/uiStore';
 
-import { RegisterCard } from './RegisterCard';
 import { useAuthContext } from './useAuthContext';
 
 interface LoginScreenProps {
-  initialShowRegister?: boolean;
-  initialInviteCode?: string;
+  onRegister: () => void;
 }
 
 const authBackgroundStyle = {
@@ -21,12 +19,11 @@ interface LoginCardProps {
   t: (typeof translations)['en'];
   isLoading: boolean;
   error: string | null;
-  showRegister: boolean;
   onLogin: () => void;
-  onShowRegister: () => void;
+  onRegister: () => void;
 }
 
-function LoginCard({ t, isLoading, error, showRegister, onLogin, onShowRegister }: LoginCardProps) {
+function LoginCard({ t, isLoading, error, onLogin, onRegister }: LoginCardProps) {
   return (
     <div className="w-full rounded-2xl bg-white/90 p-8 shadow-2xl backdrop-blur-sm dark:bg-slate-800/50">
       <div className="mb-8 flex flex-col items-center gap-4">
@@ -60,27 +57,23 @@ function LoginCard({ t, isLoading, error, showRegister, onLogin, onShowRegister 
         )}
       </button>
 
-      {!showRegister && (
-        <button
-          type="button"
-          onClick={onShowRegister}
-          className="mt-4 w-full text-center text-sm text-indigo-600 underline decoration-indigo-400/60 underline-offset-4 transition hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200"
-        >
-          {t.authNoAccountRegisterLink}
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={onRegister}
+        className="mt-4 w-full text-center text-sm text-indigo-600 underline decoration-indigo-400/60 underline-offset-4 transition hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200"
+      >
+        {t.authNoAccountRegisterLink}
+      </button>
     </div>
   );
 }
 
-export function LoginScreen({ initialShowRegister = false, initialInviteCode }: LoginScreenProps) {
+export function LoginScreen({ onRegister }: LoginScreenProps) {
   const { login } = useAuthContext();
   const lang = useUiStore((state) => state.lang);
   const t = translations[lang];
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showRegister, setShowRegister] = useState(initialShowRegister || !!initialInviteCode);
-  const [highlightRegister, setHighlightRegister] = useState(false);
 
   const handleLogin = async () => {
     setIsLoading(true);
@@ -89,11 +82,6 @@ export function LoginScreen({ initialShowRegister = false, initialInviteCode }: 
     if (result === true) return;
     setError(result);
     setIsLoading(false);
-  };
-
-  const handleShowRegister = () => {
-    setShowRegister(true);
-    setHighlightRegister(false);
   };
 
   return (
@@ -107,24 +95,9 @@ export function LoginScreen({ initialShowRegister = false, initialInviteCode }: 
           t={t}
           isLoading={isLoading}
           error={error}
-          showRegister={showRegister}
           onLogin={handleLogin}
-          onShowRegister={handleShowRegister}
+          onRegister={onRegister}
         />
-
-        {showRegister && (
-          <div className="mt-6">
-            <RegisterCard
-              dataTestId="register-section"
-              highlighted={highlightRegister}
-              initialInviteCode={initialInviteCode}
-              onReturnToLogin={() => {
-                setShowRegister(false);
-                setHighlightRegister(false);
-              }}
-            />
-          </div>
-        )}
       </div>
     </div>
   );

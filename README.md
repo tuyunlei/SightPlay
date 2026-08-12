@@ -85,6 +85,8 @@ pnpm audit
 - Risk-based test layers: [`docs/guides/testing-strategy.md`](docs/guides/testing-strategy.md)
 - Autonomous browser/system test operations: [`docs/guides/autonomous-e2e.md`](docs/guides/autonomous-e2e.md)
 - Agent instruction governance: [`docs/guides/agents-md-governance.md`](docs/guides/agents-md-governance.md)
+- Target system architecture: [`docs/architecture/`](docs/architecture/)
+- Architecture rebuild progress: [`docs/tasks/architecture-rebuild.md`](docs/tasks/architecture-rebuild.md)
 - Durable engineering decisions: [`docs/decisions/`](docs/decisions/)
 
 GitHub Issues and pull requests own live work status. A repository task document is appropriate only

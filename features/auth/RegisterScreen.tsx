@@ -2,9 +2,10 @@ import { RegisterCard } from './RegisterCard';
 
 interface RegisterScreenProps {
   initialInviteCode?: string;
+  onReturnToLogin: () => void;
 }
 
-export function RegisterScreen({ initialInviteCode }: RegisterScreenProps) {
+export function RegisterScreen({ initialInviteCode, onReturnToLogin }: RegisterScreenProps) {
   return (
     <div
       className="flex min-h-screen items-center justify-center px-4"
@@ -16,7 +17,7 @@ export function RegisterScreen({ initialInviteCode }: RegisterScreenProps) {
       <RegisterCard
         dataTestId="register-screen"
         initialInviteCode={initialInviteCode}
-        onReturnToLogin={() => window.location.assign('/')}
+        onReturnToLogin={onReturnToLogin}
       />
     </div>
   );
