@@ -169,6 +169,8 @@ production release remains a separate explicitly authorized operation.
   exempt only when their source URL matches an explicitly expected and actually observed HTTP failure;
   no test can silently suppress an unrelated console error. Request cancellation is exempt only for
   the known StrictMode `GET /api/auth/session` disposal path; all other aborted requests fail E2E.
+  Expected ErrorBoundary faults use one-shot page/console budgets; recovery cannot suppress any later
+  runtime error.
 - 2026-08-13: A pre-push rerun timed out waiting for Google Fonts, exposing that production CSS was
   also generated at runtime by the Tailwind CDN. Tailwind now compiles through Vite, the system font
   stack replaces the remote font, and stale CDN/import-map tags are gone. The built HTML has no font,
