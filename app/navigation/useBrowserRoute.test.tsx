@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useBrowserRoute } from './useBrowserRoute';
 
@@ -22,5 +22,14 @@ describe('browser route adapter', () => {
       window.dispatchEvent(new PopStateEvent('popstate'));
     });
     expect(result.current.route).toEqual({ kind: 'randomPractice' });
+  });
+
+  it('does not push a duplicate entry for the current route', () => {
+    const pushState = vi.spyOn(window.history, 'pushState');
+    const { result } = renderHook(() => useBrowserRoute());
+
+    act(() => result.current.navigate({ kind: 'library', difficulty: 'intermediate' }));
+
+    expect(pushState).not.toHaveBeenCalled();
   });
 });

@@ -17,6 +17,9 @@ export function useBrowserRoute() {
 
   const navigate = useCallback((nextRoute: AppRoute, replace = false) => {
     const href = serializeAppRoute(nextRoute);
+    const currentHref = `${window.location.pathname}${window.location.search}`;
+    if (href === currentHref) return;
+
     if (replace) window.history.replaceState(null, '', href);
     else window.history.pushState(null, '', href);
     setRoute(nextRoute);

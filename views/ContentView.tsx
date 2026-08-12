@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import type { AppContentRoute } from '@sightplay/app-shell';
 
@@ -58,6 +58,13 @@ export const ContentView: React.FC<ContentViewProps> = (props) => {
     actions,
     navigate
   );
+  const activeSongId = route.kind === 'songPractice' ? route.songId : null;
+
+  useEffect(() => {
+    if (completedSongId !== null && completedSongId !== activeSongId) {
+      setCompletedSongId(null);
+    }
+  }, [activeSongId, completedSongId]);
 
   const exitSong = () => {
     setCompletedSongId(null);
