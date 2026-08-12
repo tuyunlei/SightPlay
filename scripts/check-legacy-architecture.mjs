@@ -10,7 +10,7 @@ function isProductionSource(relativePath) {
     /\.(?:[cm]?[jt]s|[jt]sx)$/.test(relativePath) &&
     !relativePath.includes('/__tests__/') &&
     !/\.(test|spec)\.(?:[cm]?[jt]s|[jt]sx)$/.test(relativePath) &&
-    !relativePath.endsWith('/testHelpers.ts')
+    !/\/testHelpers\.(?:[cm]?[jt]s|[jt]sx)$/.test(relativePath)
   );
 }
 

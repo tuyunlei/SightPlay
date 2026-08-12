@@ -83,7 +83,10 @@ export default tseslint.config(
     },
   },
   {
-    files: ['packages/*/src/model/**/*.{ts,tsx}', 'packages/*/src/domain/**/*.{ts,tsx}'],
+    files: [
+      'packages/*/src/model/**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}',
+      'packages/*/src/domain/**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}',
+    ],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -95,7 +98,7 @@ export default tseslint.config(
           ],
           patterns: [
             {
-              group: ['@sentry/*', '@passwordless-id/*'],
+              group: ['react/*', 'react-dom/*', 'zustand/*', '@sentry/*', '@passwordless-id/*'],
               message: 'Use an injected port outside the feature model.',
             },
           ],
@@ -114,6 +117,7 @@ export default tseslint.config(
         { name: 'setInterval', message: 'Return a typed effect and inject a scheduler.' },
         { name: 'clearInterval', message: 'Return a typed effect and inject a scheduler.' },
         { name: 'crypto', message: 'Inject an identifier or randomness port.' },
+        { name: 'globalThis', message: 'Models cannot obtain ambient runtime capabilities.' },
       ],
       'no-restricted-properties': [
         'error',

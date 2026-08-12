@@ -29,7 +29,7 @@ module.exports = {
         'Capability models cannot depend on UI, adapters, stores, or application composition',
       from: { path: '^packages/[^/]+/src/(model|domain)/' },
       to: {
-        path: '^(packages/[^/]+/src/(adapters?|react|runtime|store|ui|views?)/|app|components|domain|edge-functions|features|functions|hooks|services|store|views|App\.tsx|index\.tsx)',
+        path: '^(packages/[^/]+/src/(adapters?|react|runtime|services?|store|ui|views?)/|app|components|domain|edge-functions|features|functions|hooks|services|store|views|App\.tsx|index\.tsx)',
       },
     },
     {
