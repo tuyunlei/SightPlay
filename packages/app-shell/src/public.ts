@@ -1,6 +1,8 @@
 export { isPublicAppRoute, parseAppRoute, serializeAppRoute } from './model/route';
 export type {
   AppRoute,
+  AppContentRoute,
+  PasskeysAppRoute,
   ProtectedAppRoute,
   PublicAppRoute,
   RouteDifficulty,

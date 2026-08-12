@@ -1,7 +1,7 @@
 import { Wand2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import type { AppRoute } from '@sightplay/app-shell';
+import type { AppContentRoute } from '@sightplay/app-shell';
 
 import { applyRecommendationAction } from '../app/recommendations/applyRecommendationAction';
 import type { Recommendation } from '../domain/recommendations';
@@ -31,7 +31,7 @@ type RandomPracticeViewProps = {
   sendMessage: (message: string) => void;
   chatEndRef: React.RefObject<HTMLDivElement | null>;
   lang: Language;
-  navigate: (route: AppRoute) => void;
+  navigate: (route: AppContentRoute) => void;
 };
 
 const usePracticeHints = (lang: Language, clef: string) => {

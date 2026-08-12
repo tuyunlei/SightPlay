@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useMemo, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AppRoute, ProtectedAppRoute } from '@sightplay/app-shell';
+import type { AppContentRoute } from '@sightplay/app-shell';
 
 import { translations } from '../i18n';
 import { usePracticeStore } from '../store/practiceStore';
@@ -35,7 +35,7 @@ vi.mock('./RandomPracticeView', () => ({
   RandomPracticeView: () => <div data-testid="random-practice" />,
 }));
 
-function ContentViewHarness({ initialRoute }: { initialRoute: ProtectedAppRoute }) {
+function ContentViewHarness({ initialRoute }: { initialRoute: AppContentRoute }) {
   const [route, setRoute] = useState(initialRoute);
   const [chatInput, setChatInput] = useState('');
   const actions = useMemo(
@@ -47,12 +47,7 @@ function ContentViewHarness({ initialRoute }: { initialRoute: ProtectedAppRoute 
     []
   );
 
-  const navigate = (nextRoute: AppRoute) => {
-    if (nextRoute.kind === 'login' || nextRoute.kind === 'register') {
-      throw new Error('ContentView cannot navigate to a public route');
-    }
-    setRoute(nextRoute);
-  };
+  const navigate = (nextRoute: AppContentRoute) => setRoute(nextRoute);
 
   return (
     <>

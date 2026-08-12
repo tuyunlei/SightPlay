@@ -28,18 +28,22 @@ results are harmless even when the underlying platform cannot abort them.
 Navigation is the sole page-selection fact:
 
 ```ts
+type ContentRoute =
+  | { kind: 'randomPractice' }
+  | { kind: 'library'; difficulty?: Difficulty }
+  | { kind: 'songPractice'; songId: SongId };
+
 type Route =
   | { kind: 'login' }
   | { kind: 'register'; inviteCode?: InviteCode }
-  | { kind: 'randomPractice' }
-  | { kind: 'library'; difficulty?: Difficulty }
-  | { kind: 'songPractice'; songId: SongId }
-  | { kind: 'passkeys' };
+  | ContentRoute
+  | { kind: 'passkeys'; returnTo?: ContentRoute };
 ```
 
 Parsing, serialization, and authorization redirects are pure. Browser history implements a
 `NavigationPort`; components request navigation through semantic intents. No component may mirror a
-route in booleans or nullable identifiers.
+route in booleans or nullable identifiers. Modal routes carry a validated content return route and
+render that content underneath; closing replaces the modal history entry so Back cannot reopen it.
 
 ## Exercise and Practice
 

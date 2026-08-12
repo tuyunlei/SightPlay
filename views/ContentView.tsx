@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import type { AppRoute, ProtectedAppRoute } from '@sightplay/app-shell';
+import type { AppContentRoute } from '@sightplay/app-shell';
 
 import { applyRecommendationAction } from '../app/recommendations/applyRecommendationAction';
 import { getSongById } from '../data/songs';
@@ -15,8 +15,8 @@ import { RandomPracticeView } from './RandomPracticeView';
 import { SongPracticeSection } from './SongPracticeSection';
 
 type ContentViewProps = {
-  route: ProtectedAppRoute;
-  navigate: (route: AppRoute, replace?: boolean) => void;
+  route: AppContentRoute;
+  navigate: (route: AppContentRoute, replace?: boolean) => void;
   state: ReturnType<typeof usePracticeSession>['state'];
   derived: ReturnType<typeof usePracticeSession>['derived'];
   actions: ReturnType<typeof usePracticeSession>['actions'];
@@ -105,8 +105,6 @@ export const ContentView: React.FC<ContentViewProps> = (props) => {
       />
     );
   }
-
-  if (route.kind === 'passkeys') return null;
 
   return (
     <RandomPracticeView

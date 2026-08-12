@@ -14,6 +14,38 @@ async function openPasskeyManagement(page: Page) {
 }
 
 test.describe('Account Management E2E', () => {
+  test('closing management restores its source route without reopening on Back', async ({
+    page,
+  }) => {
+    await mockAuthenticatedSession(page);
+    await page.route('**/api/auth/passkeys', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          { id: 'pk-1', name: 'MacBook Pro', createdAt: 1700000000000 },
+          { id: 'pk-2', name: 'iPhone 15', createdAt: 1701000000000 },
+        ]),
+      });
+    });
+
+    await page.goto('/library?difficulty=intermediate');
+    await expect(page.getByRole('heading', { name: /song library|曲库/i })).toBeVisible();
+
+    await page.getByTitle(/manage passkeys|管理 passkey/i).click();
+    await expect(page).toHaveURL(/\/passkeys\?from=library&difficulty=intermediate$/);
+
+    await page
+      .getByRole('button', { name: /close|关闭/i })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/library\?difficulty=intermediate$/);
+
+    await page.goBack();
+    await expect(page).toHaveURL(/\/library\?difficulty=intermediate$/);
+    await expect(page.getByRole('heading', { name: /manage passkeys|管理 passkey/i })).toBeHidden();
+  });
+
   test('1.5.1 should show passkey list after opening passkey management', async ({ page }) => {
     const passkeys: Passkey[] = [
       { id: 'pk-1', name: 'MacBook Pro', createdAt: 1700000000000 },

@@ -12,6 +12,15 @@ describe('App route', () => {
     [{ kind: 'library', difficulty: 'intermediate' }, '/library?difficulty=intermediate'],
     [{ kind: 'songPractice', songId: 'song / 1' }, '/songs/song%20%2F%201'],
     [{ kind: 'passkeys' }, '/passkeys'],
+    [{ kind: 'passkeys', returnTo: { kind: 'randomPractice' } }, '/passkeys?from=practice'],
+    [
+      { kind: 'passkeys', returnTo: { kind: 'library', difficulty: 'advanced' } },
+      '/passkeys?from=library&difficulty=advanced',
+    ],
+    [
+      { kind: 'passkeys', returnTo: { kind: 'songPractice', songId: 'song / 1' } },
+      '/passkeys?from=song&songId=song%20%2F%201',
+    ],
   ])('round trips %o', (route, href) => {
     expect(serializeAppRoute(route)).toBe(href);
     const url = new URL(href, 'https://sightplay.example');
@@ -39,6 +48,15 @@ describe('App route', () => {
   it('discards an unrecognized difficulty at the URL boundary', () => {
     expect(parseAppRoute({ pathname: '/library', search: '?difficulty=expert' })).toEqual({
       kind: 'library',
+    });
+  });
+
+  it('discards an invalid passkey return target at the URL boundary', () => {
+    expect(parseAppRoute({ pathname: '/passkeys', search: '?from=song' })).toEqual({
+      kind: 'passkeys',
+    });
+    expect(parseAppRoute({ pathname: '/passkeys', search: '?from=register' })).toEqual({
+      kind: 'passkeys',
     });
   });
 

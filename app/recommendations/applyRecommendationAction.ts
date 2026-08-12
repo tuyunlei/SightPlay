@@ -1,4 +1,4 @@
-import type { AppRoute } from '@sightplay/app-shell';
+import type { AppContentRoute } from '@sightplay/app-shell';
 
 import type { RecommendationAction } from '../../domain/recommendations';
 import type { ClefType, PracticeRangeMode } from '../../types';
@@ -6,7 +6,7 @@ import type { ClefType, PracticeRangeMode } from '../../types';
 export interface RecommendationActionPorts {
   selectClef: (clef: ClefType) => void;
   setPracticeRange: (range: PracticeRangeMode) => void;
-  navigate: (route: AppRoute) => void;
+  navigate: (route: AppContentRoute) => void;
 }
 
 export function applyRecommendationAction(

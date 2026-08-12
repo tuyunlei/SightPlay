@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { AppRoute, ProtectedAppRoute } from '@sightplay/app-shell';
+import type { AppContentRoute, AppRoute, ProtectedAppRoute } from '@sightplay/app-shell';
 
 import { BackgroundDecor } from '../components/layout/BackgroundDecor';
 import { PasskeyButton } from '../components/layout/PasskeyButton';
@@ -30,15 +30,26 @@ type MainAppContentProps = {
 };
 
 export const MainAppContent: React.FC<MainAppContentProps> = (props) => {
+  const contentRoute: AppContentRoute =
+    props.route.kind === 'passkeys'
+      ? (props.route.returnTo ?? { kind: 'randomPractice' })
+      : props.route;
+
+  const openPasskeys = () => {
+    if (props.route.kind === 'passkeys') return;
+    props.navigate({ kind: 'passkeys', returnTo: props.route });
+  };
+
+  const closePasskeys = () => {
+    if (props.route.kind !== 'passkeys') return;
+    props.navigate(props.route.returnTo ?? { kind: 'randomPractice' }, true);
+  };
+
   return (
     <>
       <BackgroundDecor />
-      {props.route.kind !== 'passkeys' && (
-        <PasskeyButton onClick={() => props.navigate({ kind: 'passkeys' })} />
-      )}
-      {props.route.kind === 'passkeys' && (
-        <PasskeyManagement onClose={() => props.navigate({ kind: 'randomPractice' })} />
-      )}
+      {props.route.kind !== 'passkeys' && <PasskeyButton onClick={openPasskeys} />}
+      {props.route.kind === 'passkeys' && <PasskeyManagement onClose={closePasskeys} />}
       {(props.route.kind === 'randomPractice' || props.route.kind === 'library') && (
         <NavigationTabs
           activeRoute={props.route.kind}
@@ -46,7 +57,7 @@ export const MainAppContent: React.FC<MainAppContentProps> = (props) => {
           t={props.t}
         />
       )}
-      <ContentView {...props} />
+      <ContentView {...props} route={contentRoute} />
     </>
   );
 };
