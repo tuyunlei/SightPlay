@@ -11,7 +11,7 @@ async function setupRegisterScreen(page: Page) {
 
   await page.goto('/');
   await page.getByRole('button', { name: /register with invite code|使用邀请码注册/i }).click();
-  await expect(page.getByTestId('register-section')).toBeVisible();
+  await expect(page.getByTestId('register-screen')).toBeVisible();
 }
 
 test.describe('Register invite code error handling', () => {
