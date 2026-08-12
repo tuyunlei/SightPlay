@@ -19,19 +19,21 @@ function decodePathSegment(value: string): string | null {
   }
 }
 
-function readQueryParam(search: string, key: string): string | undefined {
-  const encodedPair = search
-    .replace(/^\?/, '')
-    .split('&')
-    .find((pair) => pair.split('=', 1)[0] === encodeURIComponent(key));
-  if (!encodedPair) return undefined;
+function decodeQueryComponent(value: string): string | null {
+  return decodePathSegment(value.replace(/\+/g, ' '));
+}
 
-  const separatorIndex = encodedPair.indexOf('=');
-  const encodedValue = (separatorIndex < 0 ? '' : encodedPair.slice(separatorIndex + 1)).replace(
-    /\+/g,
-    ' '
-  );
-  return decodePathSegment(encodedValue) ?? undefined;
+function readQueryParam(search: string, key: string): string | undefined {
+  for (const encodedPair of search.replace(/^\?/, '').split('&')) {
+    const separatorIndex = encodedPair.indexOf('=');
+    const encodedKey = separatorIndex < 0 ? encodedPair : encodedPair.slice(0, separatorIndex);
+    if (decodeQueryComponent(encodedKey) !== key) continue;
+
+    const encodedValue = separatorIndex < 0 ? '' : encodedPair.slice(separatorIndex + 1);
+    return decodeQueryComponent(encodedValue) ?? undefined;
+  }
+
+  return undefined;
 }
 
 function serializeQueryParam(key: string, value: string): string {
