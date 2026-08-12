@@ -1,0 +1,9 @@
+{
+  "name": "@sightplay/app-shell",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/public.ts"
+  }
+}

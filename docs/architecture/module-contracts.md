@@ -89,3 +89,11 @@ feedback.
 - `window`, `navigator`, `fetch`, `Date.now`, `Math.random`, `crypto.randomUUID`, and `setTimeout` are
   restricted to adapters or composition infrastructure.
 - Every effectful runtime has an executable disposal/cancellation contract.
+
+The rules are executable in three layers. Workspace package `exports` define the supported import
+surface, dependency-cruiser prevents consumers from bypassing that surface or models from importing
+legacy/application layers, and ESLint prevents pure models from accessing framework or ambient runtime
+capabilities. A separate no-DOM/no-Node TypeScript project compiles production models, while the
+dependency graph rejects all external and core runtime modules from that layer. During migration,
+`architecture/legacy-business-files.txt` is a one-way baseline: files may be removed from it, but CI
+rejects new production files in the legacy horizontal directories.

@@ -6,7 +6,7 @@ export type AppRoute =
   | { kind: 'songPractice'; songId: string }
   | { kind: 'passkeys' };
 
-interface RouteLocation {
+export interface RouteLocation {
   pathname: string;
   search?: string;
 }
@@ -19,14 +19,33 @@ function decodePathSegment(value: string): string | null {
   }
 }
 
-export function parseAppRoute({ pathname, search = '' }: RouteLocation): AppRoute {
-  const params = new URLSearchParams(search);
+function decodeQueryComponent(value: string): string | null {
+  return decodePathSegment(value.replace(/\+/g, ' '));
+}
 
+function readQueryParam(search: string, key: string): string | undefined {
+  for (const encodedPair of search.replace(/^\?/, '').split('&')) {
+    const separatorIndex = encodedPair.indexOf('=');
+    const encodedKey = separatorIndex < 0 ? encodedPair : encodedPair.slice(0, separatorIndex);
+    if (decodeQueryComponent(encodedKey) !== key) continue;
+
+    const encodedValue = separatorIndex < 0 ? '' : encodedPair.slice(separatorIndex + 1);
+    return decodeQueryComponent(encodedValue) ?? undefined;
+  }
+
+  return undefined;
+}
+
+function serializeQueryParam(key: string, value: string): string {
+  return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+}
+
+export function parseAppRoute({ pathname, search = '' }: RouteLocation): AppRoute {
   if (pathname === '/register') {
-    return { kind: 'register', inviteCode: params.get('code') ?? undefined };
+    return { kind: 'register', inviteCode: readQueryParam(search, 'code') };
   }
   if (pathname === '/library') {
-    return { kind: 'library', difficulty: params.get('difficulty') ?? undefined };
+    return { kind: 'library', difficulty: readQueryParam(search, 'difficulty') };
   }
   if (pathname.startsWith('/songs/')) {
     const songId = decodePathSegment(pathname.slice('/songs/'.length));
@@ -44,15 +63,13 @@ export function serializeAppRoute(route: AppRoute): string {
       return '/';
     case 'register': {
       if (!route.inviteCode) return '/register';
-      const params = new URLSearchParams({ code: route.inviteCode });
-      return `/register?${params.toString()}`;
+      return `/register?${serializeQueryParam('code', route.inviteCode)}`;
     }
     case 'randomPractice':
       return '/practice';
     case 'library': {
       if (!route.difficulty) return '/library';
-      const params = new URLSearchParams({ difficulty: route.difficulty });
-      return `/library?${params.toString()}`;
+      return `/library?${serializeQueryParam('difficulty', route.difficulty)}`;
     }
     case 'songPractice':
       return `/songs/${encodeURIComponent(route.songId)}`;
