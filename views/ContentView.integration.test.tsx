@@ -1,27 +1,31 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { Profiler, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { AppContentRoute } from '@sightplay/app-shell';
 
 import { translations } from '../i18n';
 import { usePracticeStore } from '../store/practiceStore';
 
 import { ContentView } from './ContentView';
 
-const songLibraryRenderSpy = vi.hoisted(() => vi.fn());
-
-vi.mock('../features/library/SongLibrary', async () => {
-  const React = await import('react');
-  return {
-    SongLibrary: React.memo(({ onSongSelect }: { onSongSelect: (id: string) => void }) => {
-      songLibraryRenderSpy(onSongSelect);
-      return (
-        <button data-testid="mock-song-library" onClick={() => onSongSelect('twinkle-twinkle')}>
-          pick-song
-        </button>
-      );
-    }),
-  };
-});
+vi.mock('../features/library/SongLibrary', () => ({
+  SongLibrary: ({
+    difficulty,
+    onDifficultyChange,
+    onSongSelect,
+  }: {
+    difficulty?: string;
+    onDifficultyChange: (difficulty: 'intermediate') => void;
+    onSongSelect: (id: string) => void;
+  }) => (
+    <section data-testid="mock-song-library">
+      <output data-testid="library-difficulty">{difficulty ?? 'all'}</output>
+      <button onClick={() => onDifficultyChange('intermediate')}>filter-intermediate</button>
+      <button onClick={() => onSongSelect('twinkle-twinkle')}>pick-song</button>
+    </section>
+  ),
+}));
 
 vi.mock('../features/practice/PracticeArea', () => ({
   default: () => <div data-testid="practice-area" />,
@@ -31,48 +35,29 @@ vi.mock('./RandomPracticeView', () => ({
   RandomPracticeView: () => <div data-testid="random-practice" />,
 }));
 
-type ViewMode = 'random' | 'library' | 'song-practice';
-
-function ContentViewHarness({ initialMode = 'random' }: { initialMode?: ViewMode }) {
-  const [viewMode, setViewMode] = useState<ViewMode>(initialMode);
-  const [selectedSongId, setSelectedSongId] = useState<string | null>(
-    initialMode === 'song-practice' ? 'twinkle-twinkle' : null
-  );
-  const [showSongComplete, setShowSongComplete] = useState(false);
+function ContentViewHarness({ initialRoute }: { initialRoute: AppContentRoute }) {
+  const [route, setRoute] = useState(initialRoute);
   const [chatInput, setChatInput] = useState('');
-
   const actions = useMemo(
     () => ({
+      selectClef: vi.fn(),
       toggleClef: vi.fn(),
       setPracticeRange: vi.fn(),
     }),
     []
   );
 
-  const state = useMemo(() => ({ challenge: null }), []);
-  const derived = useMemo(() => ({ targetNote: null }), []);
+  const navigate = (nextRoute: AppContentRoute) => setRoute(nextRoute);
 
   return (
     <>
-      <button data-testid="to-random" onClick={() => setViewMode('random')} />
-      <button data-testid="to-library" onClick={() => setViewMode('library')} />
-      <button
-        data-testid="to-song"
-        onClick={() => {
-          setSelectedSongId('twinkle-twinkle');
-          setViewMode('song-practice');
-        }}
-      />
-
+      <output data-testid="current-route">{JSON.stringify(route)}</output>
       <ContentView
-        viewMode={viewMode}
-        selectedSongId={selectedSongId}
-        showSongComplete={showSongComplete}
-        setSelectedSongId={setSelectedSongId}
-        setViewMode={setViewMode}
-        setShowSongComplete={setShowSongComplete}
-        state={state as never}
-        derived={derived as never}
+        route={route}
+        navigate={navigate}
+        dismissEntry={navigate}
+        state={{ challenge: null } as never}
+        derived={{ targetNote: null } as never}
         actions={actions as never}
         pressedKeys={new Map()}
         t={translations.zh}
@@ -89,7 +74,7 @@ function ContentViewHarness({ initialMode = 'random' }: { initialMode?: ViewMode
   );
 }
 
-describe('ContentView integration', () => {
+describe('ContentView route integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     usePracticeStore.setState({
@@ -104,29 +89,38 @@ describe('ContentView integration', () => {
     });
   });
 
-  it('renders without render loops and supports mode switching', async () => {
-    const renderCounter = { count: 0 };
+  it('renders random practice from the route', () => {
+    render(<ContentViewHarness initialRoute={{ kind: 'randomPractice' }} />);
 
-    render(
-      <Profiler id="content-view" onRender={() => (renderCounter.count += 1)}>
-        <ContentViewHarness initialMode="random" />
-      </Profiler>
-    );
-
-    await waitFor(() => expect(renderCounter.count).toBeGreaterThan(0));
-    expect(renderCounter.count).toBeLessThan(15);
-
-    fireEvent.click(screen.getByTestId('to-library'));
-    expect(await screen.findByTestId('mock-song-library')).toBeTruthy();
-
-    fireEvent.click(screen.getByTestId('to-song'));
-    expect(await screen.findByTestId('practice-area')).toBeTruthy();
+    expect(screen.getByTestId('random-practice')).toBeTruthy();
   });
 
-  it('mounts SongPractice via ContentView and syncs store state', async () => {
-    render(<ContentViewHarness initialMode="song-practice" />);
+  it('writes a library filter change back to the typed route', () => {
+    render(<ContentViewHarness initialRoute={{ kind: 'library' }} />);
 
-    fireEvent.click(screen.getByTestId('to-song'));
+    fireEvent.click(screen.getByRole('button', { name: 'filter-intermediate' }));
+
+    expect(screen.getByTestId('library-difficulty').textContent).toBe('intermediate');
+    expect(screen.getByTestId('current-route').textContent).toBe(
+      JSON.stringify({ kind: 'library', difficulty: 'intermediate' })
+    );
+  });
+
+  it('navigates atomically from the library to a selected song', async () => {
+    render(<ContentViewHarness initialRoute={{ kind: 'library' }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'pick-song' }));
+
+    expect(await screen.findByTestId('practice-area')).toBeTruthy();
+    expect(screen.getByTestId('current-route').textContent).toBe(
+      JSON.stringify({ kind: 'songPractice', songId: 'twinkle-twinkle' })
+    );
+  });
+
+  it('mounts SongPractice from one route and synchronizes the legacy Practice adapter', async () => {
+    render(
+      <ContentViewHarness initialRoute={{ kind: 'songPractice', songId: 'twinkle-twinkle' }} />
+    );
 
     await waitFor(() => {
       const store = usePracticeStore.getState();
@@ -134,29 +128,5 @@ describe('ContentView integration', () => {
       expect(store.currentSongId).toBe('twinkle-twinkle');
       expect(store.songTotalNotes).toBeGreaterThan(0);
     });
-  });
-
-  it('keeps useCallback-wrapped SongLibrary callback stable across rerenders', () => {
-    const Wrapper = () => {
-      const [, force] = useState(0);
-      const rerenderRef = useRef(() => force((n) => n + 1));
-      return (
-        <>
-          <button data-testid="force-parent-rerender" onClick={() => rerenderRef.current()} />
-          <ContentViewHarness initialMode="library" />
-        </>
-      );
-    };
-
-    render(<Wrapper />);
-
-    const firstRef = songLibraryRenderSpy.mock.calls.at(-1)?.[0];
-    expect(firstRef).toBeTruthy();
-    expect(songLibraryRenderSpy).toHaveBeenCalledTimes(1);
-
-    fireEvent.click(screen.getByTestId('force-parent-rerender'));
-
-    expect(songLibraryRenderSpy).toHaveBeenCalledTimes(1);
-    expect(songLibraryRenderSpy.mock.calls.at(-1)?.[0]).toBe(firstRef);
   });
 });

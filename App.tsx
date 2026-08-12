@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
+
+import type { AppRoute, ProtectedAppRoute } from '@sightplay/app-shell';
 
 import { useBrowserRoute } from './app/navigation/useBrowserRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { ViewMode } from './components/navigation/NavigationTabs';
 import { AuthGate } from './features/auth/AuthGate';
-import { type AuthScene } from './features/auth/authScene';
 import { useAiCoach } from './hooks/useAiCoach';
 import { usePracticeSession } from './hooks/usePracticeSession';
 import { useTestAPI } from './hooks/useTestAPI';
@@ -12,14 +12,21 @@ import { translations } from './i18n';
 import { useUiStore } from './store/uiStore';
 import { MainAppContent } from './views/MainAppContent';
 
-function AuthenticatedApp() {
+type Navigate = (route: AppRoute, replace?: boolean) => void;
+type DismissEntry = (fallbackRoute: AppRoute) => void;
+
+function AuthenticatedApp({
+  route,
+  navigate,
+  dismissEntry,
+}: {
+  route: ProtectedAppRoute;
+  navigate: Navigate;
+  dismissEntry: DismissEntry;
+}) {
   const lang = useUiStore((state) => state.lang);
   const toggleLang = useUiStore((state) => state.toggleLang);
   const t = translations[lang];
-  const [showPasskeyManagement, setShowPasskeyManagement] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('random');
-  const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
-  const [showSongComplete, setShowSongComplete] = useState(false);
   const challengeCompleteRef = useRef<() => void>(() => {});
 
   const practiceSession = usePracticeSession({
@@ -63,24 +70,16 @@ function AuthenticatedApp() {
         sendMessage={sendMessage}
         chatEndRef={chatEndRef}
         lang={lang}
-        showPasskeyManagement={showPasskeyManagement}
-        setShowPasskeyManagement={setShowPasskeyManagement}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        selectedSongId={selectedSongId}
-        setSelectedSongId={setSelectedSongId}
-        showSongComplete={showSongComplete}
-        setShowSongComplete={setShowSongComplete}
+        route={route}
+        navigate={navigate}
+        dismissEntry={dismissEntry}
       />
     </div>
   );
 }
 
-const App = () => {
-  const lang = useUiStore((state) => state.lang);
-  const t = translations[lang];
-  const { route, navigate } = useBrowserRoute();
-  const authScene: AuthScene = route.kind === 'register' ? route : { kind: 'login' };
+function AppRuntime() {
+  const { route, navigate, dismissEntry } = useBrowserRoute();
 
   if (
     (import.meta.env.MODE === 'test' || import.meta.env.DEV) &&
@@ -90,10 +89,21 @@ const App = () => {
   }
 
   return (
+    <AuthGate route={route} navigate={navigate}>
+      {(protectedRoute) => (
+        <AuthenticatedApp route={protectedRoute} navigate={navigate} dismissEntry={dismissEntry} />
+      )}
+    </AuthGate>
+  );
+}
+
+const App = () => {
+  const lang = useUiStore((state) => state.lang);
+  const t = translations[lang];
+
+  return (
     <ErrorBoundary t={t}>
-      <AuthGate scene={authScene} navigate={navigate}>
-        <AuthenticatedApp />
-      </AuthGate>
+      <AppRuntime />
     </ErrorBoundary>
   );
 };

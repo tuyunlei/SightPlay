@@ -118,7 +118,7 @@ describe('useAuth', () => {
     expect(authenticateMock).not.toHaveBeenCalled();
   });
 
-  it('ends the server session and returns to the login route on logout', async () => {
+  it('ends the server session without owning application navigation', async () => {
     window.history.replaceState(null, '', '/register?code=ABCD-EFGH');
     document.cookie = 'auth_token=test-token; path=/';
     (fetch as unknown as ReturnType<typeof vi.fn>).mockImplementation(async (input: string) => {
@@ -145,8 +145,8 @@ describe('useAuth', () => {
       method: 'POST',
       credentials: 'include',
     });
-    expect(window.location.pathname).toBe('/');
-    expect(window.location.search).toBe('');
+    expect(window.location.pathname).toBe('/register');
+    expect(window.location.search).toBe('?code=ABCD-EFGH');
     document.cookie = 'auth_token=; max-age=0; path=/';
   });
 });

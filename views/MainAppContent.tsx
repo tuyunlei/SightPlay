@@ -1,8 +1,10 @@
 import React from 'react';
 
+import type { AppContentRoute, AppRoute, ProtectedAppRoute } from '@sightplay/app-shell';
+
 import { BackgroundDecor } from '../components/layout/BackgroundDecor';
 import { PasskeyButton } from '../components/layout/PasskeyButton';
-import { NavigationTabs, ViewMode } from '../components/navigation/NavigationTabs';
+import { NavigationTabs } from '../components/navigation/NavigationTabs';
 import { PasskeyManagement } from '../features/auth/PasskeyManagement';
 import { usePracticeSession } from '../hooks/usePracticeSession';
 import { Language, translations } from '../i18n';
@@ -23,37 +25,40 @@ type MainAppContentProps = {
   sendMessage: (message: string) => void;
   chatEndRef: React.RefObject<HTMLDivElement | null>;
   lang: Language;
-  showPasskeyManagement: boolean;
-  setShowPasskeyManagement: (show: boolean) => void;
-  viewMode: ViewMode;
-  setViewMode: (mode: ViewMode) => void;
-  selectedSongId: string | null;
-  setSelectedSongId: (id: string | null) => void;
-  showSongComplete: boolean;
-  setShowSongComplete: (show: boolean) => void;
+  route: ProtectedAppRoute;
+  navigate: (route: AppRoute, replace?: boolean) => void;
+  dismissEntry: (fallbackRoute: AppRoute) => void;
 };
 
 export const MainAppContent: React.FC<MainAppContentProps> = (props) => {
-  if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
-    const forceErrorBoundary = new URLSearchParams(window.location.search).get(
-      '__forceErrorBoundary'
-    );
-    if (forceErrorBoundary === '1') {
-      throw new Error('E2E forced child render error');
-    }
-  }
+  const contentRoute: AppContentRoute =
+    props.route.kind === 'passkeys'
+      ? (props.route.returnTo ?? { kind: 'randomPractice' })
+      : props.route;
+
+  const openPasskeys = () => {
+    if (props.route.kind === 'passkeys') return;
+    props.navigate({ kind: 'passkeys', returnTo: props.route });
+  };
+
+  const closePasskeys = () => {
+    if (props.route.kind !== 'passkeys') return;
+    props.dismissEntry(props.route.returnTo ?? { kind: 'randomPractice' });
+  };
 
   return (
     <>
       <BackgroundDecor />
-      <PasskeyButton onClick={() => props.setShowPasskeyManagement(true)} />
-      {props.showPasskeyManagement && (
-        <PasskeyManagement onClose={() => props.setShowPasskeyManagement(false)} />
+      {props.route.kind !== 'passkeys' && <PasskeyButton onClick={openPasskeys} />}
+      {props.route.kind === 'passkeys' && <PasskeyManagement onClose={closePasskeys} />}
+      {(props.route.kind === 'randomPractice' || props.route.kind === 'library') && (
+        <NavigationTabs
+          activeRoute={props.route.kind}
+          onNavigate={(kind) => props.navigate({ kind })}
+          t={props.t}
+        />
       )}
-      {props.viewMode !== 'song-practice' && (
-        <NavigationTabs viewMode={props.viewMode} setViewMode={props.setViewMode} t={props.t} />
-      )}
-      <ContentView {...props} />
+      <ContentView {...props} route={contentRoute} dismissEntry={props.dismissEntry} />
     </>
   );
 };

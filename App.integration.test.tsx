@@ -3,10 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import App from './App';
 
-const { practiceSessionMock, aiCoachMock, testApiMock } = vi.hoisted(() => ({
+const { practiceSessionMock, aiCoachMock, testApiMock, mainAppContentMock } = vi.hoisted(() => ({
   practiceSessionMock: vi.fn(),
   aiCoachMock: vi.fn(),
   testApiMock: vi.fn(),
+  mainAppContentMock: vi.fn(),
 }));
 
 vi.mock('@sentry/react', () => ({
@@ -32,7 +33,10 @@ vi.mock('./hooks/useTestAPI', () => ({
 }));
 
 vi.mock('./views/MainAppContent', () => ({
-  MainAppContent: () => <div data-testid="protected-app">protected app</div>,
+  MainAppContent: (props: { route: unknown }) => {
+    mainAppContentMock(props);
+    return <div data-testid="protected-app">protected app</div>;
+  },
 }));
 
 describe('App protected runtime lifecycle', () => {
@@ -85,8 +89,29 @@ describe('App protected runtime lifecycle', () => {
     render(<App />);
 
     expect(await screen.findByTestId('protected-app')).toBeTruthy();
+    expect(window.location.pathname).toBe('/practice');
     expect(practiceSessionMock).toHaveBeenCalledTimes(1);
     expect(aiCoachMock).toHaveBeenCalledTimes(1);
     expect(testApiMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('assembles an authenticated deep link with its decoded protected route', async () => {
+    window.history.replaceState(null, '', '/library?difficulty=intermediate');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ authenticated: true, hasPasskeys: true }),
+      }))
+    );
+
+    render(<App />);
+
+    expect(await screen.findByTestId('protected-app')).toBeTruthy();
+    expect(mainAppContentMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        route: { kind: 'library', difficulty: 'intermediate' },
+      })
+    );
   });
 });

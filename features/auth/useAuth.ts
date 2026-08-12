@@ -266,8 +266,6 @@ export function useAuth() {
 
   const logout = async () => {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-    window.history.replaceState(null, '', '/');
-    window.dispatchEvent(new PopStateEvent('popstate'));
     setState({ isAuthenticated: false, hasPasskeys: state.hasPasskeys, isLoading: false });
   };
 

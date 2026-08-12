@@ -1,6 +1,8 @@
-import React, { useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 
-import { ViewMode } from '../components/navigation/NavigationTabs';
+import type { AppContentRoute } from '@sightplay/app-shell';
+
+import { applyRecommendationAction } from '../app/recommendations/applyRecommendationAction';
 import { getSongById } from '../data/songs';
 import type { Recommendation } from '../domain/recommendations';
 import { SongLibrary } from '../features/library/SongLibrary';
@@ -13,12 +15,9 @@ import { RandomPracticeView } from './RandomPracticeView';
 import { SongPracticeSection } from './SongPracticeSection';
 
 type ContentViewProps = {
-  viewMode: ViewMode;
-  selectedSongId: string | null;
-  showSongComplete: boolean;
-  setSelectedSongId: (id: string | null) => void;
-  setViewMode: (mode: ViewMode) => void;
-  setShowSongComplete: (show: boolean) => void;
+  route: AppContentRoute;
+  navigate: (route: AppContentRoute, replace?: boolean) => void;
+  dismissEntry: (fallbackRoute: AppContentRoute) => void;
   state: ReturnType<typeof usePracticeSession>['state'];
   derived: ReturnType<typeof usePracticeSession>['derived'];
   actions: ReturnType<typeof usePracticeSession>['actions'];
@@ -36,76 +35,73 @@ type ContentViewProps = {
 
 const useContentRecommendations = (
   actions: ContentViewProps['actions'],
-  setViewMode: ContentViewProps['setViewMode'],
-  setSelectedSongId: ContentViewProps['setSelectedSongId']
+  navigate: ContentViewProps['navigate']
 ) => {
   const recs = useRecommendations();
-  const cbs = { toggleClef: actions.toggleClef, setPracticeRange: actions.setPracticeRange };
+
   const applyRec = (rec: Recommendation) => {
-    recs.applyAction(rec, cbs);
-    if (rec.action?.kind === 'navigateDifficulty') setViewMode('library');
-    if (rec.action?.kind === 'navigateSong') setSelectedSongId(rec.action.songId);
+    if (!rec.action) return;
+    applyRecommendationAction(rec.action, {
+      selectClef: actions.selectClef,
+      setPracticeRange: actions.setPracticeRange,
+      navigate,
+    });
+    recs.dismiss();
   };
+
   return { ...recs, applyRec };
 };
 
 export const ContentView: React.FC<ContentViewProps> = (props) => {
-  const {
-    viewMode,
-    selectedSongId,
-    showSongComplete,
-    setSelectedSongId,
-    setViewMode,
-    setShowSongComplete,
-    actions,
-    lang,
-    t,
-    ...rest
-  } = props;
+  const { route, navigate, actions, lang, t, ...rest } = props;
+  const [completedSongId, setCompletedSongId] = useState<string | null>(null);
   const { recommendations, onSongComplete, dismiss, applyRec } = useContentRecommendations(
     actions,
-    setViewMode,
-    setSelectedSongId
+    navigate
   );
+  const activeSongId = route.kind === 'songPractice' ? route.songId : null;
+
+  useEffect(() => {
+    if (completedSongId !== null && completedSongId !== activeSongId) {
+      setCompletedSongId(null);
+    }
+  }, [activeSongId, completedSongId]);
 
   const exitSong = () => {
-    setViewMode('library');
-    setSelectedSongId(null);
+    setCompletedSongId(null);
+    props.dismissEntry({ kind: 'library' });
   };
 
   const completeSong = () => {
-    setShowSongComplete(true);
-    const song = selectedSongId ? getSongById(selectedSongId) : undefined;
+    if (route.kind !== 'songPractice') return;
+    setCompletedSongId(route.songId);
+    const song = getSongById(route.songId);
     if (song) onSongComplete(song.difficulty);
   };
 
   const backToLib = () => {
-    setShowSongComplete(false);
     exitSong();
   };
 
-  // Kept: stable identity required for child callback behavior.
-  const selectSong = useCallback(
-    (id: string) => {
-      setSelectedSongId(id);
-      setViewMode('song-practice');
-    },
-    [setSelectedSongId, setViewMode]
-  );
-
   const retrySong = () => {
-    setShowSongComplete(false);
+    setCompletedSongId(null);
   };
 
-  if (viewMode === 'library') {
-    return <SongLibrary onSongSelect={selectSong} />;
+  if (route.kind === 'library') {
+    return (
+      <SongLibrary
+        difficulty={route.difficulty}
+        onDifficultyChange={(difficulty) => navigate({ kind: 'library', difficulty })}
+        onSongSelect={(songId) => navigate({ kind: 'songPractice', songId })}
+      />
+    );
   }
 
-  if (viewMode === 'song-practice' && selectedSongId) {
+  if (route.kind === 'songPractice') {
     return (
       <SongPracticeSection
-        songId={selectedSongId}
-        showComplete={showSongComplete}
+        songId={route.songId}
+        showComplete={completedSongId === route.songId}
         recommendations={recommendations}
         t={t}
         onExit={exitSong}
@@ -133,6 +129,7 @@ export const ContentView: React.FC<ContentViewProps> = (props) => {
       sendMessage={rest.sendMessage}
       chatEndRef={rest.chatEndRef}
       lang={lang}
+      navigate={navigate}
     />
   );
 };
