@@ -78,8 +78,7 @@ export const useAiCoach = ({
           ]);
         }
       }
-    } catch (error) {
-      console.error(error);
+    } catch {
       setChatHistory((prev) => [
         ...prev,
         { role: 'ai', text: translations[lang].aiConnectionErrorMessage },

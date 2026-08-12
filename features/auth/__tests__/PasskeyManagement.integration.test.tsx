@@ -12,9 +12,9 @@ const { checkSessionMock, logoutMock, writeTextMock } = vi.hoisted(() => ({
   writeTextMock: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('../useAuthContext', () => ({
-  useAuthContext: () => ({
-    checkSession: checkSessionMock,
+vi.mock('@sightplay/identity-client', () => ({
+  useIdentity: () => ({
+    refreshSession: checkSessionMock,
     logout: logoutMock,
   }),
 }));

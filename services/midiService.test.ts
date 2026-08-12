@@ -79,15 +79,14 @@ describe('MidiService', () => {
     });
 
     it('handles MIDI access error gracefully', async () => {
-      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
       const requestMIDIAccess = vi.fn().mockRejectedValue(new Error('Access denied'));
       vi.stubGlobal('navigator', { requestMIDIAccess });
 
       const onNoteOn = vi.fn();
-      await midiService.initialize(onNoteOn);
+      const onConnectionChange = vi.fn();
+      await midiService.initialize(onNoteOn, onConnectionChange);
 
-      expect(consoleError).toHaveBeenCalled();
-      consoleError.mockRestore();
+      expect(onConnectionChange).toHaveBeenCalledWith(false);
     });
 
     it('does not reinitialize if already initializing', async () => {

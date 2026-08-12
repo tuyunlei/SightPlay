@@ -29,8 +29,7 @@ export const chatWithAiCoach = async (
     }
 
     return data as AiResponse;
-  } catch (error) {
-    console.error('Gemini chat error:', error);
+  } catch {
     const t = translations[lang];
     // Fallback response
     return {

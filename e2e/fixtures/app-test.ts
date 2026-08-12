@@ -10,18 +10,24 @@ type ExpectedHttpError = { pathname: string; status: number };
 
 export type RuntimeDiagnostics = {
   allowPageError: () => void;
+  allowConsoleError: () => void;
   allowHttpError: (pathname: string, status: number) => void;
 };
 
 class DiagnosticsController implements RuntimeDiagnostics {
   readonly state: DiagnosticsState = {
     allowPageError: false,
+    expectedConsoleErrors: 0,
     expectedHttpErrors: [],
     events: [],
   };
 
   allowPageError = () => {
     this.state.allowPageError = true;
+  };
+
+  allowConsoleError = () => {
+    this.state.expectedConsoleErrors += 1;
   };
 
   allowHttpError = (pathname: string, status: number) => {
@@ -31,6 +37,7 @@ class DiagnosticsController implements RuntimeDiagnostics {
 
 type DiagnosticsState = {
   allowPageError: boolean;
+  expectedConsoleErrors: number;
   expectedHttpErrors: ExpectedHttpError[];
   events: RuntimeEvent[];
 };
@@ -69,11 +76,22 @@ const installDiagnostics = (page: Page, state: DiagnosticsState) => {
   });
 };
 
-const unexpectedEvents = (state: DiagnosticsState) =>
-  state.events.filter((event) => {
-    if (event.kind === 'consoleError') return false;
+const unexpectedEvents = (state: DiagnosticsState) => {
+  let remainingExpectedConsoleErrors = state.expectedConsoleErrors;
+  return state.events.filter((event) => {
+    if (event.kind === 'consoleError') {
+      if (state.allowPageError) return false;
+      if (remainingExpectedConsoleErrors > 0) {
+        remainingExpectedConsoleErrors -= 1;
+        return false;
+      }
+      return true;
+    }
     if (event.kind === 'pageError') return !state.allowPageError;
     if (event.kind === 'requestFailed') {
+      // Playwright exposes browser-initiated cancellation only through the protocol error code.
+      // React StrictMode lifecycle replay intentionally aborts disposable capability requests.
+      if (event.failure === 'net::ERR_ABORTED') return false;
       const hostname = new URL(event.url).hostname;
       return hostname === '127.0.0.1' || hostname === 'localhost';
     }
@@ -82,6 +100,7 @@ const unexpectedEvents = (state: DiagnosticsState) =>
       (expected) => expected.pathname === pathname && expected.status === event.status
     );
   });
+};
 
 const hashSeed = (value: string) => {
   let hash = 2166136261;

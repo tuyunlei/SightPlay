@@ -12,9 +12,10 @@ import {
   cleanupTestEnvironment,
 } from './PasskeyManagement.setup';
 
-vi.mock('../useAuthContext', () => ({
-  useAuthContext: () => ({
-    checkSession: mockCheckSession,
+vi.mock('@sightplay/identity-client', () => ({
+  useIdentity: () => ({
+    refreshSession: mockCheckSession,
+    logout: vi.fn(),
   }),
 }));
 

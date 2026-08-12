@@ -2,9 +2,9 @@
 
 Status: in progress
 
-Current branch: `codex/app-shell-navigation`
+Current branch: `codex/identity-client-runtime`
 
-Current base: `origin/develop` at `13532e7` (PR #10)
+Current base: `origin/develop` at `6a0b400` (PR #11)
 
 ## Goal
 
@@ -33,11 +33,13 @@ home and cannot add business ownership to legacy horizontal directories.
 ## Phase 1 — App Shell and Identity lifecycle
 
 - [x] Make typed Route the only navigation fact.
-- [ ] Represent booting, login, registration, and authenticated scenes as mutually exclusive states.
+- [x] Represent booting, login, registration, and authenticated scenes as mutually exclusive states.
 - [x] Move protected Practice, device, and Guidance runtime construction below authentication.
-- [ ] Add structured identity failures and inject API, Passkey, navigation, telemetry, and clock ports.
-- [ ] Prove cancellation recovery, route exclusivity, stale-result rejection, and runtime disposal.
-- [ ] Delete AuthGate/UI-local workflow ownership and direct browser navigation.
+- [x] Add structured identity failures and inject API, Passkey, and telemetry ports; keep navigation in
+      App Shell's independently injected browser port.
+- [x] Prove cancellation recovery, route exclusivity, stale-result rejection, and runtime disposal.
+- [x] Delete workflow ownership from AuthGate and UI-local state, and delete direct browser navigation
+      from Identity.
 
 Exit evidence: the complete App is assembled in a test; anonymous state creates no protected
 capability; auth routes are mutually exclusive; no auth business branch depends on localized text.
@@ -109,8 +111,8 @@ production release remains a separate explicitly authorized operation.
 - 2026-08-13: Added the pure typed route parser/serializer, made login and registration exclusive
   Auth scenes, removed registration embedding and direct navigation from the auth screens, and moved
   Practice/AI/test runtime construction into the authenticated subtree. The full App assembly now
-  proves anonymous sessions construct none of those runtimes; the real `useAuth` integration proves
-  cancellation remains retryable and registration can return to login.
+  proves anonymous sessions construct none of those runtimes; the assembled AuthGate integration
+  proves cancellation remains retryable and registration can return to login.
 - 2026-08-13: Verification checkpoint passed: format, zero-warning lint, typecheck, dependency/dead-code/
   file-size gates, 423 unit/integration tests, production build, and the 14-test auth E2E selection
   (13 passed, one documented WebKit virtual-WebAuthn skip). The build retains the existing 500 kB chunk
@@ -142,3 +144,26 @@ production release remains a separate explicitly authorized operation.
   build, and the complete Playwright matrix (61 passed, one documented WebKit virtual-WebAuthn skip).
   The first E2E pass exposed an ErrorBoundary test hook coupled to an auth query; moving fault
   injection under the real App boundary removed that hidden routing dependency before the clean rerun.
+- 2026-08-13: PR #11 was squash-merged to `develop` at `6a0b400`. Identity now has one pure
+  discriminated state/action/effect model in `@sightplay/identity-client`, one operation-epoch runtime,
+  and injected API, Passkey, and telemetry ports. Browser HTTP/WebAuthn/Sentry implementations live in
+  `@sightplay/browser-adapters`, where every HTTP payload is decoded before it enters Identity.
+- 2026-08-13: App, AuthGate, login, registration, logout, and session refresh now use the new Identity
+  owner. The legacy `useAuth`, provider/context, UI loading/error workflow state, and its shape-oriented
+  hook tests were deleted in the same cutover. Pure and assembled tests prove cancellation produces a
+  retryable action, stale results cannot authenticate, disposal aborts requests, lifecycle replay starts
+  a fresh epoch, and anonymous App assembly does not construct protected runtimes.
+- 2026-08-13: Identity deterministic checkpoint passed model/application typechecks, format,
+  zero-warning lint, dependency/legacy/file-size/dead-code gates, and 459 unit/integration tests. Removed
+  three E2E cases that asserted server-provided error copy; recovery remains covered at the lower React
+  integration boundary while real WebAuthn/cookie/signature E2E remains intact.
+- 2026-08-13: The first browser checkpoint correctly surfaced client-aborted session requests from
+  React StrictMode lifecycle replay, but the shared diagnostic fixture classified every cancellation as
+  a network failure while ignoring every console error. Diagnostics now recognize the browser's
+  explicit abort code, fail unexpected console errors, and expected MIDI/microphone/AI recovery paths
+  no longer log handled failures as errors. The 10 selected registration, login, logout, and account
+  management browser paths pass with the stricter oracle.
+- 2026-08-13: Phase 1 clean checkpoint passed both TypeScript projects, all architecture gates,
+  zero-warning ESLint, 459 unit/integration tests, production build, and the complete Playwright matrix
+  (58 passed, one documented WebKit virtual-WebAuthn skip). One intentional AI 500 now consumes an
+  explicit one-event console-error allowance; no test can silently suppress unrelated console errors.

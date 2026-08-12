@@ -1,10 +1,11 @@
 import { KeyRound } from 'lucide-react';
-import { useState } from 'react';
+
+import { useIdentity } from '@sightplay/identity-client';
 
 import { translations } from '../../i18n';
 import { useUiStore } from '../../store/uiStore';
 
-import { useAuthContext } from './useAuthContext';
+import { identityFailureMessage } from './identityFailureMessage';
 
 interface LoginScreenProps {
   onRegister: () => void;
@@ -69,20 +70,13 @@ function LoginCard({ t, isLoading, error, onLogin, onRegister }: LoginCardProps)
 }
 
 export function LoginScreen({ onRegister }: LoginScreenProps) {
-  const { login } = useAuthContext();
+  const identity = useIdentity();
   const lang = useUiStore((state) => state.lang);
   const t = translations[lang];
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleLogin = async () => {
-    setIsLoading(true);
-    setError(null);
-    const result = await login();
-    if (result === true) return;
-    setError(result);
-    setIsLoading(false);
-  };
+  const isLoading = identity.view.operation === 'login';
+  const error = identity.view.failure
+    ? identityFailureMessage(t, identity.view.failure.code)
+    : null;
 
   return (
     <div
@@ -95,7 +89,7 @@ export function LoginScreen({ onRegister }: LoginScreenProps) {
           t={t}
           isLoading={isLoading}
           error={error}
-          onLogin={handleLogin}
+          onLogin={identity.login}
           onRegister={onRegister}
         />
       </div>

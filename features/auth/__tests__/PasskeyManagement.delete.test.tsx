@@ -12,10 +12,10 @@ import {
   cleanupTestEnvironment,
 } from './PasskeyManagement.setup';
 
-// Mock useAuthContext - must be at the top level
-vi.mock('../useAuthContext', () => ({
-  useAuthContext: () => ({
-    checkSession: mockCheckSession,
+vi.mock('@sightplay/identity-client', () => ({
+  useIdentity: () => ({
+    refreshSession: mockCheckSession,
+    logout: vi.fn(),
   }),
 }));
 

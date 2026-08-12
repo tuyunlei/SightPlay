@@ -1,6 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import type { AppRoute, ProtectedAppRoute } from '@sightplay/app-shell';
+import { createBrowserIdentityPorts } from '@sightplay/browser-adapters';
+import { IdentityProvider } from '@sightplay/identity-client';
 
 import { useBrowserRoute } from './app/navigation/useBrowserRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -80,6 +82,7 @@ function AuthenticatedApp({
 
 function AppRuntime() {
   const { route, navigate, dismissEntry } = useBrowserRoute();
+  const [identityPorts] = useState(createBrowserIdentityPorts);
 
   if (
     (import.meta.env.MODE === 'test' || import.meta.env.DEV) &&
@@ -89,11 +92,17 @@ function AppRuntime() {
   }
 
   return (
-    <AuthGate route={route} navigate={navigate}>
-      {(protectedRoute) => (
-        <AuthenticatedApp route={protectedRoute} navigate={navigate} dismissEntry={dismissEntry} />
-      )}
-    </AuthGate>
+    <IdentityProvider ports={identityPorts}>
+      <AuthGate route={route} navigate={navigate}>
+        {(protectedRoute) => (
+          <AuthenticatedApp
+            route={protectedRoute}
+            navigate={navigate}
+            dismissEntry={dismissEntry}
+          />
+        )}
+      </AuthGate>
+    </IdentityProvider>
   );
 }
 
