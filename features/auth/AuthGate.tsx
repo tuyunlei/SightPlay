@@ -1,14 +1,13 @@
 import { type ReactNode, useEffect, useMemo } from 'react';
 
 import { selectAppScene, type AppRoute, type ProtectedAppRoute } from '@sightplay/app-shell';
+import { useIdentity } from '@sightplay/identity-client';
 
 import { translations } from '../../i18n';
 import { useUiStore } from '../../store/uiStore';
 
-import { AuthProvider } from './AuthProvider';
 import { LoginScreen } from './LoginScreen';
 import { RegisterScreen } from './RegisterScreen';
-import { useAuthContext } from './useAuthContext';
 
 interface AuthGateInnerProps {
   children: (route: ProtectedAppRoute) => ReactNode;
@@ -37,14 +36,11 @@ function LoadingScene() {
 }
 
 function AuthGateInner({ children, route, navigate }: AuthGateInnerProps) {
-  const { isAuthenticated, isLoading } = useAuthContext();
+  const identity = useIdentity();
   const scene = useMemo(
     () =>
-      selectAppScene(
-        isLoading ? 'loading' : isAuthenticated ? 'authenticated' : 'anonymous',
-        route
-      ),
-    [isAuthenticated, isLoading, route]
+      selectAppScene(identity.view.status === 'booting' ? 'loading' : identity.view.status, route),
+    [identity.view.status, route]
   );
 
   useEffect(() => {
@@ -58,12 +54,22 @@ function AuthGateInner({ children, route, navigate }: AuthGateInnerProps) {
       return (
         <RegisterScreen
           initialInviteCode={scene.route.inviteCode}
-          onReturnToLogin={() => navigate({ kind: 'login' })}
+          onReturnToLogin={() => {
+            identity.clearFailure();
+            navigate({ kind: 'login' });
+          }}
         />
       );
     }
 
-    return <LoginScreen onRegister={() => navigate({ kind: 'register' })} />;
+    return (
+      <LoginScreen
+        onRegister={() => {
+          identity.clearFailure();
+          navigate({ kind: 'register' });
+        }}
+      />
+    );
   }
 
   return <>{children(scene.route)}</>;
@@ -77,10 +83,8 @@ interface AuthGateProps {
 
 export function AuthGate({ children, route, navigate }: AuthGateProps) {
   return (
-    <AuthProvider>
-      <AuthGateInner route={route} navigate={navigate}>
-        {children}
-      </AuthGateInner>
-    </AuthProvider>
+    <AuthGateInner route={route} navigate={navigate}>
+      {children}
+    </AuthGateInner>
   );
 }

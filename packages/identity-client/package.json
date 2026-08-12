@@ -1,0 +1,12 @@
+{
+  "name": "@sightplay/identity-client",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/public.ts"
+  },
+  "dependencies": {
+    "react": "^19.2.4"
+  }
+}

@@ -12,27 +12,22 @@ export class AudioProcessor {
   async start(): Promise<void> {
     if (this.audioContext) return;
 
-    try {
-      this.microphoneStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          autoGainControl: false,
-          noiseSuppression: false,
-        },
-      });
+    this.microphoneStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        autoGainControl: false,
+        noiseSuppression: false,
+      },
+    });
 
-      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      this.analyser = this.audioContext.createAnalyser();
-      this.analyser.fftSize = 4096; // Higher FFT size for better resolution at lower frequencies
-      this.bufferLength = this.analyser.fftSize;
-      this.dataArray = new Float32Array(this.bufferLength);
+    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    this.analyser = this.audioContext.createAnalyser();
+    this.analyser.fftSize = 4096; // Higher FFT size for better resolution at lower frequencies
+    this.bufferLength = this.analyser.fftSize;
+    this.dataArray = new Float32Array(this.bufferLength);
 
-      this.source = this.audioContext.createMediaStreamSource(this.microphoneStream);
-      this.source.connect(this.analyser);
-    } catch (err) {
-      console.error('Error accessing microphone', err);
-      throw err;
-    }
+    this.source = this.audioContext.createMediaStreamSource(this.microphoneStream);
+    this.source.connect(this.analyser);
   }
 
   stop() {

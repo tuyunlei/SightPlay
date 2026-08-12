@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AppRoute } from '@sightplay/app-shell';
+import { createBrowserIdentityPorts } from '@sightplay/browser-adapters';
+import { IdentityProvider } from '@sightplay/identity-client';
 
 import { translations } from '../../../i18n';
 import { useUiStore } from '../../../store/uiStore';
@@ -29,9 +31,10 @@ vi.mock('@sentry/react', () => ({
 
 function AuthGateHarness({ initialRoute = { kind: 'login' } }: { initialRoute?: AppRoute }) {
   const [route, setRoute] = useState<AppRoute>(initialRoute);
+  const [ports] = useState(createBrowserIdentityPorts);
 
   return (
-    <>
+    <IdentityProvider ports={ports}>
       <output data-testid="current-route">{JSON.stringify(route)}</output>
       <AuthGate route={route} navigate={setRoute}>
         {(protectedRoute) => (
@@ -40,7 +43,7 @@ function AuthGateHarness({ initialRoute = { kind: 'login' } }: { initialRoute?: 
           </div>
         )}
       </AuthGate>
-    </>
+    </IdentityProvider>
   );
 }
 

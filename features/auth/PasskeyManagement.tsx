@@ -1,11 +1,12 @@
 import { KeyRound, Trash2, Ticket, X, Copy, Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
+import { useIdentity } from '@sightplay/identity-client';
+
 import { translations } from '../../i18n';
 import { useUiStore } from '../../store/uiStore';
 
 import { deletePasskeyById, generateInviteCode } from './passkey-api';
-import { useAuthContext } from './useAuthContext';
 interface Passkey {
   id: string;
   name: string;
@@ -174,7 +175,7 @@ async function loadPasskeysFromApi(): Promise<Passkey[]> {
   return response.ok ? await response.json() : [];
 }
 function usePasskeyManagementState() {
-  const { checkSession } = useAuthContext();
+  const { refreshSession } = useIdentity();
   const [passkeys, setPasskeys] = useState<Passkey[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -215,7 +216,7 @@ function usePasskeyManagementState() {
 
     if (await deletePasskeyById(id)) {
       setPasskeys(await loadPasskeysFromApi());
-      await checkSession();
+      refreshSession();
       return;
     }
     setError(t.passkeyRemoveFailed);
@@ -238,7 +239,7 @@ function usePasskeyManagementState() {
   };
 }
 export function PasskeyManagement({ onClose }: PasskeyManagementProps) {
-  const { logout } = useAuthContext();
+  const { logout } = useIdentity();
   const {
     passkeys,
     isLoading,

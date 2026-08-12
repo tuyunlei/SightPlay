@@ -42,8 +42,8 @@ export class MidiService {
           this.bindInput(e.port as MIDIInput);
         }
       };
-    } catch (err) {
-      console.error('MIDI Access failed', err);
+    } catch {
+      this.onConnectionChangeCallback?.(false);
     } finally {
       this.isInitializing = false;
     }

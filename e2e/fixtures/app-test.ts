@@ -4,7 +4,7 @@ type RuntimeEvent =
   | { kind: 'pageError'; message: string }
   | { kind: 'requestFailed'; method: string; url: string; failure: string | null }
   | { kind: 'httpError'; method: string; url: string; status: number }
-  | { kind: 'consoleError'; text: string };
+  | { kind: 'consoleError'; text: string; url: string | null };
 
 type ExpectedHttpError = { pathname: string; status: number };
 
@@ -15,13 +15,15 @@ export type RuntimeDiagnostics = {
 
 class DiagnosticsController implements RuntimeDiagnostics {
   readonly state: DiagnosticsState = {
-    allowPageError: false,
+    expectedPageErrors: 0,
+    expectedConsoleErrors: 0,
     expectedHttpErrors: [],
     events: [],
   };
 
   allowPageError = () => {
-    this.state.allowPageError = true;
+    this.state.expectedPageErrors += 1;
+    this.state.expectedConsoleErrors += 1;
   };
 
   allowHttpError = (pathname: string, status: number) => {
@@ -30,7 +32,8 @@ class DiagnosticsController implements RuntimeDiagnostics {
 }
 
 type DiagnosticsState = {
-  allowPageError: boolean;
+  expectedPageErrors: number;
+  expectedConsoleErrors: number;
   expectedHttpErrors: ExpectedHttpError[];
   events: RuntimeEvent[];
 };
@@ -64,17 +67,55 @@ const installDiagnostics = (page: Page, state: DiagnosticsState) => {
   });
   page.on('console', (message) => {
     if (message.type() === 'error') {
-      state.events.push({ kind: 'consoleError', text: message.text() });
+      state.events.push({
+        kind: 'consoleError',
+        text: message.text(),
+        url: message.location().url || null,
+      });
     }
   });
 };
 
-const unexpectedEvents = (state: DiagnosticsState) =>
-  state.events.filter((event) => {
-    if (event.kind === 'consoleError') return false;
-    if (event.kind === 'pageError') return !state.allowPageError;
+const unexpectedEvents = (state: DiagnosticsState) => {
+  let remainingPageErrors = state.expectedPageErrors;
+  let remainingConsoleErrors = state.expectedConsoleErrors;
+  return state.events.filter((event) => {
+    if (event.kind === 'consoleError') {
+      if (remainingConsoleErrors > 0) {
+        remainingConsoleErrors -= 1;
+        return false;
+      }
+      if (event.url) {
+        const pathname = new URL(event.url).pathname;
+        const matchesObservedExpectedHttpError = state.events.some(
+          (candidate) =>
+            candidate.kind === 'httpError' &&
+            new URL(candidate.url).pathname === pathname &&
+            state.expectedHttpErrors.some(
+              (expected) => expected.pathname === pathname && expected.status === candidate.status
+            )
+        );
+        if (matchesObservedExpectedHttpError) return false;
+      }
+      return true;
+    }
+    if (event.kind === 'pageError' && remainingPageErrors > 0) {
+      remainingPageErrors -= 1;
+      return false;
+    }
+    if (event.kind === 'pageError') return true;
     if (event.kind === 'requestFailed') {
-      const hostname = new URL(event.url).hostname;
+      // Playwright exposes browser-initiated cancellation only through the protocol error code.
+      // React StrictMode lifecycle replay intentionally aborts Identity's initial session request.
+      const url = new URL(event.url);
+      if (
+        event.failure === 'net::ERR_ABORTED' &&
+        event.method === 'GET' &&
+        url.pathname === '/api/auth/session'
+      ) {
+        return false;
+      }
+      const hostname = url.hostname;
       return hostname === '127.0.0.1' || hostname === 'localhost';
     }
     const pathname = new URL(event.url).pathname;
@@ -82,6 +123,7 @@ const unexpectedEvents = (state: DiagnosticsState) =>
       (expected) => expected.pathname === pathname && expected.status === event.status
     );
   });
+};
 
 const hashSeed = (value: string) => {
   let hash = 2166136261;

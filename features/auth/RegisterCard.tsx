@@ -1,11 +1,13 @@
 import { Fingerprint } from 'lucide-react';
 import { useState } from 'react';
 
+import { useIdentity } from '@sightplay/identity-client';
+
 import { translations } from '../../i18n';
 import { useUiStore } from '../../store/uiStore';
 import { normalizeInviteCode, toDisplayInviteCode } from '../../utils/inviteCode';
 
-import { useAuthContext } from './useAuthContext';
+import { identityFailureMessage } from './identityFailureMessage';
 
 const MAX_INVITE_LENGTH = 8;
 
@@ -126,27 +128,18 @@ export function RegisterCard({
   dataTestId,
   onReturnToLogin,
 }: RegisterCardProps) {
-  const { register } = useAuthContext();
+  const identity = useIdentity();
   const lang = useUiStore((state) => state.lang);
   const t = translations[lang];
 
   const [inviteCode, setInviteCode] = useState(() =>
     initialInviteCode ? formatInviteInput(initialInviteCode) : ''
   );
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   const isInviteCodeComplete = normalizeInviteCode(inviteCode).length === 8;
-
-  const handleRegister = async () => {
-    setIsLoading(true);
-    setError(null);
-    const result = await register(undefined, inviteCode);
-    if (result !== true) {
-      setError(result);
-      setIsLoading(false);
-    }
-  };
+  const isLoading = identity.view.operation === 'registration';
+  const error = identity.view.failure
+    ? identityFailureMessage(t, identity.view.failure.code)
+    : null;
 
   return (
     <RegisterCardView
@@ -159,7 +152,7 @@ export function RegisterCard({
       highlighted={highlighted}
       onReturnToLogin={onReturnToLogin}
       onInviteCodeChange={(value) => setInviteCode(formatInviteInput(value))}
-      onRegister={handleRegister}
+      onRegister={() => identity.register({ inviteCode })}
     />
   );
 }

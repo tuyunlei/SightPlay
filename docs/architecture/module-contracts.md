@@ -47,6 +47,20 @@ marker. Exiting an application-opened song or modal removes that entry and resto
 route; exiting a direct deep link replaces it with a validated safe fallback. Modal routes carry a
 validated content return route and render that content underneath.
 
+## Identity client
+
+Identity is a closed session and ceremony lifecycle. `@sightplay/identity-client` owns the pure
+`IdentityState`, semantic intents, result actions, typed effects, selectors, and operation epochs. Its
+runtime is the only effect interpreter: it invokes consumer-owned API, Passkey, and telemetry ports,
+feeds structured results back into the transition, aborts active HTTP requests on disposal, and
+ignores all results from an older lifecycle generation.
+
+`@sightplay/browser-adapters` owns HTTP decoding, WebAuthn invocation and error classification, and
+Sentry projection. Localized messages belong to the React projection; adapter response text and
+exception messages never select a business branch. App Shell remains the sole navigation owner, so
+Identity success changes the public session state and the scene selector performs any resulting route
+authorization without Identity writing browser history.
+
 ## Exercise and Practice
 
 Song, random, and coach content compile into one plan:
