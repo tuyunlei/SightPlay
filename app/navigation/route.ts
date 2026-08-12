@@ -11,6 +11,14 @@ interface RouteLocation {
   search?: string;
 }
 
+function decodePathSegment(value: string): string | null {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return null;
+  }
+}
+
 export function parseAppRoute({ pathname, search = '' }: RouteLocation): AppRoute {
   const params = new URLSearchParams(search);
 
@@ -21,7 +29,7 @@ export function parseAppRoute({ pathname, search = '' }: RouteLocation): AppRout
     return { kind: 'library', difficulty: params.get('difficulty') ?? undefined };
   }
   if (pathname.startsWith('/songs/')) {
-    const songId = decodeURIComponent(pathname.slice('/songs/'.length));
+    const songId = decodePathSegment(pathname.slice('/songs/'.length));
     if (songId) return { kind: 'songPractice', songId };
   }
   if (pathname === '/passkeys') return { kind: 'passkeys' };

@@ -115,3 +115,6 @@ production release remains a separate explicitly authorized operation.
   file-size gates, 423 unit/integration tests, production build, and the 14-test auth E2E selection
   (13 passed, one documented WebKit virtual-WebAuthn skip). The build retains the existing 500 kB chunk
   advisory; three existing files remain near the 300-line size limit.
+- 2026-08-13: PR #9 review identified that malformed percent-encoding in a song deep link could throw
+  before the App ErrorBoundary mounted. The pure route parser now classifies malformed paths as unknown
+  routes, with regression cases for incomplete and invalid UTF-8 encodings.

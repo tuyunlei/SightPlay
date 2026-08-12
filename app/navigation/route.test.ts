@@ -21,4 +21,11 @@ describe('App route', () => {
   it('falls back to login for an unknown route', () => {
     expect(parseAppRoute({ pathname: '/unknown' })).toEqual({ kind: 'login' });
   });
+
+  it.each(['/songs/%', '/songs/%E0'])(
+    'falls back to login for a malformed encoded song route: %s',
+    (pathname) => {
+      expect(parseAppRoute({ pathname })).toEqual({ kind: 'login' });
+    }
+  );
 });
