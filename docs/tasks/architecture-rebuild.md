@@ -121,7 +121,8 @@ production release remains a separate explicitly authorized operation.
 - 2026-08-13: PR #9 was squash-merged to `develop` at `a1d9614`. The next slice established the pnpm
   workspace and moved the App Shell route model behind `@sightplay/app-shell`'s public export. ESLint
   now rejects React, browser globals, timers, and implicit time/randomness inside package models;
-  dependency-cruiser rejects deep imports and upward model dependencies.
+  dependency-cruiser rejects deep imports and upward/runtime model dependencies, and a dedicated
+  no-DOM/no-Node TypeScript project makes unlisted platform APIs fail closed.
 - 2026-08-13: Captured the 25 remaining production files under top-level `hooks/`, `services/`,
   `store/`, and `views/` as a shrinking migration baseline. `lint:boundaries` rejects any new business
   source in those directories, so new capability ownership must enter the package architecture while

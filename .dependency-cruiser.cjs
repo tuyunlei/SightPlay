@@ -33,6 +33,28 @@ module.exports = {
       },
     },
     {
+      name: 'capability-model-no-runtime-dependencies',
+      severity: 'error',
+      comment:
+        'Production models receive runtime capabilities through ports, never runtime modules',
+      from: {
+        path: '^packages/[^/]+/src/(model|domain)/',
+        pathNot: '\\.(test|spec)\\.[cm]?[jt]sx?$',
+      },
+      to: {
+        dependencyTypes: [
+          'core',
+          'npm',
+          'npm-bundled',
+          'npm-dev',
+          'npm-no-pkg',
+          'npm-optional',
+          'npm-peer',
+          'npm-unknown',
+        ],
+      },
+    },
+    {
       name: 'shared-no-upper',
       severity: 'error',
       comment: 'shared 文件禁止依赖上层模块',

@@ -19,14 +19,27 @@ function decodePathSegment(value: string): string | null {
   }
 }
 
-export function parseAppRoute({ pathname, search = '' }: RouteLocation): AppRoute {
-  const params = new URLSearchParams(search);
+function readQueryParam(search: string, key: string): string | undefined {
+  const encodedPair = search
+    .replace(/^\?/, '')
+    .split('&')
+    .find((pair) => pair.split('=', 1)[0] === encodeURIComponent(key));
+  if (!encodedPair) return undefined;
 
+  const encodedValue = encodedPair.slice(encodedPair.indexOf('=') + 1).replace(/\+/g, ' ');
+  return decodePathSegment(encodedValue) ?? undefined;
+}
+
+function serializeQueryParam(key: string, value: string): string {
+  return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+}
+
+export function parseAppRoute({ pathname, search = '' }: RouteLocation): AppRoute {
   if (pathname === '/register') {
-    return { kind: 'register', inviteCode: params.get('code') ?? undefined };
+    return { kind: 'register', inviteCode: readQueryParam(search, 'code') };
   }
   if (pathname === '/library') {
-    return { kind: 'library', difficulty: params.get('difficulty') ?? undefined };
+    return { kind: 'library', difficulty: readQueryParam(search, 'difficulty') };
   }
   if (pathname.startsWith('/songs/')) {
     const songId = decodePathSegment(pathname.slice('/songs/'.length));
@@ -44,15 +57,13 @@ export function serializeAppRoute(route: AppRoute): string {
       return '/';
     case 'register': {
       if (!route.inviteCode) return '/register';
-      const params = new URLSearchParams({ code: route.inviteCode });
-      return `/register?${params.toString()}`;
+      return `/register?${serializeQueryParam('code', route.inviteCode)}`;
     }
     case 'randomPractice':
       return '/practice';
     case 'library': {
       if (!route.difficulty) return '/library';
-      const params = new URLSearchParams({ difficulty: route.difficulty });
-      return `/library?${params.toString()}`;
+      return `/library?${serializeQueryParam('difficulty', route.difficulty)}`;
     }
     case 'songPractice':
       return `/songs/${encodeURIComponent(route.songId)}`;
