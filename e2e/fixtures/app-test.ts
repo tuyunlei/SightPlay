@@ -94,9 +94,16 @@ const unexpectedEvents = (state: DiagnosticsState) => {
     if (event.kind === 'pageError') return !state.allowPageError;
     if (event.kind === 'requestFailed') {
       // Playwright exposes browser-initiated cancellation only through the protocol error code.
-      // React StrictMode lifecycle replay intentionally aborts disposable capability requests.
-      if (event.failure === 'net::ERR_ABORTED') return false;
-      const hostname = new URL(event.url).hostname;
+      // React StrictMode lifecycle replay intentionally aborts Identity's initial session request.
+      const url = new URL(event.url);
+      if (
+        event.failure === 'net::ERR_ABORTED' &&
+        event.method === 'GET' &&
+        url.pathname === '/api/auth/session'
+      ) {
+        return false;
+      }
+      const hostname = url.hostname;
       return hostname === '127.0.0.1' || hostname === 'localhost';
     }
     const pathname = new URL(event.url).pathname;

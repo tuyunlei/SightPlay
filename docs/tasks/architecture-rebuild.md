@@ -167,4 +167,5 @@ production release remains a separate explicitly authorized operation.
   zero-warning ESLint, 459 unit/integration tests, production build, and the complete Playwright matrix
   (58 passed, one documented WebKit virtual-WebAuthn skip). Browser-generated console errors are
   exempt only when their source URL matches an explicitly expected and actually observed HTTP failure;
-  no test can silently suppress an unrelated console error.
+  no test can silently suppress an unrelated console error. Request cancellation is exempt only for
+  the known StrictMode `GET /api/auth/session` disposal path; all other aborted requests fail E2E.
