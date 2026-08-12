@@ -14,7 +14,10 @@ const capabilityPrivateRules = packageNames.map((packageName) => {
     severity: 'error',
     comment: 'Capability internals are private; consumers import the package public API only',
     from: { pathNot: `^${packagePath}/` },
-    to: { path: `^${packagePath}/src/(?!public\\.ts$)` },
+    to: {
+      path: `^${packagePath}/src/`,
+      dependencyTypes: ['local', 'aliased', 'aliased-tsconfig', 'aliased-tsconfig-base-url'],
+    },
   };
 });
 

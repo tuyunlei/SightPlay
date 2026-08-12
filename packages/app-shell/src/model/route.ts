@@ -26,7 +26,11 @@ function readQueryParam(search: string, key: string): string | undefined {
     .find((pair) => pair.split('=', 1)[0] === encodeURIComponent(key));
   if (!encodedPair) return undefined;
 
-  const encodedValue = encodedPair.slice(encodedPair.indexOf('=') + 1).replace(/\+/g, ' ');
+  const separatorIndex = encodedPair.indexOf('=');
+  const encodedValue = (separatorIndex < 0 ? '' : encodedPair.slice(separatorIndex + 1)).replace(
+    /\+/g,
+    ' '
+  );
   return decodePathSegment(encodedValue) ?? undefined;
 }
 

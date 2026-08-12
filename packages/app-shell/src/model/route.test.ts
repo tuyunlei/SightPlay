@@ -22,6 +22,13 @@ describe('App route', () => {
     expect(parseAppRoute({ pathname: '/unknown' })).toEqual({ kind: 'login' });
   });
 
+  it('treats a key-only query parameter as an empty value', () => {
+    expect(parseAppRoute({ pathname: '/register', search: '?code' })).toEqual({
+      kind: 'register',
+      inviteCode: '',
+    });
+  });
+
   it.each(['/songs/%', '/songs/%E0'])(
     'falls back to login for a malformed encoded song route: %s',
     (pathname) => {
