@@ -87,9 +87,17 @@ export function readSessionToken(request: Request): string | null {
   const cookies = request.headers.get('Cookie')?.split(';') ?? [];
   for (const cookie of cookies) {
     const [name, ...parts] = cookie.trim().split('=');
-    if (name === SESSION_COOKIE) return decodeURIComponent(parts.join('='));
+    if (name === SESSION_COOKIE) return decodeCookieValue(parts.join('='));
   }
   return null;
+}
+
+function decodeCookieValue(value: string): string | null {
+  try {
+    return decodeURIComponent(value) || null;
+  } catch {
+    return null;
+  }
 }
 
 export async function authenticateIdentityRequest(

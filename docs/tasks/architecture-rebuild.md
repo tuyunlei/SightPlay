@@ -229,3 +229,7 @@ production release remains a separate explicitly authorized operation.
   virtual-WebAuthn skip). The stable auth fixture now obeys the same canonical credential-ID contract
   as the production WebAuthn adapter. Production credential import, the deployed `IDENTITY_DB`
   binding, and custom-domain lifecycle evidence remain intentionally unchecked operational gates.
+- 2026-08-13: Latest-head review found that an invalid percent escape in the session cookie reached
+  `decodeURIComponent` and became an internal error. Cookie decoding now fails closed to anonymous
+  state before hashing or repository access; the assembled handler over real D1 proves malformed
+  external input returns a valid anonymous session snapshot rather than a 500.

@@ -104,6 +104,19 @@ describe('Identity HTTP assembly over D1', () => {
     });
   });
 
+  it('treats a malformed session cookie as anonymous input instead of an internal failure', async () => {
+    const response = await handleGetSession(
+      platform('/api/auth/session', { headers: { Cookie: 'sightplay_session=%' } })
+    );
+    const decoded = decodeApiResult(await response.json(), decodeSessionSnapshot);
+
+    expect(response.status).toBe(200);
+    expect(decoded).toMatchObject({
+      ok: true,
+      value: { ok: true, data: { authenticated: false, hasPasskeys: false } },
+    });
+  });
+
   it('rejects malformed registration input before it reaches a ceremony', async () => {
     const response = await handlePostRegisterOptions(
       platform('/api/auth/register-options', {
