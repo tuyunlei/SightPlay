@@ -40,3 +40,25 @@ Production release remains separately authorized. Before it, PPE must prove:
 
 The read-only remote smoke command remains appropriate for generated previews, but it cannot replace any
 of these proofs.
+
+## PPE provisioning plan
+
+Provisioning requires an explicitly approved Cloudflare token scoped to the SightPlay account and
+`xclz.org` zone with Pages Write, D1 Write, and DNS Edit. The operator consumes it from the approved secret
+store; the value never enters source, chat, command arguments, logs, or an environment file.
+
+1. Create D1 database `sightplay-identity-ppe` and apply every checked-in Identity migration.
+2. Create Git-integrated Pages project `sightplay-ppe` from `tuyunlei/SightPlay`, with production branch
+   `develop`, the repository build contract, and automatic preview branch deployments disabled.
+3. Configure only the project's production environment with `IDENTITY_DB`, Identity variables, and required
+   secrets. Leave its preview environment without Identity storage.
+4. Complete one successful `develop` deployment, attach `develop.sightplay.xclz.org`, and require active
+   domain verification and certificate validation before changing DNS routing.
+5. Run the required evidence above and record only resource identifiers and results. If any step fails,
+   remove or disable the new PPE resources without touching the existing `sightplay` project.
+
+Cloudflare documents the relevant controls in its guides for
+[Pages bindings](https://developers.cloudflare.com/pages/functions/bindings/),
+[branch deployment controls](https://developers.cloudflare.com/pages/configuration/branch-build-controls/),
+and [custom domains](https://developers.cloudflare.com/pages/configuration/custom-domains/). The API
+requires Pages Write to create a project and D1 Write to create a database.
