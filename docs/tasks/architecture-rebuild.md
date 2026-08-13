@@ -336,9 +336,10 @@ production release remains a separate explicitly authorized operation.
   D1 do not reproduce. Parenthesizing each trigger `CASE` preserves its behavior and allowed all three
   migrations to apply to both remote databases. Deployed preview binding, custom-domain restoration, and
   real Passkey proof remain in progress; production data import and release remain separately gated.
-- 2026-08-13: Cloudflare Preview deployment `3e15d40` bound the PPE D1 successfully: the generated URL
+- 2026-08-13: Cloudflare Preview deployment `8ec62c2f` bound the PPE D1 successfully: the generated URL
   serves the web artifact and `GET /api/auth/session` returns the anonymous Identity envelope instead of
   the prior internal 500. Added the one-time bootstrap secret to the preview environment through encrypted
-  stdin. Recreated the Pages custom-domain association and proxied DNS record for
-  `develop.sightplay.xclz.org` in the documented order; DNS resolves and Pages verification is active, while
-  certificate validation and the final branch-alias switch remain pending.
+  stdin. `develop.sightplay.xclz.org` is now active with certificate and domain verification complete, and
+  its proxied CNAME targets the PR candidate's Cloudflare-provided branch alias. The stable origin returns
+  the anonymous Identity session envelope and recognizes the bootstrap capability; a single disposable
+  invitation has been issued for the remaining real-device Passkey lifecycle proof.
