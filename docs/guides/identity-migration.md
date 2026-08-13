@@ -36,6 +36,29 @@ pnpm identity:migration:validate < /private/path/passkeys.json
 Record only the reported count and SHA-256 fingerprint. The validator never prints public keys or
 credential IDs.
 
+## Pre-production rehearsal gate
+
+Do not begin the production maintenance window merely because Cloudflare reports a successful artifact
+deployment. First prove a named, isolated PPE environment:
+
+1. Record the PPE branch SHA, Pages deployment, isolated D1 database, binding scope, and HTTPS custom
+   domain. The origin must be explicitly allowed and compatible with RP ID `sightplay.xclz.org`; a
+   `pages.dev` hostname is delivery evidence only.
+2. Apply the same migrations to the PPE D1 database and bind it as `IDENTITY_DB` only in that environment.
+   Require `GET /api/auth/session` to return a valid anonymous success envelope; a structured 500 means the
+   runtime is not ready even if the deployment check is green.
+3. On the PPE custom domain, use a disposable invitation to prove registration, session refresh, logout,
+   Passkey login, credential listing, non-final removal, and final-credential rejection. Record browser,
+   authenticator, URL, and deployment SHA.
+4. Rehearse `importLegacyIdentity()` with a non-production fixture that has the same decoded schema. Prove
+   first-run import, exact idempotent rerun, count/fingerprint comparison, and rollback from an induced late
+   failure without copying production credentials into PPE.
+
+PPE evidence proves binding, schema, application wiring, WebAuthn origin/RP policy, and the operational
+procedure. It does not prove that the production export is valid or authorize a production data change.
+Proceed only after the named production account/project/database and maintenance window are explicitly
+approved.
+
 ## Authorized execution
 
 1. Put the application in a short registration/login maintenance window so the KV export cannot
