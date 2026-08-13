@@ -51,10 +51,15 @@ store; the value never enters source, chat, command arguments, logs, or an envir
 2. Create Git-integrated Pages project `sightplay-ppe` from `tuyunlei/SightPlay`, with production branch
    `develop`, the repository build contract, and automatic preview branch deployments disabled.
 3. Configure only the project's production environment with `IDENTITY_DB`, Identity variables, and required
-   secrets. Leave its preview environment without Identity storage.
+   secrets. Add a high-entropy `IDENTITY_BOOTSTRAP_SECRET` only for initial account creation; leave the
+   project's preview environment without Identity storage.
 4. Complete one successful `develop` deployment, attach `develop.sightplay.xclz.org`, and require active
    domain verification and certificate validation before changing DNS routing.
-5. Run the required evidence above and record only resource identifiers and results. If any step fails,
+5. Call `POST /api/auth/bootstrap/invitations` through the PPE custom origin with the secret supplied from
+   the approved secret store in `X-Identity-Bootstrap-Secret`. Use the returned invitation immediately to
+   register the first account, then remove `IDENTITY_BOOTSTRAP_SECRET` and prove that the bootstrap endpoint
+   returns `authenticationRequired`. Generate every later invitation through the authenticated account API.
+6. Run the required evidence above and record only resource identifiers and results. If any step fails,
    remove or disable the new PPE resources without touching the existing `sightplay` project.
 
 Cloudflare documents the relevant controls in its guides for

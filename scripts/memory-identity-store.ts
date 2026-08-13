@@ -27,6 +27,7 @@ export class MemoryIdentityStore implements IdentityStore {
   private readonly invitations = new Map<string, InvitationRecord>();
   private readonly ceremonies = new Map<string, CeremonyRecord>();
   private readonly sessions = new Map<string, SessionRecord>();
+  private bootstrapClaimed = false;
   private serial = Promise.resolve();
 
   clear(): void {
@@ -35,6 +36,7 @@ export class MemoryIdentityStore implements IdentityStore {
     this.invitations.clear();
     this.ceremonies.clear();
     this.sessions.clear();
+    this.bootstrapClaimed = false;
   }
 
   async seedInvitation(
@@ -105,6 +107,17 @@ export class MemoryIdentityStore implements IdentityStore {
         return failed('invitationConflict');
       }
       for (const invitation of invitations) this.invitations.set(invitation.codeDigest, invitation);
+      return accepted(undefined);
+    });
+  }
+
+  async bootstrapInvitations(input: Parameters<IdentityStore['bootstrapInvitations']>[0]) {
+    return this.exclusive(() => {
+      if (this.bootstrapClaimed || this.accounts.size > 0 || this.invitations.size > 0) {
+        return failed('authenticationRequired');
+      }
+      this.bootstrapClaimed = true;
+      for (const invitation of input.invitations) this.invitations.set(invitation.codeDigest, invitation);
       return accepted(undefined);
     });
   }

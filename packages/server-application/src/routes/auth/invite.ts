@@ -1,5 +1,9 @@
 import { isRecord } from '@sightplay/api-contracts';
-import { createInvitations, validateInvitation } from '@sightplay/identity-server';
+import {
+  bootstrapInvitations,
+  createInvitations,
+  validateInvitation,
+} from '@sightplay/identity-server';
 
 import type { PlatformContext } from '../../platform';
 
@@ -31,10 +35,10 @@ export async function handlePostInvite(platform: PlatformContext): Promise<Respo
   });
 }
 
-export async function handlePostInviteAdmin(platform: PlatformContext): Promise<Response> {
+export async function handlePostInviteBootstrap(platform: PlatformContext): Promise<Response> {
   return handleInvite(platform, async (request) => {
-    const expected = platform.env('ADMIN_SECRET');
-    const actual = platform.request.headers.get('X-Admin-Secret');
+    const expected = platform.env('IDENTITY_BOOTSTRAP_SECRET');
+    const actual = platform.request.headers.get('X-Identity-Bootstrap-Secret');
     if (!expected || !actual || !timingSafeEqual(actual, expected)) {
       return failureResponse(
         { code: 'authenticationRequired', retryable: false },
@@ -43,7 +47,7 @@ export async function handlePostInviteAdmin(platform: PlatformContext): Promise<
     }
     const count = decodeCount(await readUnknownJson(platform.request));
     if (count === null) return invalidRequestResponse(request.requestId);
-    const result = await createInvitations({ issuerAccountId: null, count }, request.dependencies);
+    const result = await bootstrapInvitations({ count }, request.dependencies);
     return resultResponse(
       result.ok ? { ok: true, value: { codes: result.value } } : result,
       request.requestId

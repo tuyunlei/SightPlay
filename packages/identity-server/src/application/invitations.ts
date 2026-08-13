@@ -9,6 +9,32 @@ export async function createInvitations(
   input: { readonly issuerAccountId: AccountId | null; readonly count: number },
   dependencies: IdentityUseCaseDependencies
 ) {
+  const prepared = await prepareInvitations(input, dependencies);
+  if (!prepared.ok) return prepared;
+  const committed = await dependencies.store.createInvitations(prepared.value.records);
+  return committed.ok ? accepted(prepared.value.codes) : committed;
+}
+
+export async function bootstrapInvitations(
+  input: { readonly count: number },
+  dependencies: IdentityUseCaseDependencies
+) {
+  const prepared = await prepareInvitations(
+    { issuerAccountId: null, count: input.count },
+    dependencies
+  );
+  if (!prepared.ok) return prepared;
+  const committed = await dependencies.store.bootstrapInvitations({
+    claimedAt: prepared.value.now,
+    invitations: prepared.value.records,
+  });
+  return committed.ok ? accepted(prepared.value.codes) : committed;
+}
+
+async function prepareInvitations(
+  input: { readonly issuerAccountId: AccountId | null; readonly count: number },
+  dependencies: IdentityUseCaseDependencies
+) {
   if (!Number.isInteger(input.count) || input.count < 1 || input.count > 10) {
     return failed('invalidRequest');
   }
@@ -37,8 +63,7 @@ export async function createInvitations(
       };
     })
   );
-  const committed = await dependencies.store.createInvitations(records);
-  return committed.ok ? accepted(codes) : committed;
+  return accepted({ codes, records, now });
 }
 
 export async function validateInvitation(

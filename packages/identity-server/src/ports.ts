@@ -52,6 +52,10 @@ export interface IdentityStore {
   createInvitations(
     invitations: readonly InvitationRecord[]
   ): Promise<IdentityServerResult<undefined>>;
+  bootstrapInvitations(input: {
+    readonly claimedAt: Timestamp;
+    readonly invitations: readonly InvitationRecord[];
+  }): Promise<IdentityServerResult<undefined>>;
   findRegistrationContext(input: {
     readonly now: Timestamp;
     readonly challengeDigest: SecretDigest;

@@ -2,7 +2,7 @@ import type { PlatformContext } from './platform';
 import {
   handleGetInviteByCode,
   handlePostInvite,
-  handlePostInviteAdmin,
+  handlePostInviteBootstrap,
 } from './routes/auth/invite';
 import { handlePostLoginOptions } from './routes/auth/login-options';
 import { handlePostLoginVerify } from './routes/auth/login-verify';
@@ -57,9 +57,9 @@ const ROUTES: readonly ServerRoute[] = [
     handlers: { GET: handleGetPasskeys, DELETE: handleDeletePasskey },
   },
   {
-    id: 'invite-admin',
-    matches: exact('/api/auth/invite/admin'),
-    handlers: { POST: handlePostInviteAdmin },
+    id: 'identity-bootstrap-invitations',
+    matches: exact('/api/auth/bootstrap/invitations'),
+    handlers: { POST: handlePostInviteBootstrap },
   },
   { id: 'invite', matches: exact('/api/auth/invite'), handlers: { POST: handlePostInvite } },
   {

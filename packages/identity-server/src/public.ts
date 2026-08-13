@@ -3,7 +3,11 @@ export { beginRegistration } from './application/beginRegistration';
 export { completeAuthentication } from './application/completeAuthentication';
 export { completeRegistration } from './application/completeRegistration';
 export { listCredentials, revokeCredential } from './application/credentials';
-export { createInvitations, validateInvitation } from './application/invitations';
+export {
+  bootstrapInvitations,
+  createInvitations,
+  validateInvitation,
+} from './application/invitations';
 export type { IdentityUseCaseDependencies } from './application/dependencies';
 export { authenticateSession, revokeSession } from './application/session';
 export type {

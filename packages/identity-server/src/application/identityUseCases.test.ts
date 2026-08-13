@@ -22,6 +22,7 @@ import { beginRegistration } from './beginRegistration';
 import { completeAuthentication } from './completeAuthentication';
 import { completeRegistration } from './completeRegistration';
 import type { IdentityUseCaseDependencies } from './dependencies';
+import { bootstrapInvitations } from './invitations';
 
 const NOW = asTimestamp(1_000);
 const ACCOUNT_ID = asAccountId('account-1');
@@ -64,6 +65,7 @@ function createStore(): IdentityStore {
     validateInvitation: vi.fn(async () => accepted({ expiresAt: asTimestamp(20_000) })),
     beginRegistration: vi.fn(async () => accepted(undefined)),
     createInvitations: vi.fn(async () => accepted(undefined)),
+    bootstrapInvitations: vi.fn(async () => accepted(undefined)),
     findRegistrationContext: vi.fn(async () => accepted({ ceremony: registrationCeremony() })),
     completeRegistration: vi.fn(async () => accepted(undefined)),
     beginAuthentication: vi.fn(async () => accepted([credential()])),
@@ -140,6 +142,20 @@ function createDependencies(
 }
 
 describe('Identity Server use cases', () => {
+  it('commits invitation bootstrap through its dedicated atomic store command', async () => {
+    const store = createStore();
+    const dependencies = createDependencies({ store });
+
+    const result = await bootstrapInvitations({ count: 1 }, dependencies);
+
+    expect(result).toEqual(accepted(['ABCD-EFGH']));
+    expect(store.bootstrapInvitations).toHaveBeenCalledWith({
+      claimedAt: NOW,
+      invitations: [expect.objectContaining({ issuerAccountId: null })],
+    });
+    expect(store.createInvitations).not.toHaveBeenCalled();
+  });
+
   it('rejects an untrusted origin before creating a ceremony or challenge', async () => {
     const dependencies = createDependencies();
 

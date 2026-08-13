@@ -48,9 +48,11 @@ deployment. Use the separate project and data boundary defined in the
 2. Apply the same migrations to the PPE D1 database and bind it as `IDENTITY_DB` only in that environment.
    Require `GET /api/auth/session` to return a valid anonymous success envelope; a structured 500 means the
    runtime is not ready even if the deployment check is green.
-3. On the PPE custom domain, use a disposable invitation to prove registration, session refresh, logout,
-   Passkey login, credential listing, non-final removal, and final-credential rejection. Record browser,
-   authenticator, URL, and deployment SHA.
+3. On the PPE custom domain, use the one-time bootstrap capability described in the environment contract
+   to issue the first disposable invitation. Register the first account, remove the bootstrap secret, prove
+   the capability is closed, then prove session refresh, logout, Passkey login, authenticated invitation
+   creation, credential listing, non-final removal, and final-credential rejection. Record browser,
+   authenticator, URL, and deployment SHA, but never the invitation code or credential material.
 4. Rehearse `importLegacyIdentity()` with a non-production fixture that has the same decoded schema. Prove
    first-run import, exact idempotent rerun, count/fingerprint comparison, and rollback from an induced late
    failure without copying production credentials into PPE.

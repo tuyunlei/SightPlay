@@ -14,6 +14,7 @@ import {
   classifyRegistrationFailure,
   inspectInvitation,
 } from './classify';
+import { bootstrapD1Invitations, createD1Invitations } from './d1Invitations';
 import type { D1DatabasePort } from './d1Types';
 import {
   toCeremony,
@@ -43,33 +44,11 @@ export class D1IdentityStore implements IdentityStore {
   }
 
   async createInvitations(invitations: Parameters<IdentityStore['createInvitations']>[0]) {
-    try {
-      await this.db.batch(
-        invitations.map((invitation) =>
-          this.db
-            .prepare(
-              'INSERT INTO invitations (code_digest, purpose, issuer_account_id, expires_at, consumed_at, consumed_by_account_id) VALUES (?, ?, ?, ?, NULL, NULL)'
-            )
-            .bind(
-              invitation.codeDigest,
-              invitation.purpose,
-              invitation.issuerAccountId,
-              invitation.expiresAt
-            )
-        )
-      );
-      return accepted(undefined);
-    } catch {
-      const existing = await Promise.all(
-        invitations.map((invitation) =>
-          this.db
-            .prepare('SELECT code_digest FROM invitations WHERE code_digest = ?')
-            .bind(invitation.codeDigest)
-            .first<{ readonly code_digest: string }>()
-        )
-      );
-      return existing.some(Boolean) ? failed('invitationConflict') : failed('internal', true);
-    }
+    return createD1Invitations(this.db, invitations);
+  }
+
+  async bootstrapInvitations(input: Parameters<IdentityStore['bootstrapInvitations']>[0]) {
+    return bootstrapD1Invitations(this.db, input);
   }
 
   async beginRegistration(input: Parameters<IdentityStore['beginRegistration']>[0]) {

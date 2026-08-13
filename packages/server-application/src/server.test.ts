@@ -12,9 +12,11 @@ const platform = (path: string, method = 'GET'): PlatformContext => ({
 });
 
 describe('Server application routing', () => {
-  it('distinguishes invitation creation, administration, and code validation', () => {
+  it('distinguishes authenticated, bootstrap, and validation invitation capabilities', () => {
     expect(resolveServerRoute(request('/api/auth/invite', 'POST'))?.id).toBe('invite');
-    expect(resolveServerRoute(request('/api/auth/invite/admin', 'POST'))?.id).toBe('invite-admin');
+    expect(resolveServerRoute(request('/api/auth/bootstrap/invitations', 'POST'))?.id).toBe(
+      'identity-bootstrap-invitations'
+    );
     expect(resolveServerRoute(request('/api/auth/invite/ABCD-EFGH'))?.id).toBe('invite-code');
   });
 

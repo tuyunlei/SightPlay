@@ -23,6 +23,20 @@ The transactional identity store owns these conceptual records:
 Raw invitation codes, session tokens, and challenges are not stored as retrievable secrets. Repository
 interfaces expose atomic domain commands, not generic key/value operations.
 
+## Empty-store bootstrap
+
+An empty Identity database has no authenticated account that can issue its first invitation. The only
+exception is the explicitly named `POST /api/auth/bootstrap/invitations` capability. It requires
+`IDENTITY_BOOTSTRAP_SECRET`, is unavailable when that secret is absent, and the Identity use case rejects
+it permanently after the first bootstrap batch or any pre-existing identity state. A D1 claim and the
+invitations commit in one transaction, so concurrent requests cannot both succeed. The operator removes
+the secret immediately after registering the first account; all later invitations use the authenticated
+account capability.
+
+Bootstrap still passes through invitation normalization, digesting, TTL policy, rate limits, and the
+transactional `IdentityStore`. Operators must not seed invitation rows directly or preserve a general
+administrator route as a second business implementation.
+
 ## Atomic commands
 
 - `completeRegistration` consumes one valid registration ceremony and one valid invitation, creates

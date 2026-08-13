@@ -21,3 +21,4 @@ IDENTITY_RATE_LIMIT_ACCOUNT_WINDOW_MS = "3600000"
 
 # Configure runtime secrets (not in source control):
 # wrangler secret put GEMINI_API_KEY
+# IDENTITY_BOOTSTRAP_SECRET is temporary and belongs only in an empty PPE identity environment.

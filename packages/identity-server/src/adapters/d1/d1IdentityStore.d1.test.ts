@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { asSecretDigest, asSessionId, type CeremonyRecord } from '../../model/types';
+import {
+  asSecretDigest,
+  asSessionId,
+  asTimestamp,
+  type CeremonyRecord,
+  type InvitationRecord,
+} from '../../model/types';
 
 import {
   account,
@@ -20,6 +26,43 @@ import {
 beforeEach(clearIdentityTables);
 
 describe('D1 IdentityStore transaction contract', () => {
+  it('admits exactly one bootstrap batch while the complete store is empty', async () => {
+    const first = bootstrapInvitation('bootstrap-first');
+    const second = bootstrapInvitation('bootstrap-second');
+
+    const results = await Promise.all([
+      store.bootstrapInvitations({ claimedAt: now, invitations: [first] }),
+      store.bootstrapInvitations({ claimedAt: now, invitations: [second] }),
+    ]);
+
+    expect(results.filter((result) => result.ok)).toHaveLength(1);
+    expect(
+      results.some((result) => !result.ok && result.failure.code === 'authenticationRequired')
+    ).toBe(true);
+    expect(await scalar('SELECT COUNT(*) AS value FROM identity_bootstrap_claims')).toBe(1);
+    expect(await scalar('SELECT COUNT(*) AS value FROM invitations')).toBe(1);
+  });
+
+  it('rejects bootstrap after identity state already exists', async () => {
+    const accountRecord = account('existing-bootstrap-account');
+    await seedAccountAndCredential(
+      accountRecord,
+      credential('existing-bootstrap-credential', accountRecord.id)
+    );
+
+    const result = await store.bootstrapInvitations({
+      claimedAt: now,
+      invitations: [bootstrapInvitation('late-bootstrap')],
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      failure: { code: 'authenticationRequired', retryable: false },
+    });
+    expect(await scalar('SELECT COUNT(*) AS value FROM identity_bootstrap_claims')).toBe(0);
+    expect(await scalar('SELECT COUNT(*) AS value FROM invitations')).toBe(0);
+  });
+
   it('allows exactly one concurrent registration to consume an invitation', async () => {
     await seedInvitation();
     const firstCeremony = ceremony('registration-a', 'challenge-a');
@@ -206,3 +249,14 @@ describe('D1 IdentityStore transaction contract', () => {
     ).toBe(1);
   });
 });
+
+function bootstrapInvitation(digest: string): InvitationRecord {
+  return {
+    codeDigest: asSecretDigest(digest),
+    purpose: 'createAccount',
+    issuerAccountId: null,
+    expiresAt: asTimestamp(20_000),
+    consumedAt: null,
+    consumedByAccountId: null,
+  };
+}

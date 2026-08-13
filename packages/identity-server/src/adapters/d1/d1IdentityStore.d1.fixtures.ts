@@ -116,6 +116,7 @@ export async function clearIdentityTables(): Promise<void> {
   await db.batch(
     [
       'DELETE FROM credential_revocation_claims',
+      'DELETE FROM identity_bootstrap_claims',
       'DELETE FROM identity_rate_limits',
       'DELETE FROM authentication_claims',
       'DELETE FROM registration_claims',
