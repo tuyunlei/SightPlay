@@ -42,6 +42,12 @@ importers:
       '@sightplay/practice':
         specifier: workspace:*
         version: link:packages/practice
+      '@sightplay/preferences':
+        specifier: workspace:*
+        version: link:packages/preferences
+      '@sightplay/server-application':
+        specifier: workspace:*
+        version: link:packages/server-application
       lucide-react:
         specifier: ^0.563.0
         version: 0.563.0(react@19.2.4)
@@ -51,9 +57,6 @@ importers:
       react-dom:
         specifier: ^19.2.4
         version: 19.2.4(react@19.2.4)
-      zustand:
-        specifier: ^5.0.3
-        version: 5.0.11(@types/react@19.2.14)(react@19.2.4)
     devDependencies:
       '@babel/core':
         specifier: ^7.29.6
@@ -227,6 +230,21 @@ importers:
       react:
         specifier: ^19.2.4
         version: 19.2.4
+
+  packages/preferences:
+    dependencies:
+      react:
+        specifier: ^19.2.4
+        version: 19.2.4
+
+  packages/server-application:
+    dependencies:
+      '@sightplay/api-contracts':
+        specifier: workspace:*
+        version: link:../api-contracts
+      '@sightplay/identity-server':
+        specifier: workspace:*
+        version: link:../identity-server
 
 packages:
   '@asamuzakjp/css-color@6.0.7':
@@ -5587,27 +5605,6 @@ packages:
         integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==,
       }
 
-  zustand@5.0.11:
-    resolution:
-      {
-        integrity: sha512-fdZY+dk7zn/vbWNCYmzZULHRrss0jx5pPFiOuMZ/5HJN6Yv3u+1Wswy/4MpZEkEGhtNH+pwxZB8OKgUBPzYAGg==,
-      }
-    engines: { node: '>=12.20.0' }
-    peerDependencies:
-      '@types/react': '>=18.0.0'
-      immer: '>=9.0.6'
-      react: '>=18.0.0'
-      use-sync-external-store: '>=1.2.0'
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-      immer:
-        optional: true
-      react:
-        optional: true
-      use-sync-external-store:
-        optional: true
-
 snapshots:
   '@asamuzakjp/css-color@6.0.7':
     dependencies:
@@ -8902,8 +8899,3 @@ snapshots:
   zod@3.25.76: {}
 
   zod@4.4.3: {}
-
-  zustand@5.0.11(@types/react@19.2.14)(react@19.2.4):
-    optionalDependencies:
-      '@types/react': 19.2.14
-      react: 19.2.4

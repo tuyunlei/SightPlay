@@ -3,9 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AccountAccessProvider, type AccountAccessPorts } from '@sightplay/account-access-client';
+import { PreferencesProvider } from '@sightplay/preferences';
 
 import { translations } from '../../../i18n';
-import { useUiStore } from '../../../store/uiStore';
 import { PasskeyManagement } from '../PasskeyManagement';
 
 const { logoutMock } = vi.hoisted(() => ({ logoutMock: vi.fn() }));
@@ -16,14 +16,16 @@ vi.mock('@sightplay/identity-client', () => ({
 
 function renderManagement(api: AccountAccessPorts['api'], onCredentialSetChanged = vi.fn()) {
   render(
-    <AccountAccessProvider
-      ports={{ api }}
-      onOutput={(output) => {
-        if (output.kind === 'credentialSetChanged') onCredentialSetChanged();
-      }}
-    >
-      <PasskeyManagement onClose={vi.fn()} />
-    </AccountAccessProvider>
+    <PreferencesProvider initialLanguage="en">
+      <AccountAccessProvider
+        ports={{ api }}
+        onOutput={(output) => {
+          if (output.kind === 'credentialSetChanged') onCredentialSetChanged();
+        }}
+      >
+        <PasskeyManagement onClose={vi.fn()} />
+      </AccountAccessProvider>
+    </PreferencesProvider>
   );
   return onCredentialSetChanged;
 }
@@ -31,7 +33,6 @@ function renderManagement(api: AccountAccessPorts['api'], onCredentialSetChanged
 describe('PasskeyManagement assembled behavior', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useUiStore.setState({ lang: 'en' });
     window.confirm = vi.fn(() => true);
   });
 

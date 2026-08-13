@@ -23,7 +23,7 @@ export default defineConfig({
   test: {
     include: [
       'packages/identity-server/src/adapters/d1/**/*.d1.test.ts',
-      'edge-functions/api/auth/**/*.d1.test.ts',
+      'packages/server-application/src/routes/auth/**/*.d1.test.ts',
     ],
     setupFiles: ['packages/identity-server/src/adapters/d1/applyMigrations.d1.ts'],
   },

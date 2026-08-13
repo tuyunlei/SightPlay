@@ -129,19 +129,37 @@ feedback.
 
 - Feature models cannot import React, Zustand, DOM types, adapters, network clients, system clocks,
   random generators, UUID generators, or timers.
-- A feature cannot import another feature's internals. Application composition maps public outputs to
-  public intents.
+- A capability cannot import another capability, including its public API. Application composition is
+  the only place that maps one capability's public output to another capability's public intent.
 - UI cannot import adapters or mutable stores and cannot expose raw field setters.
 - Adapters implement consumer-owned ports; ports never depend on adapters.
 - Applications import package exports only; deep imports fail CI.
+- Hosting and local-development adapters call the same server application route table. Cloudflare exposes
+  one `/api/*` catch-all; hosting files cannot enumerate product paths/methods or contain handlers.
 - `window`, `navigator`, `fetch`, `Date.now`, `Math.random`, `crypto.randomUUID`, and `setTimeout` are
   restricted to adapters or composition infrastructure.
 - Every effectful runtime has an executable disposal/cancellation contract.
 
-The rules are executable in three layers. Workspace package `exports` define the supported import
-surface, dependency-cruiser prevents consumers from bypassing that surface or models from importing
-legacy/application layers, and ESLint prevents pure models from accessing framework or ambient runtime
-capabilities. A separate no-DOM/no-Node TypeScript project compiles production models, while the
-dependency graph rejects all external and core runtime modules from that layer. During migration,
-`architecture/legacy-business-files.txt` is a one-way baseline: files may be removed from it, but CI
-rejects new production files in the legacy horizontal directories.
+Every workspace package declares a structured `sightplayArchitecture` contract in its manifest. `role`
+is `application`, `capability`, `contracts`, `domain`, or `adapters`. An application may map public
+capability contracts but cannot become a capability's state owner. A capability also declares whether
+its lifecycle is `none`, `request-scoped`, or `managed-runtime`; a managed runtime names its
+implementation entry and behavior test. This metadata is the source for the fitness gate, so enforcement
+does not depend on class names, directory guesses, or a manually maintained package list.
+
+External JSON enters adapter and HTTP-handler code only through `readUnknownJson()` or
+`parseUnknownJson()`. These admission functions return `unknown`; a runtime codec must establish the
+complete trusted contract before the value crosses the port. Direct `.json()`, `JSON.parse()`, type
+assertions, and non-null assertions fail the ingress gate. The rule deliberately applies at trust
+boundaries rather than banning internal typed transformations.
+
+The rules are executable in four layers. Workspace package `exports` define the supported import
+surface; dependency-cruiser prevents deep imports, legacy upward dependencies, and cycles; the AST
+fitness gate enforces package roles, unknown-input admission, declared runtime lifecycle, disposable
+resource ports, cancellable schedulers, and hosting-only route wrappers; ESLint prevents pure models from
+accessing framework or ambient runtime capabilities. A separate no-DOM/no-Node TypeScript project
+compiles production models, while the dependency graph rejects all external and core runtime modules
+from that layer. Web and server builds are explicit independent artifacts; server TypeScript is never
+copied into the browser output. During migration, `architecture/legacy-business-files.txt` is a one-way
+baseline: files may be removed from it, but CI rejects new production files in the legacy horizontal
+directories.

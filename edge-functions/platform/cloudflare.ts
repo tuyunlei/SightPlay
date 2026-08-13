@@ -3,8 +3,7 @@ import {
   createD1IdentityStore,
   type D1DatabasePort,
 } from '@sightplay/identity-server';
-
-import type { PlatformContext } from './types';
+import type { PlatformContext } from '@sightplay/server-application';
 
 export interface CFPagesContext {
   request: Request;

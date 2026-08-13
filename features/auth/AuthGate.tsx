@@ -3,8 +3,7 @@ import { type ReactNode, useEffect, useMemo } from 'react';
 import { selectAppScene, type AppRoute, type ProtectedAppRoute } from '@sightplay/app-shell';
 import { useIdentity } from '@sightplay/identity-client';
 
-import { translations } from '../../i18n';
-import { useUiStore } from '../../store/uiStore';
+import { useLanguage } from '../../app/presentation/useLanguage';
 
 import { LoginScreen } from './LoginScreen';
 import { RegisterScreen } from './RegisterScreen';
@@ -16,8 +15,7 @@ interface AuthGateInnerProps {
 }
 
 function LoadingScene() {
-  const lang = useUiStore((state) => state.lang);
-  const t = translations[lang];
+  const { t } = useLanguage();
 
   return (
     <div

@@ -2,10 +2,10 @@
 
 Status: in progress
 
-Current branch: `codex/guidance-core`
+Current branch: `codex/architecture-fitness-gates`
 
-Current base: `codex/transactional-identity-server` at `99e0f30` (PR #13), stacked on
-`origin/develop` at `cf18b34`
+Current base: `codex/guidance-core` at `da3d44b` (PR #15), stacked through Practice and the
+transactional Identity server on `origin/develop` at `cf18b34`
 
 ## Goal
 
@@ -82,14 +82,25 @@ structured result; presentation modules contain no business transitions.
 
 ## Phase 5 — Platform convergence and legacy removal
 
-- [ ] Use one server application for local, Cloudflare, and any retained platform adapters.
-- [ ] Split explicit web and server builds; stop copying server TypeScript into the web artifact.
-- [ ] Delete legacy business ownership from top-level `hooks/`, `services/`, `store/`, and `views/`.
-- [ ] Remove low-value tests and production test escape hatches superseded by public contracts.
-- [ ] Run the complete deterministic and named real-boundary evidence matrix.
+- [x] Enforce package ownership, unknown-input admission, and managed-runtime lifecycle in CI.
+- [x] Use one server application for local, Cloudflare, and any retained platform adapters.
+- [x] Split explicit web and server builds; stop copying server TypeScript into the web artifact.
+- [x] Delete legacy business ownership from top-level `hooks/`, `services/`, `store/`, and `views/`.
+- [x] Remove low-value tests and production test escape hatches superseded by public contracts.
+- [x] Run the complete deterministic and named real-boundary evidence matrix.
 
 Exit evidence: package graph and CI enforce the target architecture; no legacy dual owner remains;
 production release remains a separate explicitly authorized operation.
+
+## Current completion audit
+
+| Completion condition                                                                    | Status                                              | Authoritative evidence                                                                                                                                                                                                           |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Legacy horizontal directories do not own workflows and no v1/v2 state is double-written | Proven in source                                    | Empty `architecture/legacy-business-files.txt`; `lint:boundaries`; no production files under `hooks/`, `services/`, `store/`, or `views/`; capability public contracts and one application composition root                      |
+| Anonymous state cannot start protected runtime                                          | Proven deterministically                            | `App.integration.test.tsx` constructs no Practice/MIDI/Guidance ports while anonymous; `AuthGate.integration.test.tsx` rejects protected children before authorization                                                           |
+| Random, song, and AI exercises share Practice                                           | Proven deterministically and at browser boundary    | All three compile to `ExercisePlan`; Guidance-to-Practice assembly proof; random/song WebMIDI and real Web Audio paths drive the same Practice runtime                                                                           |
+| Identity invariants are transactional                                                   | Proven in workerd/D1; cloud lifecycle still pending | 15 D1 tests include concurrent invite use, rollback, replay exclusion, monotonic counters, final-credential protection, rate limits, and import idempotency; deployed binding/migration remains Phase 2's operational gate       |
+| CI mechanically rejects architectural regressions                                       | Proven by positive and negative fixtures            | Package roles/exports, dependency-cruiser, no-DOM model compile, unknown-JSON admission, managed runtime disposal, cancellable resource ports, single Cloudflare catch-all, legacy baseline, dead-code, and size gates run in CI |
 
 ## Decisions and open risks
 
@@ -273,6 +284,12 @@ production release remains a separate explicitly authorized operation.
   feedback; song retry is now one semantic Practice intent rather than UI plan reconstruction. The full
   browser and delivery checkpoints remain pending before this branch is committed and Phase 4 is called
   delivered.
+- 2026-08-13: Phase 5 adds manifest-declared package roles and lifecycle kinds plus an AST fitness gate.
+  CI now rejects capability-to-capability imports, direct/asserted JSON at adapter and HTTP ingress,
+  managed runtimes without declared disposal evidence, resource ports without teardown, and schedulers
+  without cancellation handles. Isolated negative fixtures prove each rejection path; the regular 267
+  tests and all TypeScript projects pass with unknown-JSON admission applied to both browser and server
+  adapters. Legacy removal and platform convergence remain active.
 - 2026-08-13: The complete browser matrix caught and corrected one policy leak before delivery: song
   streaks requested contextual hints even though that projection exists only in random practice. Hint
   admission is now source-typed in the pure model; songs retain completion recommendations and Coach
@@ -281,3 +298,19 @@ production release remains a separate explicitly authorized operation.
   tests, 15 real D1 tests, production build, and complete Playwright (58 passed, one documented WebKit
   virtual-WebAuthn skip). Phase 4 is delivered; Phase 5 architecture/CI convergence is next while the
   separately authorized production Identity migration and deployed D1/custom-domain proof remain open.
+- 2026-08-13: Phase 5 removed the final legacy ownership baseline and production Practice test API.
+  Presentation moved under the application boundary; language became a pure Preferences capability;
+  public Practice simulation intents and bypass-heavy UI E2E were deleted. WebMIDI/song proofs now drive
+  a test-owned browser device through the production adapter and use public exercise/catalog contracts.
+- 2026-08-13: Local Vite and Cloudflare Pages now invoke one `@sightplay/server-application` route table.
+  One hosting catch-all replaces every path/method wrapper, is mechanically restricted to the shared
+  handler export, and handler-local method policy was deleted. A real local Pages runtime returns the
+  application-owned 204/404/405 contracts through that catch-all. `build:web` emits only browser assets
+  while `build:server` independently compiles the Worker; server TypeScript is no longer copied into
+  `dist`.
+- 2026-08-13: Phase 5 final source checkpoint passes format, zero-warning ESLint, three TypeScript
+  projects, all architecture gates, 269 regular tests, 15 real workerd/D1 tests, independent web/server
+  builds, and the complete Playwright matrix (51 passed, one documented WebKit virtual-WebAuthn skip).
+  A local Pages runtime additionally proved the single catch-all returns application-owned 204/404/405
+  contracts. Phase 5 is complete; Phase 2 remains open only for the explicitly authorized deployed D1,
+  migration, custom-domain, and real Passkey lifecycle evidence.

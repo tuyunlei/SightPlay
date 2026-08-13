@@ -1,4 +1,5 @@
-export type { DecodeResult } from './codec';
+export { isRecord, parseUnknownJson, readUnknownJson } from './codec';
+export type { DecodeResult, UnknownJsonSource } from './codec';
 export { decodeChatApiResult, decodeChatReply, decodeChatRequest } from './guidance/codec';
 export { guidanceFailed, guidanceSucceeded } from './guidance/envelope';
 export type {

@@ -35,7 +35,6 @@ export function PracticeProvider({
 
   const actions = useMemo<PracticeActions>(
     () => ({
-      canAcceptInput: runtime.canAcceptInput,
       startExercise: (plan) => runtime.dispatch({ kind: 'startExercise', plan }),
       restartExercise: () => runtime.dispatch({ kind: 'restartExercise' }),
       startRandom: (config) => runtime.dispatch({ kind: 'configureRandom', config }),
@@ -46,8 +45,6 @@ export function PracticeProvider({
       toggleMicrophone: () => runtime.dispatch({ kind: 'toggleMicrophone' }),
       resetStats: () => runtime.dispatch({ kind: 'resetStats' }),
       onOutput: runtime.onOutput,
-      simulateMidiPressed: (pitch) => runtime.dispatch({ kind: 'simulateMidiPressed', pitch }),
-      simulateMidiReleased: (pitch) => runtime.dispatch({ kind: 'simulateMidiReleased', pitch }),
     }),
     [runtime]
   );

@@ -53,6 +53,7 @@ export const zh = {
   hintPracticeRange: '试试缩小练习范围来建立信心。',
   openAiChat: 'AI 教练',
   closeChat: '关闭',
+  languageToggle: '切换语言',
   songLibrary: '曲库',
   difficulty_beginner: '初级',
   difficulty_intermediate: '中级',

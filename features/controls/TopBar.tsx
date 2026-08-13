@@ -127,6 +127,8 @@ const TopBar: React.FC<TopBarProps> = ({
 
         <button
           onClick={onToggleLang}
+          aria-label={t.languageToggle}
+          title={t.languageToggle}
           className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition text-slate-500 dark:text-slate-400"
         >
           <Languages size={18} />

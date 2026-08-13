@@ -1,4 +1,4 @@
-import { createMidiPitch, createRandomExercise } from '../model/exercise';
+import { createRandomExercise } from '../model/exercise';
 import { selectPracticeView, type PracticeView } from '../model/selectors';
 import { createPracticeState, transitionPractice } from '../model/transition';
 import {
@@ -32,10 +32,6 @@ export class PracticeRuntimeImpl implements PracticeRuntime {
 
   readonly getState = () => this.state;
   readonly getView = () => this.view;
-  readonly canAcceptInput = () =>
-    this.active &&
-    this.state.completion.kind === 'active' &&
-    this.ports.clock.now() >= this.state.lockedUntil;
   readonly subscribe = (listener: () => void) => {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
@@ -100,14 +96,7 @@ export class PracticeRuntimeImpl implements PracticeRuntime {
     }
     if (intent.kind === 'resetStats') {
       this.dispatchAction({ kind: 'statsReset', now: this.ports.clock.now() });
-      return;
     }
-    const pitch = toMidiPitch(intent.pitch);
-    if (pitch === null) return;
-    this.receiveMidi(
-      { kind: intent.kind === 'simulateMidiPressed' ? 'pressed' : 'released', pitch },
-      this.generation
-    );
   }
 
   private replaceExercise(plan: ExercisePlan): void {
@@ -253,10 +242,6 @@ export class PracticeRuntimeImpl implements PracticeRuntime {
   private isCurrentEpoch(epoch: PracticeState['epoch'], generation: number): boolean {
     return this.isCurrent(generation) && this.state.epoch === epoch;
   }
-}
-
-function toMidiPitch(value: number) {
-  return createMidiPitch(value);
 }
 
 export function createPracticeRuntime(

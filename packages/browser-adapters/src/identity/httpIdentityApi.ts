@@ -4,6 +4,7 @@ import {
   decodeOperationCompleted,
   decodeRegistrationOptions,
   decodeSessionSnapshot,
+  readUnknownJson,
   type DecodeResult,
 } from '@sightplay/api-contracts';
 import type { IdentityApiPort, IdentityFailureCode, PortResult } from '@sightplay/identity-client';
@@ -15,14 +16,6 @@ const failure = <T>(code: IdentityFailureCode, retryable = true): PortResult<T> 
   failure: { code, retryable },
 });
 
-async function readJson(response: Response): Promise<unknown> {
-  try {
-    return await response.json();
-  } catch {
-    return null;
-  }
-}
-
 async function requestJson<T>(
   fetchPort: FetchPort,
   input: RequestInfo | URL,
@@ -32,7 +25,7 @@ async function requestJson<T>(
 ): Promise<PortResult<T>> {
   try {
     const response = await fetchPort(input, init);
-    const decoded = decodeApiResult(await readJson(response), parse);
+    const decoded = decodeApiResult(await readUnknownJson(response), parse);
     if (!decoded.ok || response.ok !== decoded.value.ok) return failure('invalidResponse');
     return decoded.value.ok
       ? { ok: true, value: decoded.value.data }

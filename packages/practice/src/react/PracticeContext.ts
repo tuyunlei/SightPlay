@@ -11,7 +11,6 @@ import type {
 import type { PracticeOutput } from '../runtime/contracts';
 
 export interface PracticeActions {
-  canAcceptInput(): boolean;
   startExercise(plan: ExercisePlan): void;
   restartExercise(): void;
   startRandom(config: RandomExerciseConfig): void;
@@ -21,8 +20,6 @@ export interface PracticeActions {
   toggleMicrophone(): void;
   resetStats(): void;
   onOutput(listener: (output: PracticeOutput) => void): () => void;
-  simulateMidiPressed(pitch: number): void;
-  simulateMidiReleased(pitch: number): void;
 }
 
 export interface PracticeClient extends PracticeActions {

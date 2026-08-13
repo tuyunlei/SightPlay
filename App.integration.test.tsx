@@ -5,9 +5,8 @@ import App from './App';
 
 const identitySuccess = <T,>(data: T) => ({ ok: true, data, requestId: 'test-request' });
 
-const { guidancePortsMock, testApiMock, mainAppContentMock } = vi.hoisted(() => ({
+const { guidancePortsMock, mainAppContentMock } = vi.hoisted(() => ({
   guidancePortsMock: vi.fn(),
-  testApiMock: vi.fn(),
   mainAppContentMock: vi.fn(),
 }));
 
@@ -26,11 +25,7 @@ vi.mock('@passwordless-id/webauthn', () => ({
   client: { register: vi.fn(), authenticate: vi.fn() },
 }));
 
-vi.mock('./hooks/useTestAPI', () => ({
-  useTestAPI: testApiMock,
-}));
-
-vi.mock('./views/MainAppContent', () => ({
+vi.mock('./app/presentation/MainAppContent', () => ({
   MainAppContent: (props: { route: unknown }) => {
     mainAppContentMock(props);
     return <div data-testid="protected-app">protected app</div>;
@@ -76,7 +71,6 @@ describe('App protected runtime lifecycle', () => {
     expect(await screen.findByTestId('login-screen')).toBeTruthy();
     expect(requestMidiAccess).not.toHaveBeenCalled();
     expect(guidancePortsMock).not.toHaveBeenCalled();
-    expect(testApiMock).not.toHaveBeenCalled();
   });
 
   it('constructs the protected runtime only after an authenticated session is established', async () => {
@@ -94,7 +88,6 @@ describe('App protected runtime lifecycle', () => {
     expect(window.location.pathname).toBe('/practice');
     expect(requestMidiAccess).toHaveBeenCalledTimes(1);
     expect(guidancePortsMock).toHaveBeenCalledOnce();
-    expect(testApiMock).toHaveBeenCalled();
   });
 
   it('assembles an authenticated deep link with its decoded protected route', async () => {

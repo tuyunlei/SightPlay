@@ -11,17 +11,16 @@ import {
 import { GuidanceProvider } from '@sightplay/guidance';
 import { IdentityProvider, useIdentity } from '@sightplay/identity-client';
 import { PracticeProvider, usePractice } from '@sightplay/practice';
+import { PreferencesProvider, usePreferences } from '@sightplay/preferences';
 
 import { GuidancePracticeBridge } from './app/guidance/GuidancePracticeBridge';
 import { useBrowserRoute } from './app/navigation/useBrowserRoute';
 import { createInitialRandomExercise } from './app/practice/createExercisePlan';
 import { usePracticeRoute } from './app/practice/usePracticeRoute';
+import { MainAppContent } from './app/presentation/MainAppContent';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthGate } from './features/auth/AuthGate';
-import { useTestAPI } from './hooks/useTestAPI';
 import { translations } from './i18n';
-import { useUiStore } from './store/uiStore';
-import { MainAppContent } from './views/MainAppContent';
 
 type Navigate = (route: AppRoute, replace?: boolean) => void;
 type DismissEntry = (fallbackRoute: AppRoute) => void;
@@ -40,8 +39,9 @@ function AuthenticatedApp({
   const [guidancePorts] = useState(createBrowserGuidancePorts);
   const [practicePorts] = useState(createBrowserPracticePorts);
   const [initialPlan] = useState(() => createInitialRandomExercise(practicePorts.seed.nextSeed()));
-  const lang = useUiStore((state) => state.lang);
-  const toggleLang = useUiStore((state) => state.toggleLang);
+  const preferences = usePreferences();
+  const lang = preferences.language;
+  const toggleLang = preferences.toggleLanguage;
   const t = translations[lang];
   const content = (
     <GuidanceProvider
@@ -86,12 +86,11 @@ function PracticeApplication({
   navigate: Navigate;
   dismissEntry: DismissEntry;
   t: (typeof translations)['en'];
-  lang: ReturnType<typeof useUiStore.getState>['lang'];
+  lang: ReturnType<typeof usePreferences>['language'];
   toggleLang: () => void;
 }) {
   const practice = usePractice();
   usePracticeRoute(route, practice);
-  useTestAPI(practice);
 
   return (
     <div
@@ -136,15 +135,21 @@ function AppRuntime() {
   );
 }
 
-const App = () => {
-  const lang = useUiStore((state) => state.lang);
-  const t = translations[lang];
+function LocalizedApp() {
+  const { language } = usePreferences();
+  const t = translations[language];
 
   return (
     <ErrorBoundary t={t}>
       <AppRuntime />
     </ErrorBoundary>
   );
-};
+}
+
+const App = () => (
+  <PreferencesProvider>
+    <LocalizedApp />
+  </PreferencesProvider>
+);
 
 export default App;

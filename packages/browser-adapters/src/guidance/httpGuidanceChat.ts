@@ -1,4 +1,8 @@
-import { decodeChatApiResult, type GuidanceApiFailure } from '@sightplay/api-contracts';
+import {
+  decodeChatApiResult,
+  readUnknownJson,
+  type GuidanceApiFailure,
+} from '@sightplay/api-contracts';
 import type {
   GuidanceChatFailure,
   GuidanceChatPort,
@@ -22,7 +26,7 @@ export function createHttpGuidanceChat(fetcher: GuidanceFetch = fetch): Guidance
           }),
           signal,
         });
-        const decoded = decodeChatApiResult(await response.json());
+        const decoded = decodeChatApiResult(await readUnknownJson(response));
         if (!decoded.ok) return { ok: false, failure: 'invalidResponse' };
         return decoded.value.ok
           ? { ok: true, reply: decoded.value.data }

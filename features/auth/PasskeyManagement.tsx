@@ -5,16 +5,14 @@ import { useAccountAccess } from '@sightplay/account-access-client';
 import type { CredentialSummary } from '@sightplay/account-access-client';
 import { useIdentity } from '@sightplay/identity-client';
 
-import { translations } from '../../i18n';
-import { useUiStore } from '../../store/uiStore';
+import { useLanguage } from '../../app/presentation/useLanguage';
 
 interface PasskeyManagementProps {
   onClose: () => void;
 }
 
 function ModalHeader({ onClose }: { onClose: () => void }) {
-  const lang = useUiStore((state) => state.lang);
-  const t = translations[lang];
+  const { t } = useLanguage();
   return (
     <div className="mb-6 flex items-center justify-between">
       <div className="flex items-center gap-3">
@@ -45,8 +43,7 @@ function InviteCodeDisplay({
   onCopy: () => void;
   onClose: () => void;
 }) {
-  const lang = useUiStore((state) => state.lang);
-  const t = translations[lang];
+  const { t } = useLanguage();
 
   return (
     <div className="space-y-3">
@@ -97,8 +94,7 @@ function PasskeyList({
   isLoading: boolean;
   onRemove: (id: string) => void;
 }) {
-  const lang = useUiStore((state) => state.lang);
-  const t = translations[lang];
+  const { t } = useLanguage();
 
   if (isLoading)
     return (
@@ -143,8 +139,7 @@ function GenerateInviteButton({
   isGenerating: boolean;
   onClick: () => void;
 }) {
-  const lang = useUiStore((state) => state.lang);
-  const t = translations[lang];
+  const { t } = useLanguage();
 
   return (
     <button
@@ -169,8 +164,7 @@ function GenerateInviteButton({
 function usePasskeyPresentationState() {
   const accountAccess = useAccountAccess();
   const [copied, setCopied] = useState(false);
-  const lang = useUiStore((state) => state.lang);
-  const t = translations[lang];
+  const { t } = useLanguage();
 
   const handleGenerateInvite = () => {
     accountAccess.clearFailure();
@@ -227,8 +221,7 @@ export function PasskeyManagement({ onClose }: PasskeyManagementProps) {
     handleRemovePasskey,
     handleCloseInvite,
   } = usePasskeyPresentationState();
-  const lang = useUiStore((state) => state.lang);
-  const t = translations[lang];
+  const { t } = useLanguage();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-bg-overlay)] p-4 backdrop-blur-sm">

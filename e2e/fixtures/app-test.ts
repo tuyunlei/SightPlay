@@ -198,9 +198,3 @@ export async function mockAuthenticatedSession(page: Page): Promise<void> {
     })
   );
 }
-
-export async function waitForPracticeInputReady(page: Page): Promise<void> {
-  await expect
-    .poll(() => page.evaluate(() => window.__sightplayTestAPI?.isReadyForInput() ?? false))
-    .toBe(true);
-}

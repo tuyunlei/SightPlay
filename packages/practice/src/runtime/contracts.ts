@@ -34,14 +34,11 @@ export type PracticeIntent =
     }
   | { readonly kind: 'selectHandMode'; readonly handMode: RandomExerciseConfig['handMode'] }
   | { readonly kind: 'toggleMicrophone' }
-  | { readonly kind: 'resetStats' }
-  | { readonly kind: 'simulateMidiPressed'; readonly pitch: number }
-  | { readonly kind: 'simulateMidiReleased'; readonly pitch: number };
+  | { readonly kind: 'resetStats' };
 
 export interface PracticeRuntime {
   getState(): PracticeState;
   getView(): PracticeView;
-  canAcceptInput(): boolean;
   subscribe(listener: () => void): () => void;
   onOutput(listener: (output: PracticeOutput) => void): () => void;
   dispatch(intent: PracticeIntent): void;

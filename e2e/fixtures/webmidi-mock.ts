@@ -13,8 +13,30 @@
  *   __simulateMidiNoteOff(midi: number) — sends [0x80, midi, 0]
  *   __simulateMidiConnect()             — hot-plugs a second MIDI device
  */
+export const E2E_PRACTICE_SEED = 0x12345678;
+
+declare global {
+  interface Window {
+    __simulateMidiNoteOn(midi: number): void;
+    __simulateMidiNoteOff(midi: number): void;
+    __simulateMidiConnect(): void;
+  }
+}
+
 export const webmidiMockScript = /* js */ `(function () {
   'use strict';
+
+  var originalGetRandomValues = crypto.getRandomValues.bind(crypto);
+  Object.defineProperty(crypto, 'getRandomValues', {
+    configurable: true,
+    value: function (array) {
+      if (array instanceof Uint32Array && array.length === 1) {
+        array[0] = ${E2E_PRACTICE_SEED};
+        return array;
+      }
+      return originalGetRandomValues(array);
+    },
+  });
 
   // ── fake MIDIInput ─────────────────────────────────────────────────────────
 

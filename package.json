@@ -10,7 +10,9 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "pnpm run build:web && pnpm run build:server",
+    "build:web": "vite build",
+    "build:server": "wrangler pages functions build functions --outdir .server-dist",
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
@@ -34,7 +36,8 @@
     "lint:size": "node scripts/check-file-size.js --src=.",
     "lint:dead": "knip",
     "lint:boundaries": "node scripts/check-legacy-architecture.mjs",
-    "lint:arch": "pnpm run dep:check && pnpm run lint:boundaries && pnpm run lint:size && pnpm run lint:dead",
+    "lint:fitness": "node scripts/check-architecture-fitness.mjs && node --test scripts/architecture-fitness-fixtures.mjs",
+    "lint:arch": "pnpm run dep:check && pnpm run lint:boundaries && pnpm run lint:fitness && pnpm run lint:size && pnpm run lint:dead",
     "prepare": "husky"
   },
   "dependencies": {
@@ -47,10 +50,11 @@
     "@sightplay/identity-client": "workspace:*",
     "@sightplay/identity-server": "workspace:*",
     "@sightplay/practice": "workspace:*",
+    "@sightplay/preferences": "workspace:*",
+    "@sightplay/server-application": "workspace:*",
     "lucide-react": "^0.563.0",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "zustand": "^5.0.3"
+    "react-dom": "^19.2.4"
   },
   "devDependencies": {
     "@babel/core": "^7.29.6",

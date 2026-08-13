@@ -6,9 +6,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppRoute } from '@sightplay/app-shell';
 import { createBrowserIdentityPorts, createBrowserPasskeyPort } from '@sightplay/browser-adapters';
 import { IdentityProvider } from '@sightplay/identity-client';
+import { PreferencesProvider } from '@sightplay/preferences';
 
 import { translations } from '../../../i18n';
-import { useUiStore } from '../../../store/uiStore';
 import { AuthGate } from '../AuthGate';
 
 const identitySuccess = <T,>(data: T) => ({ ok: true, data, requestId: 'test-request' });
@@ -56,23 +56,24 @@ function AuthGateHarness({ initialRoute = { kind: 'login' } }: { initialRoute?: 
   }));
 
   return (
-    <IdentityProvider ports={ports}>
-      <output data-testid="current-route">{JSON.stringify(route)}</output>
-      <AuthGate route={route} navigate={setRoute}>
-        {(protectedRoute) => (
-          <div data-testid="main-app" data-route={JSON.stringify(protectedRoute)}>
-            main-app
-          </div>
-        )}
-      </AuthGate>
-    </IdentityProvider>
+    <PreferencesProvider initialLanguage="zh">
+      <IdentityProvider ports={ports}>
+        <output data-testid="current-route">{JSON.stringify(route)}</output>
+        <AuthGate route={route} navigate={setRoute}>
+          {(protectedRoute) => (
+            <div data-testid="main-app" data-route={JSON.stringify(protectedRoute)}>
+              main-app
+            </div>
+          )}
+        </AuthGate>
+      </IdentityProvider>
+    </PreferencesProvider>
   );
 }
 
 describe('AuthGate integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useUiStore.setState({ lang: 'zh' });
     Object.defineProperty(window, 'PublicKeyCredential', {
       writable: true,
       configurable: true,

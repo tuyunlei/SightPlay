@@ -8,6 +8,10 @@
       "vitest/globals"
     ]
   },
-  "include": ["packages/identity-server/src/**/*.ts", "edge-functions/**/*.ts"],
+  "include": [
+    "packages/identity-server/src/**/*.ts",
+    "packages/server-application/src/**/*.ts",
+    "edge-functions/**/*.ts"
+  ],
   "exclude": ["node_modules", "dist", "coverage"]
 }

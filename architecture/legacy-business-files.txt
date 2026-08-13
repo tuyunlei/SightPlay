@@ -1,7 +1,0 @@
-hooks/useLanguage.ts
-hooks/useTestAPI.ts
-store/uiStore.ts
-views/ContentView.tsx
-views/MainAppContent.tsx
-views/RandomPracticeView.tsx
-views/SongPracticeSection.tsx

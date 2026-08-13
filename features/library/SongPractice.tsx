@@ -2,8 +2,8 @@ import React from 'react';
 
 import { usePractice } from '@sightplay/practice';
 
+import { useLanguage } from '../../app/presentation/useLanguage';
 import { getSongById } from '../../data/songs';
-import { useLanguage } from '../../hooks/useLanguage';
 import PracticeArea from '../practice/PracticeArea';
 
 interface SongPracticeProps {
