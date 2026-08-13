@@ -80,7 +80,7 @@ CREATE TABLE registration_claims (
 CREATE TRIGGER validate_registration_claim
 BEFORE INSERT ON registration_claims
 BEGIN
-  SELECT CASE WHEN NOT EXISTS (
+  SELECT (CASE WHEN NOT EXISTS (
     SELECT 1
     FROM ceremonies c
     JOIN invitations i ON i.code_digest = NEW.invitation_digest
@@ -92,7 +92,7 @@ BEGIN
       AND i.purpose = 'createAccount'
       AND i.consumed_at IS NULL
       AND i.expires_at > NEW.claimed_at
-  ) THEN RAISE(ABORT, 'registration precondition failed') END;
+  ) THEN RAISE(ABORT, 'registration precondition failed') END);
 END;
 
 CREATE TABLE authentication_claims (
@@ -105,7 +105,7 @@ CREATE TABLE authentication_claims (
 CREATE TRIGGER validate_authentication_claim
 BEFORE INSERT ON authentication_claims
 BEGIN
-  SELECT CASE WHEN NOT EXISTS (
+  SELECT (CASE WHEN NOT EXISTS (
     SELECT 1
     FROM ceremonies c
     JOIN credentials k ON k.id = NEW.credential_id
@@ -117,7 +117,7 @@ BEGIN
       AND k.revoked_at IS NULL
       AND k.counter <= NEW.next_counter
       AND a.status = 'active'
-  ) THEN RAISE(ABORT, 'authentication precondition failed') END;
+  ) THEN RAISE(ABORT, 'authentication precondition failed') END);
 END;
 
 CREATE TABLE credential_revocation_claims (
@@ -129,7 +129,7 @@ CREATE TABLE credential_revocation_claims (
 CREATE TRIGGER validate_credential_revocation
 BEFORE INSERT ON credential_revocation_claims
 BEGIN
-  SELECT CASE WHEN NOT EXISTS (
+  SELECT (CASE WHEN NOT EXISTS (
     SELECT 1
     FROM credentials target
     WHERE target.id = NEW.credential_id
@@ -139,5 +139,5 @@ BEGIN
         SELECT COUNT(*) FROM credentials active
         WHERE active.account_id = NEW.account_id AND active.revoked_at IS NULL
       ) > 1
-  ) THEN RAISE(ABORT, 'credential revocation precondition failed') END;
+  ) THEN RAISE(ABORT, 'credential revocation precondition failed') END);
 END;

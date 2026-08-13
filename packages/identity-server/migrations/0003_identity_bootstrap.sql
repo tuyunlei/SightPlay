@@ -6,8 +6,8 @@ CREATE TABLE identity_bootstrap_claims (
 CREATE TRIGGER validate_identity_bootstrap_claim
 BEFORE INSERT ON identity_bootstrap_claims
 BEGIN
-  SELECT CASE WHEN
+  SELECT (CASE WHEN
     EXISTS (SELECT 1 FROM accounts) OR
     EXISTS (SELECT 1 FROM invitations)
-  THEN RAISE(ABORT, 'identity store is not empty') END;
+  THEN RAISE(ABORT, 'identity store is not empty') END);
 END;

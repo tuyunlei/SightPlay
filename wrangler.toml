@@ -2,10 +2,39 @@ name = "sightplay"
 compatibility_date = "2024-12-01"
 pages_build_output_dir = "dist"
 
+[[d1_databases]]
+binding = "IDENTITY_DB"
+database_name = "sightplay-identity-production"
+database_id = "36006220-5eac-4602-ad9f-17c17ec301e5"
+migrations_dir = "packages/identity-server/migrations"
+
 [vars]
 WEBAUTHN_RP_ID = "sightplay.xclz.org"
 WEBAUTHN_RP_NAME = "SightPlay"
 IDENTITY_ALLOWED_ORIGINS = "https://sightplay.xclz.org"
+WEBAUTHN_USER_VERIFICATION = "required"
+IDENTITY_CEREMONY_TTL_MS = "300000"
+IDENTITY_INVITATION_TTL_MS = "604800000"
+IDENTITY_SESSION_TTL_MS = "604800000"
+IDENTITY_RATE_LIMIT_SOURCE_COUNT = "30"
+IDENTITY_RATE_LIMIT_SOURCE_WINDOW_MS = "60000"
+IDENTITY_RATE_LIMIT_CEREMONY_COUNT = "10"
+IDENTITY_RATE_LIMIT_CEREMONY_WINDOW_MS = "300000"
+IDENTITY_RATE_LIMIT_INVITATION_COUNT = "10"
+IDENTITY_RATE_LIMIT_INVITATION_WINDOW_MS = "60000"
+IDENTITY_RATE_LIMIT_ACCOUNT_COUNT = "20"
+IDENTITY_RATE_LIMIT_ACCOUNT_WINDOW_MS = "3600000"
+
+[[env.preview.d1_databases]]
+binding = "IDENTITY_DB"
+database_name = "sightplay-identity-ppe"
+database_id = "8b513322-25d2-4d39-9ce6-f8dea964df68"
+migrations_dir = "packages/identity-server/migrations"
+
+[env.preview.vars]
+WEBAUTHN_RP_ID = "sightplay.xclz.org"
+WEBAUTHN_RP_NAME = "SightPlay"
+IDENTITY_ALLOWED_ORIGINS = "https://develop.sightplay.xclz.org"
 WEBAUTHN_USER_VERIFICATION = "required"
 IDENTITY_CEREMONY_TTL_MS = "300000"
 IDENTITY_INVITATION_TTL_MS = "604800000"

@@ -5,20 +5,20 @@ requires the correct project, custom domain, database binding, schema, origin po
 
 ## Topology
 
-| Environment          | Pages project   | Production branch | Public origin                         | Identity data                       |
-| -------------------- | --------------- | ----------------- | ------------------------------------- | ----------------------------------- |
-| Production           | `sightplay`     | `main`            | `https://sightplay.xclz.org`          | Production D1, migration-controlled |
-| PPE                  | `sightplay-ppe` | `develop`         | `https://develop.sightplay.xclz.org`  | Isolated disposable D1              |
-| Pull-request preview | `sightplay`     | none              | generated `*.sightplay.pages.dev` URL | No Identity binding                 |
+| Environment          | Pages project | Pages environment | Public origin                         | Identity data                       |
+| -------------------- | ------------- | ----------------- | ------------------------------------- | ----------------------------------- |
+| Production           | `sightplay`   | production        | `https://sightplay.xclz.org`          | Production D1, migration-controlled |
+| PPE                  | `sightplay`   | preview           | `https://develop.sightplay.xclz.org`  | Disposable PPE D1                   |
+| Pull-request preview | `sightplay`   | preview           | generated `*.sightplay.pages.dev` URL | Same disposable PPE D1              |
 
-The separate PPE project is required by [Decision 0004](../decisions/0004-isolated-ppe-project.md).
-Cloudflare Pages applies one preview binding set to every non-production branch; therefore a persistent
-PPE database must not be attached to the production project's preview configuration.
+[Decision 0004](../decisions/0004-shared-preview-ppe.md) keeps the existing single-project topology.
+Cloudflare Pages applies one preview binding set to every non-production branch, so `develop` and pull-request
+previews share the PPE database. Only the stable custom origin is admitted for Identity mutations.
 
 ## Configuration ownership
 
 - `wrangler.toml` owns versioned, non-secret runtime defaults.
-- Pages project configuration owns environment-specific D1 and secret bindings.
+- `wrangler.toml` owns environment-specific D1 bindings and non-secret variables.
 - Cloudflare DNS and Pages custom-domain configuration jointly own the HTTPS origin.
 - `packages/identity-server/migrations/` is the only schema history.
 - [The Identity migration runbook](identity-migration.md) owns rehearsal, production cutover, and rollback.
@@ -36,23 +36,21 @@ Production release remains separately authorized. Before it, PPE must prove:
    non-final removal, and final-credential rejection with a real Passkey.
 3. The synthetic legacy fixture imports once, reruns idempotently, and rolls back on an induced late
    failure without production data.
-4. The production project's pull-request preview has no Identity D1 binding.
+4. A generated pull-request origin cannot perform credentialed Identity mutations against the PPE D1.
 
 The read-only remote smoke command remains appropriate for generated previews, but it cannot replace any
 of these proofs.
 
 ## PPE provisioning plan
 
-Provisioning requires an explicitly approved Cloudflare token scoped to the SightPlay account and
-`xclz.org` zone with Pages Write, D1 Write, and DNS Edit. The operator consumes it from the approved secret
-store; the value never enters source, chat, command arguments, logs, or an environment file.
+Provision through Wrangler OAuth, a scoped API token, or the Cloudflare dashboard. Authentication is an
+operator concern, not a deployment prerequisite; Git integration remains the deployment owner.
 
-1. Create D1 database `sightplay-identity-ppe` and apply every checked-in Identity migration.
-2. Create Git-integrated Pages project `sightplay-ppe` from `tuyunlei/SightPlay`, with production branch
-   `develop`, the repository build contract, and automatic preview branch deployments disabled.
-3. Configure only the project's production environment with `IDENTITY_DB`, Identity variables, and required
-   secrets. Add a high-entropy `IDENTITY_BOOTSTRAP_SECRET` only for initial account creation; leave the
-   project's preview environment without Identity storage.
+1. Create D1 databases `sightplay-identity-production` and `sightplay-identity-ppe`, then apply every
+   checked-in Identity migration to each. Do not import or bind production credentials during PPE setup.
+2. Configure the existing project's production and preview environments with distinct `IDENTITY_DB`
+   bindings. Allow only `sightplay.xclz.org` in production and `develop.sightplay.xclz.org` in preview.
+3. Add a high-entropy preview `IDENTITY_BOOTSTRAP_SECRET` only for initial PPE account creation.
 4. Complete one successful `develop` deployment, attach `develop.sightplay.xclz.org`, and require active
    domain verification and certificate validation before changing DNS routing.
 5. Call `POST /api/auth/bootstrap/invitations` through the PPE custom origin with the secret supplied from
@@ -60,7 +58,7 @@ store; the value never enters source, chat, command arguments, logs, or an envir
    register the first account, then remove `IDENTITY_BOOTSTRAP_SECRET` and prove that the bootstrap endpoint
    returns `authenticationRequired`. Generate every later invitation through the authenticated account API.
 6. Run the required evidence above and record only resource identifiers and results. If any step fails,
-   remove or disable the new PPE resources without touching the existing `sightplay` project.
+   remove the preview binding or reset the PPE database without changing the production binding.
 
 Cloudflare documents the relevant controls in its guides for
 [Pages bindings](https://developers.cloudflare.com/pages/functions/bindings/),

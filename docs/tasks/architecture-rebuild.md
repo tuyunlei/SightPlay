@@ -108,9 +108,9 @@ production release remains a separate explicitly authorized operation.
   management. Revisit only through a superseding decision record.
 - D1 is the first transactional adapter candidate. If an invariant cannot be proven under its concrete
   API, use a Durable Object serialization boundary rather than weakening the domain contract.
-- Live inventory confirms the production `sightplay` Pages project has no D1 binding and the former PPE
-  domain no longer exists. Phase 2 requires authorized provisioning of the separate `sightplay-ppe`
-  project, isolated D1, and `develop.sightplay.xclz.org` contract from Decision 0004.
+- Live inventory confirms the `sightplay` Pages project had no D1 binding and the former PPE domain no
+  longer exists. Phase 2 uses distinct production and preview D1 bindings on that project and restores
+  `develop.sightplay.xclz.org` under the single-project contract from Decision 0004.
 - The rebuild remains a modular monolith. Package boundaries are correctness controls, not a plan to
   create independently deployed services.
 
@@ -327,6 +327,12 @@ production release remains a separate explicitly authorized operation.
   production branch `main`, has only active custom domain `sightplay.xclz.org`, retains the legacy
   production KV, and has no production or preview D1 binding. Historical OpenClaw records recovered the
   former `develop.sightplay.xclz.org` PPE attempt, whose certificate never reached success in the preserved
-  transcript and whose DNS is now absent. Decision 0004 replaces its unsafe shared-KV topology with a
-  separate `sightplay-ppe` project and isolated D1; the available legacy token can read Pages but is not
-  authorized for D1 APIs.
+  transcript and whose DNS is now absent. Decision 0004 retains one Pages project with distinct production
+  and preview D1 bindings; generated previews share disposable PPE data, while only the stable custom PPE
+  origin is admitted for Identity mutations.
+- 2026-08-13: Authorized Cloudflare OAuth inventory found no existing D1 databases. Created empty APAC
+  databases `sightplay-identity-production` and `sightplay-identity-ppe`; neither was bound at creation. The
+  first remote migration exposed Cloudflare's `CASE`/trigger SQL-splitter defect that local SQLite and local
+  D1 do not reproduce. Parenthesizing each trigger `CASE` preserves its behavior and allowed all three
+  migrations to apply to both remote databases. Deployed preview binding, custom-domain restoration, and
+  real Passkey proof remain in progress; production data import and release remain separately gated.

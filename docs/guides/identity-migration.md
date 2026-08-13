@@ -39,13 +39,13 @@ credential IDs.
 ## Pre-production rehearsal gate
 
 Do not begin the production maintenance window merely because Cloudflare reports a successful artifact
-deployment. Use the separate project and data boundary defined in the
+deployment. Use the preview data boundary defined in the
 [Cloudflare environment contract](cloudflare-environments.md), then prove the named PPE environment:
 
-1. Record the `sightplay-ppe` deployment of `develop`, isolated D1 database, binding scope, and
+1. Record the `sightplay` preview deployment of `develop`, disposable PPE D1 database, binding scope, and
    `https://develop.sightplay.xclz.org`. The origin must be explicitly allowed and compatible with RP ID
    `sightplay.xclz.org`; a `pages.dev` hostname is delivery evidence only.
-2. Apply the same migrations to the PPE D1 database and bind it as `IDENTITY_DB` only in that environment.
+2. Apply the same migrations to the PPE D1 database and bind it as `IDENTITY_DB` in the Pages preview environment.
    Require `GET /api/auth/session` to return a valid anonymous success envelope; a structured 500 means the
    runtime is not ready even if the deployment check is green.
 3. On the PPE custom domain, use the one-time bootstrap capability described in the environment contract
