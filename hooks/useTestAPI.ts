@@ -1,40 +1,27 @@
 import { useEffect } from 'react';
 
-import { registerTestAPI } from '../services/testHelpers';
+import type { PracticeClient } from '@sightplay/practice';
 
-import type { usePracticeSession } from './usePracticeSession';
-
-type PracticeSessionWithTestHandlers = ReturnType<typeof usePracticeSession> & {
-  __testHandlers?: {
-    handleMidiNoteOn: (midi: number) => void;
-    handleMidiNoteOff: (midi: number) => void;
-    isReadyForInput: () => boolean;
-  };
-};
+import { registerPracticeTestApi } from '../app/testing/registerPracticeTestApi';
 
 /**
  * Register test API for E2E tests (dev/test mode only)
  * This hook exposes internal MIDI handlers and state accessors
  * to window.__sightplayTestAPI for Playwright E2E tests
  */
-export function useTestAPI(practiceSession: PracticeSessionWithTestHandlers) {
-  const { state, derived } = practiceSession;
+export function useTestAPI(practice: PracticeClient) {
+  const { view } = practice;
 
   useEffect(() => {
-    if (
-      (import.meta.env.MODE === 'test' || import.meta.env.DEV) &&
-      practiceSession.__testHandlers
-    ) {
-      const testHandlers = practiceSession.__testHandlers;
-      registerTestAPI({
-        getState: () => state,
-        simulateMidiNoteOn: testHandlers.handleMidiNoteOn,
-        simulateMidiNoteOff: testHandlers.handleMidiNoteOff,
-        getTargetNoteMidi: () => derived.targetNote?.midi ?? null,
-        getScore: () => state.score,
-        getSessionStats: () => state.sessionStats,
-        isReadyForInput: testHandlers.isReadyForInput,
-      });
-    }
-  }, [state, derived, practiceSession]);
+    if (import.meta.env.MODE !== 'test' && !import.meta.env.DEV) return;
+    return registerPracticeTestApi({
+      getState: () => view,
+      simulateMidiNoteOn: practice.simulateMidiPressed,
+      simulateMidiNoteOff: practice.simulateMidiReleased,
+      getTargetNoteMidi: () => view.targetNote?.midi ?? null,
+      getScore: () => view.score,
+      getSessionStats: () => view.sessionStats,
+      isReadyForInput: practice.canAcceptInput,
+    });
+  }, [practice, view]);
 }

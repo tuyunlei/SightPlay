@@ -83,7 +83,7 @@ test.describe('Song Library Practice flow', () => {
   test('navigate to library and see songs', async ({ page }) => {
     await openSongLibrary(page);
 
-    await expect(page.getByText('Twinkle Twinkle Little Star')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Twinkle Twinkle Little Star' })).toBeVisible();
     await expect(page.getByText('Ode to Joy')).toBeVisible();
   });
 
@@ -94,7 +94,7 @@ test.describe('Song Library Practice flow', () => {
 
     await page.getByText('Twinkle Twinkle Little Star').click();
 
-    await expect(page.getByText('Twinkle Twinkle Little Star')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Twinkle Twinkle Little Star' })).toBeVisible();
     await expect(page.getByTestId('staff-display')).toBeVisible();
     await expect(page.getByTestId('piano-display')).toBeVisible();
     await expect(page.getByRole('button', { name: /exit|退出/i })).toBeVisible();

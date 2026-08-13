@@ -1,21 +1,19 @@
 import React from 'react';
 
+import { usePractice } from '@sightplay/practice';
+
 import { getSongById } from '../data/songs';
 import type { Recommendation } from '../domain/recommendations';
-import { computeAccuracy } from '../domain/scoring';
 import { SongComplete } from '../features/library/SongComplete';
 import { SongPractice } from '../features/library/SongPractice';
 import { RecommendationPanel } from '../features/recommendations/RecommendationPanel';
 import { translations } from '../i18n';
-import { usePracticeStore } from '../store/practiceStore';
 
 type Props = {
   songId: string;
-  showComplete: boolean;
   recommendations: Recommendation[];
   t: typeof translations.en;
   onExit: () => void;
-  onComplete: () => void;
   onRetry: () => void;
   onBackToLibrary: () => void;
   onApplyRec: (rec: Recommendation) => void;
@@ -24,29 +22,28 @@ type Props = {
 
 export const SongPracticeSection: React.FC<Props> = ({
   songId,
-  showComplete,
   recommendations,
   t,
   onExit,
-  onComplete,
   onRetry,
   onBackToLibrary,
   onApplyRec,
   onDismissRec,
 }) => {
-  const sessionStats = usePracticeStore((s) => s.sessionStats);
-  const songStartTime = usePracticeStore((s) => s.songStartTime);
+  const { view } = usePractice();
+  const showComplete =
+    view.source === 'song' && view.metadata.id === songId && view.completion.kind === 'completed';
 
   return (
     <>
-      <SongPractice songId={songId} onExit={onExit} onComplete={onComplete} />
+      <SongPractice songId={songId} onExit={onExit} />
       {showComplete && (
         <SongComplete
           songTitle={getSongById(songId)?.title || ''}
-          accuracy={computeAccuracy(sessionStats)}
-          totalAttempts={sessionStats.totalAttempts}
-          correctNotes={sessionStats.cleanHits}
-          timeElapsed={songStartTime}
+          accuracy={view.accuracy}
+          totalAttempts={view.sessionStats.totalAttempts}
+          correctNotes={view.sessionStats.cleanHits}
+          elapsedMs={view.elapsedMs}
           onRetry={onRetry}
           onBackToLibrary={onBackToLibrary}
         />

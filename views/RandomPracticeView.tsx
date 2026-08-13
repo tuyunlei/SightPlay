@@ -2,6 +2,7 @@ import { Wand2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import type { AppContentRoute } from '@sightplay/app-shell';
+import { type PracticeClient, type PracticeView, usePractice } from '@sightplay/practice';
 
 import { applyRecommendationAction } from '../app/recommendations/applyRecommendationAction';
 import type { Recommendation } from '../domain/recommendations';
@@ -11,17 +12,11 @@ import { HintBubble } from '../features/hints/HintBubble';
 import PracticeArea from '../features/practice/PracticeArea';
 import { RecommendationPanel } from '../features/recommendations/RecommendationPanel';
 import { useContextualHints } from '../hooks/useContextualHints';
-import { usePracticeSession } from '../hooks/usePracticeSession';
 import { useRecommendations } from '../hooks/useRecommendations';
 import { Language, translations } from '../i18n';
-import { usePracticeStore } from '../store/practiceStore';
-import { ChatMessage } from '../types';
+import { ChatMessage, ClefType } from '../types';
 
 type RandomPracticeViewProps = {
-  state: ReturnType<typeof usePracticeSession>['state'];
-  derived: ReturnType<typeof usePracticeSession>['derived'];
-  actions: ReturnType<typeof usePracticeSession>['actions'];
-  pressedKeys: ReturnType<typeof usePracticeSession>['pressedKeys'];
   t: typeof translations.en;
   toggleLang: () => void;
   chatInput: string;
@@ -34,57 +29,40 @@ type RandomPracticeViewProps = {
   navigate: (route: AppContentRoute) => void;
 };
 
-const usePracticeHints = (lang: Language, clef: string) => {
-  const streak = usePracticeStore((s) => s.streak);
-  const sessionStats = usePracticeStore((s) => s.sessionStats);
-  const hints = useContextualHints(lang, clef);
-  const prevAttempts = React.useRef(sessionStats.totalAttempts);
+const usePracticeHints = (lang: Language, view: PracticeView) => {
+  const hints = useContextualHints(lang, view.clef);
+  const prevAttempts = React.useRef(view.sessionStats.totalAttempts);
 
   useEffect(() => {
-    if (sessionStats.totalAttempts > prevAttempts.current) {
-      const hasMistake = sessionStats.totalAttempts > sessionStats.cleanHits;
-      hints.onPracticeUpdate(streak, hasMistake);
+    if (view.sessionStats.totalAttempts > prevAttempts.current) {
+      const hasMistake = view.sessionStats.totalAttempts > view.sessionStats.cleanHits;
+      hints.onPracticeUpdate(view.streak, hasMistake);
     }
-    prevAttempts.current = sessionStats.totalAttempts;
-  }, [streak, sessionStats, hints]);
+    prevAttempts.current = view.sessionStats.totalAttempts;
+  }, [view.sessionStats, view.streak, hints]);
 
   return hints;
 };
 
 const PracticeMain: React.FC<{
-  state: RandomPracticeViewProps['state'];
-  derived: RandomPracticeViewProps['derived'];
-  actions: RandomPracticeViewProps['actions'];
-  pressedKeys: RandomPracticeViewProps['pressedKeys'];
+  practice: PracticeClient;
   t: RandomPracticeViewProps['t'];
   lang: Language;
   recommendations: Recommendation[];
   dismissRec: (id: string) => void;
   applyRec: (rec: Recommendation) => void;
-}> = ({ state, derived, actions, pressedKeys, t, lang, recommendations, dismissRec, applyRec }) => {
-  const { currentHint, dismissHint } = usePracticeHints(lang, state.clef);
+}> = ({ practice, t, lang, recommendations, dismissRec, applyRec }) => {
+  const { currentHint, dismissHint } = usePracticeHints(lang, practice.view);
 
   return (
     <main className="relative z-10 flex-1 w-full max-w-7xl mx-auto p-3 sm:p-4">
       <div className="relative">
         <HintBubble hint={currentHint} onDismiss={dismissHint} />
         <PracticeArea
-          clef={state.clef}
-          practiceRange={state.practiceRange}
-          handMode={state.handMode}
-          noteQueue={state.noteQueue}
-          exitingNotes={state.exitingNotes}
-          detectedNote={state.detectedNote}
-          status={state.status}
-          targetNote={derived.targetNote}
-          pressedKeys={pressedKeys}
-          challengeSequence={state.challengeSequence}
-          challengeIndex={state.challengeIndex}
-          challengeInfo={state.challengeInfo}
+          view={practice.view}
           t={t}
-          isMidiConnected={state.isMidiConnected}
-          onPracticeRangeChange={actions.setPracticeRange}
-          onHandModeChange={actions.setHandMode}
+          onPracticeRangeChange={practice.selectPracticeRange}
+          onHandModeChange={practice.selectHandMode}
         />
       </div>
       <RecommendationPanel
@@ -98,16 +76,18 @@ const PracticeMain: React.FC<{
 };
 
 export const RandomPracticeView: React.FC<RandomPracticeViewProps> = (props) => {
-  const { state, derived, actions, pressedKeys, t, toggleLang, lang } = props;
+  const { t, toggleLang, lang } = props;
+  const practice = usePractice();
+  const { view } = practice;
   const { chatInput, setChatInput, chatHistory, isLoadingAi, sendMessage, chatEndRef } = props;
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const { recommendations, dismiss } = useRecommendations();
+  const { recommendations, dismiss } = useRecommendations(view);
 
   const applyRec = (rec: Recommendation) => {
     if (!rec.action) return;
     applyRecommendationAction(rec.action, {
-      selectClef: actions.selectClef,
-      setPracticeRange: actions.setPracticeRange,
+      selectClef: (clef) => practice.selectClef(clef === ClefType.TREBLE ? 'treble' : 'bass'),
+      setPracticeRange: practice.selectPracticeRange,
       navigate: props.navigate,
     });
     dismiss();
@@ -116,22 +96,19 @@ export const RandomPracticeView: React.FC<RandomPracticeViewProps> = (props) => 
   return (
     <>
       <TopBar
-        isListening={state.isListening}
-        clef={state.clef}
-        score={state.score}
-        bpm={state.sessionStats.bpm}
-        accuracy={derived.accuracy}
-        onToggleMic={actions.toggleMic}
-        onToggleClef={actions.toggleClef}
+        isListening={view.isListening}
+        clef={view.clef === 'treble' ? ClefType.TREBLE : ClefType.BASS}
+        score={view.score}
+        bpm={view.sessionStats.bpm}
+        accuracy={view.accuracy}
+        onToggleMic={practice.toggleMicrophone}
+        onToggleClef={() => practice.selectClef(view.clef === 'treble' ? 'bass' : 'treble')}
         onToggleLang={toggleLang}
-        onResetStats={actions.resetSessionStats}
+        onResetStats={practice.resetStats}
         t={t}
       />
       <PracticeMain
-        state={state}
-        derived={derived}
-        actions={actions}
-        pressedKeys={pressedKeys}
+        practice={practice}
         t={t}
         lang={lang}
         recommendations={recommendations}
@@ -149,8 +126,8 @@ export const RandomPracticeView: React.FC<RandomPracticeViewProps> = (props) => 
       <AiChatDrawer
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
-        clef={state.clef}
-        targetNote={derived.targetNote}
+        clef={view.clef === 'treble' ? ClefType.TREBLE : ClefType.BASS}
+        targetNote={view.targetNote}
         t={t}
         chatHistory={chatHistory}
         chatInput={chatInput}

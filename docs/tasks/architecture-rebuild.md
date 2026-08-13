@@ -2,9 +2,10 @@
 
 Status: in progress
 
-Current branch: `codex/transactional-identity-server`
+Current branch: `codex/practice-core`
 
-Current base: `origin/develop` at `cf18b34` (PR #12)
+Current base: `codex/transactional-identity-server` at `99e0f30` (PR #13), stacked on
+`origin/develop` at `cf18b34`
 
 ## Goal
 
@@ -58,12 +59,12 @@ preview custom domain completes registration, login, credential management, and 
 
 ## Phase 3 — Exercise, Instrument Input, and Practice
 
-- [ ] Introduce `MidiPitch`, `ScoreFrame`, `ExercisePlan`, and deterministic generation.
-- [ ] Compile song, random, and Coach content through the same Exercise contract.
-- [ ] Normalize MIDI and microphone input into `InstrumentObservation`.
-- [ ] Move held keys, attempts, timers, statistics, progress, and completion into one pure model.
-- [ ] Add operation epochs and complete runtime disposal.
-- [ ] Delete public practice setters, direct store reads, business refs, and duplicate song ownership.
+- [x] Introduce `MidiPitch`, `ScoreFrame`, `ExercisePlan`, and deterministic generation.
+- [x] Compile song, random, and Coach content through the same Exercise contract.
+- [x] Normalize MIDI and microphone input into `InstrumentObservation`.
+- [x] Move held keys, attempts, timers, statistics, progress, and completion into one pure model.
+- [x] Add operation epochs and complete runtime disposal.
+- [x] Delete public practice setters, direct store reads, business refs, and duplicate song ownership.
 
 Exit evidence: recorded seeds/action sequences reproduce sessions; property tests prove Practice
 invariants; real WebMIDI/Web Audio system paths still pass.
@@ -233,3 +234,25 @@ production release remains a separate explicitly authorized operation.
   `decodeURIComponent` and became an internal error. Cookie decoding now fails closed to anonymous
   state before hashing or repository access; the assembled handler over real D1 proves malformed
   external input returns a valid anonymous session snapshot rather than a 500.
+- 2026-08-13: Phase 3 replaced every Practice workflow owner in one vertical cutover. Random generation,
+  songs, and Coach challenges now compile into the same runtime-decoded `ExercisePlan`; MIDI and Web
+  Audio normalize into one timestamped observation union; one pure transition owns held pitches,
+  attempts, score, timing, progress, completion, and stale-effect rejection. Browser ports own and
+  dispose MIDI handlers, microphone tracks, AudioContext nodes, animation frames, and scheduled effects.
+- 2026-08-13: App constructs Practice only below authenticated Identity and mounts route/Guidance
+  consumers only after the runtime starts. The old Practice Zustand store, public field setters, direct
+  singleton reads, mutable handler refs, queue/reducer split, MIDI/Audio services and hooks, song mount
+  setter sequence, and React-owned song completion were deleted in the same cutover; no production
+  reference to a former owner remains.
+- 2026-08-13: The first full browser run exposed overlapping both-hand pitch ranges and an audio proof
+  still coupled to obsolete `Math.random`. The generator now guarantees disjoint decoded hand ranges and
+  unique chord pitches across seeds; a deterministic legal-range waveform drives the actual capture,
+  AudioContext, pitch detector, and Practice transition without a production seed override. Mixed action
+  sequences additionally found and fixed valid zero seed/MIDI truthiness rejection and a pre-start route
+  intent race.
+- 2026-08-13: Phase 3's clean delivery checkpoint passes formatting, zero-warning ESLint, all TypeScript
+  projects, dependency/legacy/file-size/dead-code gates, 293 regular tests, 15 real D1 tests, production
+  build, and the complete Playwright matrix (58 passed, one documented WebKit virtual-WebAuthn skip).
+  Pure evidence includes 16,384 deterministic mixed transitions plus 1,920 cross-seed generated frames;
+  real WebMIDI and fake-capture Web Audio system paths remain green. Phase 4 Guidance is next; Phase 2's
+  production migration and deployed D1/custom-domain proof remains a separate operational gate.

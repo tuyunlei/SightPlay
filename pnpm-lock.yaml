@@ -36,6 +36,9 @@ importers:
       '@sightplay/identity-server':
         specifier: workspace:*
         version: link:packages/identity-server
+      '@sightplay/practice':
+        specifier: workspace:*
+        version: link:packages/practice
       lucide-react:
         specifier: ^0.563.0
         version: 0.563.0(react@19.2.4)
@@ -185,6 +188,9 @@ importers:
       '@sightplay/identity-client':
         specifier: workspace:*
         version: link:../identity-client
+      '@sightplay/practice':
+        specifier: workspace:*
+        version: link:../practice
 
   packages/identity-client:
     dependencies:
@@ -203,6 +209,12 @@ importers:
       '@simplewebauthn/server':
         specifier: ^13.3.2
         version: 13.3.2
+
+  packages/practice:
+    dependencies:
+      react:
+        specifier: ^19.2.4
+        version: 19.2.4
 
 packages:
   '@asamuzakjp/css-color@6.0.7':

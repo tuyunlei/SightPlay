@@ -1,6 +1,5 @@
 import React from 'react';
 
-import { formatSongTime } from '../../domain/song';
 import { useLanguage } from '../../hooks/useLanguage';
 
 interface SongCompleteProps {
@@ -8,7 +7,7 @@ interface SongCompleteProps {
   accuracy: number;
   totalAttempts: number;
   correctNotes: number;
-  timeElapsed: number | null;
+  elapsedMs: number;
   onRetry: () => void;
   onBackToLibrary: () => void;
 }
@@ -41,7 +40,7 @@ export const SongComplete: React.FC<SongCompleteProps> = ({
   accuracy,
   totalAttempts,
   correctNotes,
-  timeElapsed,
+  elapsedMs,
   onRetry,
   onBackToLibrary,
 }) => {
@@ -76,7 +75,7 @@ export const SongComplete: React.FC<SongCompleteProps> = ({
             <div className="flex items-center justify-between border-b border-slate-200 py-2 dark:border-slate-700">
               <span className="text-gray-600 dark:text-slate-300">{t.time}</span>
               <span className="text-xl font-semibold text-gray-900 dark:text-slate-100">
-                {formatSongTime(timeElapsed)}
+                {`${Math.floor(elapsedMs / 60_000)}:${String(Math.floor(elapsedMs / 1_000) % 60).padStart(2, '0')}`}
               </span>
             </div>
           </div>

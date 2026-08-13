@@ -1,10 +1,10 @@
 /**
  * E2E tests for the FULL WebMIDI pipeline.
  *
- * These tests exercise MidiService → useMidiInput → usePracticeSession end-to-
- * end by injecting a fake `navigator.requestMIDIAccess` via Playwright's
+ * These tests exercise the browser MIDI adapter → Practice runtime end-to-end
+ * by injecting a fake `navigator.requestMIDIAccess` via Playwright's
  * `addInitScript` BEFORE the page loads.  We intentionally do NOT use
- * `__sightplayTestAPI.simulateMidiNoteOn/Off`; those bypass MidiService.
+ * `__sightplayTestAPI.simulateMidiNoteOn/Off`; those bypass the browser adapter.
  *
  * We do still use `__sightplayTestAPI.getTargetNoteMidi()` and `getScore()` to
  * READ state — that's fine because we're testing the INPUT path.
@@ -72,7 +72,7 @@ async function playNote(page: Page, midi: number, holdMs = 80) {
 
 test.describe('WebMIDI pipeline E2E (addInitScript mock)', () => {
   test.beforeEach(async ({ page }) => {
-    // Inject the WebMIDI mock BEFORE the page loads so MidiService picks it up
+    // Inject the WebMIDI mock BEFORE the page loads so the browser adapter picks it up
     await page.addInitScript({ content: webmidiMockScript });
 
     await mockAuthenticatedSession(page);
@@ -85,8 +85,8 @@ test.describe('WebMIDI pipeline E2E (addInitScript mock)', () => {
   // ── 1. MIDI device connection ────────────────────────────────────────────
 
   test('1. MIDI connection state is true when fake device is present', async ({ page }) => {
-    // The mock pre-populates one connected input.  MidiService should call
-    // onConnectionChange(true) → setIsMidiConnected(true) in the store.
+    // The mock pre-populates one connected input. The adapter should publish
+    // connectionChanged(true) into the Practice runtime.
     // We verify via the test API so this test is locale-independent.
     await expect
       .poll(

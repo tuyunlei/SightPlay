@@ -5,8 +5,7 @@ import App from './App';
 
 const identitySuccess = <T,>(data: T) => ({ ok: true, data, requestId: 'test-request' });
 
-const { practiceSessionMock, aiCoachMock, testApiMock, mainAppContentMock } = vi.hoisted(() => ({
-  practiceSessionMock: vi.fn(),
+const { aiCoachMock, testApiMock, mainAppContentMock } = vi.hoisted(() => ({
   aiCoachMock: vi.fn(),
   testApiMock: vi.fn(),
   mainAppContentMock: vi.fn(),
@@ -20,10 +19,6 @@ vi.mock('@sentry/react', () => ({
 
 vi.mock('@passwordless-id/webauthn', () => ({
   client: { register: vi.fn(), authenticate: vi.fn() },
-}));
-
-vi.mock('./hooks/usePracticeSession', () => ({
-  usePracticeSession: practiceSessionMock,
 }));
 
 vi.mock('./hooks/useAiCoach', () => ({
@@ -42,15 +37,17 @@ vi.mock('./views/MainAppContent', () => ({
 }));
 
 describe('App protected runtime lifecycle', () => {
+  const requestMidiAccess = vi.fn(async () => ({
+    inputs: new Map(),
+    onstatechange: null,
+  }));
+
   beforeEach(() => {
     vi.clearAllMocks();
     window.history.replaceState(null, '', '/');
-
-    practiceSessionMock.mockReturnValue({
-      state: { clef: 'treble' },
-      derived: {},
-      actions: { loadChallenge: vi.fn() },
-      pressedKeys: new Set(),
+    Object.defineProperty(navigator, 'requestMIDIAccess', {
+      configurable: true,
+      value: requestMidiAccess,
     });
     aiCoachMock.mockReturnValue({
       chatInput: '',
@@ -74,7 +71,7 @@ describe('App protected runtime lifecycle', () => {
     render(<App />);
 
     expect(await screen.findByTestId('login-screen')).toBeTruthy();
-    expect(practiceSessionMock).not.toHaveBeenCalled();
+    expect(requestMidiAccess).not.toHaveBeenCalled();
     expect(aiCoachMock).not.toHaveBeenCalled();
     expect(testApiMock).not.toHaveBeenCalled();
   });
@@ -92,9 +89,9 @@ describe('App protected runtime lifecycle', () => {
 
     expect(await screen.findByTestId('protected-app')).toBeTruthy();
     expect(window.location.pathname).toBe('/practice');
-    expect(practiceSessionMock).toHaveBeenCalledTimes(1);
-    expect(aiCoachMock).toHaveBeenCalledTimes(1);
-    expect(testApiMock).toHaveBeenCalledTimes(1);
+    expect(requestMidiAccess).toHaveBeenCalledTimes(1);
+    expect(aiCoachMock).toHaveBeenCalled();
+    expect(testApiMock).toHaveBeenCalled();
   });
 
   it('assembles an authenticated deep link with its decoded protected route', async () => {

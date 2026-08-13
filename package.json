@@ -45,6 +45,7 @@
     "@sightplay/browser-adapters": "workspace:*",
     "@sightplay/identity-client": "workspace:*",
     "@sightplay/identity-server": "workspace:*",
+    "@sightplay/practice": "workspace:*",
     "lucide-react": "^0.563.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",

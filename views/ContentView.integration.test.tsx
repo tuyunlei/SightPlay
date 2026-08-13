@@ -1,11 +1,11 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { useMemo, useState } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { useState } from 'react';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { AppContentRoute } from '@sightplay/app-shell';
+import { createRandomExercise, PracticeProvider, type PracticePorts } from '@sightplay/practice';
 
 import { translations } from '../i18n';
-import { usePracticeStore } from '../store/practiceStore';
 
 import { ContentView } from './ContentView';
 
@@ -38,57 +38,53 @@ vi.mock('./RandomPracticeView', () => ({
 function ContentViewHarness({ initialRoute }: { initialRoute: AppContentRoute }) {
   const [route, setRoute] = useState(initialRoute);
   const [chatInput, setChatInput] = useState('');
-  const actions = useMemo(
-    () => ({
-      selectClef: vi.fn(),
-      toggleClef: vi.fn(),
-      setPracticeRange: vi.fn(),
-    }),
-    []
-  );
+  const [ports] = useState<PracticePorts>(() => ({
+    clock: { now: () => 0 },
+    scheduler: { schedule: () => vi.fn() },
+    seed: { nextSeed: () => 2 },
+    midi: { start: async () => {}, dispose: vi.fn() },
+    microphone: { start: async () => {}, stop: vi.fn(), dispose: vi.fn() },
+  }));
+  const [plan] = useState(() => {
+    const result = createRandomExercise({
+      seed: 1,
+      config: {
+        clef: 'treble',
+        practiceRange: 'combined',
+        handMode: 'right-hand',
+        includeAccidentals: false,
+      },
+    });
+    if (!result.ok) throw new Error('invalid fixture');
+    return result.value;
+  });
 
   const navigate = (nextRoute: AppContentRoute) => setRoute(nextRoute);
 
   return (
     <>
       <output data-testid="current-route">{JSON.stringify(route)}</output>
-      <ContentView
-        route={route}
-        navigate={navigate}
-        dismissEntry={navigate}
-        state={{ challenge: null } as never}
-        derived={{ targetNote: null } as never}
-        actions={actions as never}
-        pressedKeys={new Map()}
-        t={translations.zh}
-        toggleLang={vi.fn()}
-        chatInput={chatInput}
-        setChatInput={setChatInput}
-        chatHistory={[]}
-        isLoadingAi={false}
-        sendMessage={vi.fn()}
-        chatEndRef={{ current: null }}
-        lang="zh"
-      />
+      <PracticeProvider ports={ports} initialPlan={plan}>
+        <ContentView
+          route={route}
+          navigate={navigate}
+          dismissEntry={navigate}
+          t={translations.zh}
+          toggleLang={vi.fn()}
+          chatInput={chatInput}
+          setChatInput={setChatInput}
+          chatHistory={[]}
+          isLoadingAi={false}
+          sendMessage={vi.fn()}
+          chatEndRef={{ current: null }}
+          lang="zh"
+        />
+      </PracticeProvider>
     </>
   );
 }
 
 describe('ContentView route integration', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    usePracticeStore.setState({
-      practiceMode: 'random',
-      currentSongId: null,
-      songProgress: 0,
-      songTotalNotes: 0,
-      songStartTime: null,
-      challengeSequence: [],
-      challengeIndex: 0,
-      noteQueue: [],
-    });
-  });
-
   it('renders random practice from the route', () => {
     render(<ContentViewHarness initialRoute={{ kind: 'randomPractice' }} />);
 
@@ -106,27 +102,14 @@ describe('ContentView route integration', () => {
     );
   });
 
-  it('navigates atomically from the library to a selected song', async () => {
+  it('navigates atomically from the library to a selected song', () => {
     render(<ContentViewHarness initialRoute={{ kind: 'library' }} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'pick-song' }));
 
-    expect(await screen.findByTestId('practice-area')).toBeTruthy();
+    expect(screen.getByTestId('practice-area')).toBeTruthy();
     expect(screen.getByTestId('current-route').textContent).toBe(
       JSON.stringify({ kind: 'songPractice', songId: 'twinkle-twinkle' })
     );
-  });
-
-  it('mounts SongPractice from one route and synchronizes the legacy Practice adapter', async () => {
-    render(
-      <ContentViewHarness initialRoute={{ kind: 'songPractice', songId: 'twinkle-twinkle' }} />
-    );
-
-    await waitFor(() => {
-      const store = usePracticeStore.getState();
-      expect(store.practiceMode).toBe('song');
-      expect(store.currentSongId).toBe('twinkle-twinkle');
-      expect(store.songTotalNotes).toBeGreaterThan(0);
-    });
   });
 });

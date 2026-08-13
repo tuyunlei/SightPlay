@@ -1,44 +1,33 @@
 import { useState } from 'react';
 
-import { SongDifficulty } from '../data/songs/types';
+import type { PracticeView } from '@sightplay/practice';
+
 import {
   generateRecommendations,
   PracticeSnapshot,
   Recommendation,
 } from '../domain/recommendations';
-import { usePracticeStore } from '../store/practiceStore';
+import { ClefType } from '../types';
 
-export function useRecommendations() {
-  const [completedDifficulty, setCompletedDifficulty] = useState<SongDifficulty | undefined>();
-  const [dismissed, setDismissed] = useState(false);
-
-  const clef = usePracticeStore((s) => s.clef);
-  const practiceRange = usePracticeStore((s) => s.practiceRange);
-  const practiceMode = usePracticeStore((s) => s.practiceMode);
-  const sessionStats = usePracticeStore((s) => s.sessionStats);
+export function useRecommendations(view: PracticeView) {
+  const contextKey = `${view.source}:${view.metadata.id}:${view.completion.kind}`;
+  const [dismissedContext, setDismissedContext] = useState<string | null>(null);
 
   const snapshot: PracticeSnapshot = {
-    totalAttempts: sessionStats.totalAttempts,
-    cleanHits: sessionStats.cleanHits,
-    currentClef: clef,
-    currentRange: practiceRange,
-    practiceMode,
-    completedSongDifficulty: completedDifficulty,
+    totalAttempts: view.sessionStats.totalAttempts,
+    cleanHits: view.sessionStats.cleanHits,
+    currentClef: view.clef === 'treble' ? ClefType.TREBLE : ClefType.BASS,
+    currentRange: view.practiceRange,
+    practiceMode: view.source,
+    completedSongDifficulty:
+      view.source === 'song' && view.completion.kind === 'completed'
+        ? view.metadata.difficulty
+        : undefined,
   };
 
-  const recommendations: Recommendation[] = dismissed ? [] : generateRecommendations(snapshot);
+  const recommendations: Recommendation[] =
+    dismissedContext === contextKey ? [] : generateRecommendations(snapshot);
+  const dismiss = () => setDismissedContext(contextKey);
 
-  const onSongComplete = (difficulty: SongDifficulty) => {
-    setDismissed(false);
-    setCompletedDifficulty(difficulty);
-  };
-
-  const dismiss = () => setDismissed(true);
-
-  const reset = () => {
-    setDismissed(false);
-    setCompletedDifficulty(undefined);
-  };
-
-  return { recommendations, onSongComplete, dismiss, reset };
+  return { recommendations, dismiss };
 }

@@ -1,10 +1,52 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { createNoteFromMidi } from '../../domain/note';
 import { Note } from '../../types';
 
 import { createStaffLayout, StaffLayout } from './staffLayout';
 import { getAccidental, getNoteY, getStaffSteps, isFlat, isSharp } from './staffUtils';
+
+const SHARP_NAMES: Note['name'][] = [
+  'C',
+  'C#',
+  'D',
+  'D#',
+  'E',
+  'F',
+  'F#',
+  'G',
+  'G#',
+  'A',
+  'A#',
+  'B',
+];
+const FLAT_NAMES: Note['name'][] = [
+  'C',
+  'Db',
+  'D',
+  'Eb',
+  'E',
+  'F',
+  'Gb',
+  'G',
+  'Ab',
+  'A',
+  'Bb',
+  'B',
+];
+const createNoteFromMidi = (
+  midi: number,
+  globalIndex = 0,
+  duration?: Note['duration'],
+  preferFlat = false
+): Note => ({
+  id: `test:${midi}:${globalIndex}`,
+  name: (preferFlat ? FLAT_NAMES : SHARP_NAMES)[midi % 12],
+  octave: Math.floor(midi / 12) - 1,
+  frequency: 440 * 2 ** ((midi - 69) / 12),
+  midi,
+  globalIndex,
+  ...(duration ? { duration } : {}),
+});
 
 describe('staffUtils', () => {
   describe('getStaffSteps', () => {

@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 import type { AppContentRoute } from '@sightplay/app-shell';
+import { type PracticeClient, usePractice } from '@sightplay/practice';
 
+import { createSongExercise } from '../app/practice/createExercisePlan';
 import { applyRecommendationAction } from '../app/recommendations/applyRecommendationAction';
-import { getSongById } from '../data/songs';
 import type { Recommendation } from '../domain/recommendations';
 import { SongLibrary } from '../features/library/SongLibrary';
-import { usePracticeSession } from '../hooks/usePracticeSession';
 import { useRecommendations } from '../hooks/useRecommendations';
 import { Language, translations } from '../i18n';
-import { ChatMessage } from '../types';
+import { ChatMessage, ClefType } from '../types';
 
 import { RandomPracticeView } from './RandomPracticeView';
 import { SongPracticeSection } from './SongPracticeSection';
@@ -18,10 +18,6 @@ type ContentViewProps = {
   route: AppContentRoute;
   navigate: (route: AppContentRoute, replace?: boolean) => void;
   dismissEntry: (fallbackRoute: AppContentRoute) => void;
-  state: ReturnType<typeof usePracticeSession>['state'];
-  derived: ReturnType<typeof usePracticeSession>['derived'];
-  actions: ReturnType<typeof usePracticeSession>['actions'];
-  pressedKeys: ReturnType<typeof usePracticeSession>['pressedKeys'];
   t: typeof translations.en;
   toggleLang: () => void;
   chatInput: string;
@@ -34,16 +30,16 @@ type ContentViewProps = {
 };
 
 const useContentRecommendations = (
-  actions: ContentViewProps['actions'],
+  practice: PracticeClient,
   navigate: ContentViewProps['navigate']
 ) => {
-  const recs = useRecommendations();
+  const recs = useRecommendations(practice.view);
 
   const applyRec = (rec: Recommendation) => {
     if (!rec.action) return;
     applyRecommendationAction(rec.action, {
-      selectClef: actions.selectClef,
-      setPracticeRange: actions.setPracticeRange,
+      selectClef: (clef) => practice.selectClef(clef === ClefType.TREBLE ? 'treble' : 'bass'),
+      setPracticeRange: practice.selectPracticeRange,
       navigate,
     });
     recs.dismiss();
@@ -53,38 +49,18 @@ const useContentRecommendations = (
 };
 
 export const ContentView: React.FC<ContentViewProps> = (props) => {
-  const { route, navigate, actions, lang, t, ...rest } = props;
-  const [completedSongId, setCompletedSongId] = useState<string | null>(null);
-  const { recommendations, onSongComplete, dismiss, applyRec } = useContentRecommendations(
-    actions,
-    navigate
-  );
-  const activeSongId = route.kind === 'songPractice' ? route.songId : null;
-
-  useEffect(() => {
-    if (completedSongId !== null && completedSongId !== activeSongId) {
-      setCompletedSongId(null);
-    }
-  }, [activeSongId, completedSongId]);
+  const { route, navigate, lang, t, ...rest } = props;
+  const practice = usePractice();
+  const { recommendations, dismiss, applyRec } = useContentRecommendations(practice, navigate);
 
   const exitSong = () => {
-    setCompletedSongId(null);
     props.dismissEntry({ kind: 'library' });
   };
 
-  const completeSong = () => {
-    if (route.kind !== 'songPractice') return;
-    setCompletedSongId(route.songId);
-    const song = getSongById(route.songId);
-    if (song) onSongComplete(song.difficulty);
-  };
-
-  const backToLib = () => {
-    exitSong();
-  };
-
   const retrySong = () => {
-    setCompletedSongId(null);
+    if (route.kind !== 'songPractice') return;
+    const plan = createSongExercise(route.songId);
+    if (plan) practice.startExercise(plan);
   };
 
   if (route.kind === 'library') {
@@ -101,13 +77,11 @@ export const ContentView: React.FC<ContentViewProps> = (props) => {
     return (
       <SongPracticeSection
         songId={route.songId}
-        showComplete={completedSongId === route.songId}
         recommendations={recommendations}
         t={t}
         onExit={exitSong}
-        onComplete={completeSong}
         onRetry={retrySong}
-        onBackToLibrary={backToLib}
+        onBackToLibrary={exitSong}
         onApplyRec={applyRec}
         onDismissRec={dismiss}
       />
@@ -116,10 +90,6 @@ export const ContentView: React.FC<ContentViewProps> = (props) => {
 
   return (
     <RandomPracticeView
-      state={rest.state}
-      derived={rest.derived}
-      actions={actions}
-      pressedKeys={rest.pressedKeys}
       t={t}
       toggleLang={rest.toggleLang}
       chatInput={rest.chatInput}

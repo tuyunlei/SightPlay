@@ -51,10 +51,6 @@ function Harness() {
         route={route}
         navigate={navigate}
         dismissEntry={dismissEntry}
-        state={{} as never}
-        derived={{} as never}
-        actions={{} as never}
-        pressedKeys={new Map()}
         t={translations.en}
         toggleLang={vi.fn()}
         chatInput=""

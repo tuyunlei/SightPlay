@@ -1,18 +1,24 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { AccountAccessProvider } from '@sightplay/account-access-client';
 import type { AppRoute, ProtectedAppRoute } from '@sightplay/app-shell';
 import {
   createBrowserAccountAccessPorts,
   createBrowserIdentityPorts,
+  createBrowserPracticePorts,
 } from '@sightplay/browser-adapters';
 import { IdentityProvider, useIdentity } from '@sightplay/identity-client';
+import { PracticeProvider, usePractice } from '@sightplay/practice';
 
 import { useBrowserRoute } from './app/navigation/useBrowserRoute';
+import {
+  createCoachExercise,
+  createInitialRandomExercise,
+} from './app/practice/createExercisePlan';
+import { usePracticeRoute } from './app/practice/usePracticeRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthGate } from './features/auth/AuthGate';
 import { useAiCoach } from './hooks/useAiCoach';
-import { usePracticeSession } from './hooks/usePracticeSession';
 import { useTestAPI } from './hooks/useTestAPI';
 import { translations } from './i18n';
 import { useUiStore } from './store/uiStore';
@@ -32,43 +38,86 @@ function AuthenticatedApp({
 }) {
   const identity = useIdentity();
   const [accountAccessPorts] = useState(createBrowserAccountAccessPorts);
+  const [practicePorts] = useState(createBrowserPracticePorts);
+  const [initialPlan] = useState(() => createInitialRandomExercise(practicePorts.seed.nextSeed()));
   const lang = useUiStore((state) => state.lang);
   const toggleLang = useUiStore((state) => state.toggleLang);
   const t = translations[lang];
-  const challengeCompleteRef = useRef<() => void>(() => {});
+  const content = (
+    <PracticeProvider ports={practicePorts} initialPlan={initialPlan}>
+      <PracticeApplication
+        route={route}
+        navigate={navigate}
+        dismissEntry={dismissEntry}
+        t={t}
+        lang={lang}
+        toggleLang={toggleLang}
+      />
+    </PracticeProvider>
+  );
 
-  const practiceSession = usePracticeSession({
-    onMicError: () => alert(t.micError),
-    onChallengeComplete: () => challengeCompleteRef.current(),
-  });
+  const handleAccountAccessOutput = useCallback(() => {
+    identity.refreshSession();
+  }, [identity]);
 
-  const { state, derived, actions, pressedKeys } = practiceSession;
-  useTestAPI(practiceSession);
+  return route.kind === 'passkeys' ? (
+    <AccountAccessProvider ports={accountAccessPorts} onOutput={handleAccountAccessOutput}>
+      {content}
+    </AccountAccessProvider>
+  ) : (
+    content
+  );
+}
+
+function PracticeApplication({
+  route,
+  navigate,
+  dismissEntry,
+  t,
+  lang,
+  toggleLang,
+}: {
+  route: ProtectedAppRoute;
+  navigate: Navigate;
+  dismissEntry: DismissEntry;
+  t: (typeof translations)['en'];
+  lang: ReturnType<typeof useUiStore.getState>['lang'];
+  toggleLang: () => void;
+}) {
+  const practice = usePractice();
+  const subscribePracticeOutput = practice.onOutput;
+  usePracticeRoute(route, practice);
+  useTestAPI(practice);
 
   const { chatInput, setChatInput, chatHistory, isLoadingAi, sendMessage, chatEndRef } = useAiCoach(
     {
-      clef: state.clef,
+      clef: practice.view.clef,
       lang,
-      onLoadChallenge: actions.loadChallenge,
+      onLoadChallenge: (challenge) => {
+        const plan = createCoachExercise(challenge, practice.view.clef);
+        if (!plan) return 0;
+        practice.startExercise(plan);
+        return plan.frames.length;
+      },
     }
   );
 
   useEffect(() => {
-    challengeCompleteRef.current = () => {
-      sendMessage(t.aiChallengeCompletedUserMessage);
-    };
-  }, [sendMessage, t.aiChallengeCompletedUserMessage]);
+    return subscribePracticeOutput((output) => {
+      if (output.kind === 'microphoneFailed') {
+        alert(t.micError);
+      } else if (output.plan.source === 'coach') {
+        sendMessage(t.aiChallengeCompletedUserMessage);
+      }
+    });
+  }, [sendMessage, subscribePracticeOutput, t.aiChallengeCompletedUserMessage, t.micError]);
 
-  const content = (
+  return (
     <div
       className="bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] flex flex-col font-sans"
       style={{ minHeight: '100dvh' }}
     >
       <MainAppContent
-        state={state}
-        derived={derived}
-        actions={actions}
-        pressedKeys={pressedKeys}
         t={t}
         toggleLang={toggleLang}
         chatInput={chatInput}
@@ -83,18 +132,6 @@ function AuthenticatedApp({
         dismissEntry={dismissEntry}
       />
     </div>
-  );
-
-  const handleAccountAccessOutput = useCallback(() => {
-    identity.refreshSession();
-  }, [identity]);
-
-  return route.kind === 'passkeys' ? (
-    <AccountAccessProvider ports={accountAccessPorts} onOutput={handleAccountAccessOutput}>
-      {content}
-    </AccountAccessProvider>
-  ) : (
-    content
   );
 }
 

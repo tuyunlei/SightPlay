@@ -22,7 +22,7 @@ export interface PracticeSnapshot {
   cleanHits: number;
   currentClef: ClefType;
   currentRange: PracticeRangeMode;
-  practiceMode: 'random' | 'song';
+  practiceMode: 'random' | 'song' | 'coach';
   completedSongDifficulty?: SongDifficulty;
 }
 

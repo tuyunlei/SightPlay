@@ -5,8 +5,8 @@
  * `page.addInitScript({ content: webmidiMockScript })` BEFORE the app loads.
  *
  * It overrides `navigator.requestMIDIAccess` with a fake implementation so
- * the real MidiService → useMidiInput → usePracticeSession pipeline runs end-
- * to-end without physical hardware.
+ * the real browser MIDI adapter → Practice runtime pipeline runs end-to-end
+ * without physical hardware.
  *
  * Window globals exposed after injection:
  *   __simulateMidiNoteOn(midi: number)  — sends [0x90, midi, 127]
@@ -74,7 +74,7 @@ export const webmidiMockScript = /* js */ `(function () {
 
   /**
    * Simulate connecting a second MIDI device (hot-plug).
-   * Triggers the MIDIAccess onstatechange handler so MidiService binds it.
+   * Triggers the MIDIAccess onstatechange handler so the adapter binds it.
    */
   window.__simulateMidiConnect = function () {
     var newInput = {

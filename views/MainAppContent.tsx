@@ -6,16 +6,11 @@ import { BackgroundDecor } from '../components/layout/BackgroundDecor';
 import { PasskeyButton } from '../components/layout/PasskeyButton';
 import { NavigationTabs } from '../components/navigation/NavigationTabs';
 import { PasskeyManagement } from '../features/auth/PasskeyManagement';
-import { usePracticeSession } from '../hooks/usePracticeSession';
 import { Language, translations } from '../i18n';
 
 import { ContentView } from './ContentView';
 
 type MainAppContentProps = {
-  state: ReturnType<typeof usePracticeSession>['state'];
-  derived: ReturnType<typeof usePracticeSession>['derived'];
-  actions: ReturnType<typeof usePracticeSession>['actions'];
-  pressedKeys: ReturnType<typeof usePracticeSession>['pressedKeys'];
   t: typeof translations.en;
   toggleLang: () => void;
   chatInput: string;
