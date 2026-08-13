@@ -108,8 +108,9 @@ production release remains a separate explicitly authorized operation.
   management. Revisit only through a superseding decision record.
 - D1 is the first transactional adapter candidate. If an invariant cannot be proven under its concrete
   API, use a Durable Object serialization boundary rather than weakening the domain contract.
-- Existing production credential migration and preview custom-domain configuration require live
-  infrastructure discovery before Phase 2 execution.
+- Live inventory confirms the production `sightplay` Pages project has no D1 binding and the former PPE
+  domain no longer exists. Phase 2 requires authorized provisioning of the separate `sightplay-ppe`
+  project, isolated D1, and `develop.sightplay.xclz.org` contract from Decision 0004.
 - The rebuild remains a modular monolith. Package boundaries are correctness controls, not a plan to
   create independently deployed services.
 
@@ -314,3 +315,11 @@ production release remains a separate explicitly authorized operation.
   A local Pages runtime additionally proved the single catch-all returns application-owned 204/404/405
   contracts. Phase 5 is complete; Phase 2 remains open only for the explicitly authorized deployed D1,
   migration, custom-domain, and real Passkey lifecycle evidence.
+- 2026-08-13: Latest-head PR #16 deployment passes artifact and catch-all checks, but session GET remains
+  a structured 500 because no D1 is bound. Read-only Cloudflare inventory confirms `sightplay` uses
+  production branch `main`, has only active custom domain `sightplay.xclz.org`, retains the legacy
+  production KV, and has no production or preview D1 binding. Historical OpenClaw records recovered the
+  former `develop.sightplay.xclz.org` PPE attempt, whose certificate never reached success in the preserved
+  transcript and whose DNS is now absent. Decision 0004 replaces its unsafe shared-KV topology with a
+  separate `sightplay-ppe` project and isolated D1; the available legacy token can read Pages but is not
+  authorized for D1 APIs.

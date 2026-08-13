@@ -48,6 +48,7 @@ The public application is [sightplay.xclz.org](https://sightplay.xclz.org), depl
 Cloudflare Pages and its Pages Functions. `wrangler.toml` owns the runtime configuration; see the
 E2E guide for the boundary between a remote smoke check and real Passkey evidence. Transactional
 Identity deployment and credential cutover follow the
+[Cloudflare environment contract](docs/guides/cloudflare-environments.md) and
 [Identity migration runbook](docs/guides/identity-migration.md).
 
 ## How It Works
