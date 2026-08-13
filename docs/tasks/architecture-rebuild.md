@@ -94,13 +94,13 @@ production release remains a separate explicitly authorized operation.
 
 ## Current completion audit
 
-| Completion condition                                                                    | Status                                              | Authoritative evidence                                                                                                                                                                                                           |
-| --------------------------------------------------------------------------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Legacy horizontal directories do not own workflows and no v1/v2 state is double-written | Proven in source                                    | Empty `architecture/legacy-business-files.txt`; `lint:boundaries`; no production files under `hooks/`, `services/`, `store/`, or `views/`; capability public contracts and one application composition root                      |
-| Anonymous state cannot start protected runtime                                          | Proven deterministically                            | `App.integration.test.tsx` constructs no Practice/MIDI/Guidance ports while anonymous; `AuthGate.integration.test.tsx` rejects protected children before authorization                                                           |
-| Random, song, and AI exercises share Practice                                           | Proven deterministically and at browser boundary    | All three compile to `ExercisePlan`; Guidance-to-Practice assembly proof; random/song WebMIDI and real Web Audio paths drive the same Practice runtime                                                                           |
-| Identity invariants are transactional                                                   | Proven in workerd/D1; cloud lifecycle still pending | 15 D1 tests include concurrent invite use, rollback, replay exclusion, monotonic counters, final-credential protection, rate limits, and import idempotency; deployed binding/migration remains Phase 2's operational gate       |
-| CI mechanically rejects architectural regressions                                       | Proven by positive and negative fixtures            | Package roles/exports, dependency-cruiser, no-DOM model compile, unknown-JSON admission, managed runtime disposal, cancellable resource ports, single Cloudflare catch-all, legacy baseline, dead-code, and size gates run in CI |
+| Completion condition                                                                    | Status                                              | Authoritative evidence                                                                                                                                                                                                                         |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Legacy horizontal directories do not own workflows and no v1/v2 state is double-written | Proven in source                                    | Empty `architecture/legacy-business-files.txt`; `lint:boundaries`; no production files under `hooks/`, `services/`, `store/`, or `views/`; capability public contracts and one application composition root                                    |
+| Anonymous state cannot start protected runtime                                          | Proven deterministically                            | `App.integration.test.tsx` constructs no Practice/MIDI/Guidance ports while anonymous; `AuthGate.integration.test.tsx` rejects protected children before authorization                                                                         |
+| Random, song, and AI exercises share Practice                                           | Proven deterministically and at browser boundary    | All three compile to `ExercisePlan`; Guidance-to-Practice assembly proof; random/song WebMIDI and real Web Audio paths drive the same Practice runtime                                                                                         |
+| Identity invariants are transactional                                                   | Proven in workerd/D1; cloud lifecycle still pending | 18 D1 tests include one-time bootstrap, concurrent invite use, rollback, replay exclusion, monotonic counters, final-credential protection, rate limits, and import idempotency; deployed binding/migration remains Phase 2's operational gate |
+| CI mechanically rejects architectural regressions                                       | Proven by positive and negative fixtures            | Package roles/exports, dependency-cruiser, no-DOM model compile, unknown-JSON admission, managed runtime disposal, cancellable resource ports, single Cloudflare catch-all, legacy baseline, dead-code, and size gates run in CI               |
 
 ## Decisions and open risks
 
@@ -115,6 +115,13 @@ production release remains a separate explicitly authorized operation.
   create independently deployed services.
 
 ## Progress log
+
+- 2026-08-13: Replaced the permanent broad-secret invitation administrator route with an explicit
+  empty-store bootstrap capability. `IDENTITY_BOOTSTRAP_SECRET` is configuration-gated; a singleton D1
+  claim and the first invitation batch commit together, so exactly one concurrent bootstrap request can
+  succeed and any existing account or invitation closes the path. Pure use-case, assembled HTTP/D1, and
+  concurrent workerd tests prove the capability while the PPE runbook requires secret removal after first
+  account creation.
 
 - 2026-08-13: Started from `origin/develop@4477bc4`. Replaced the earlier local-complexity framing with
   a top-down target architecture covering product capabilities, runtime ownership, backend identity,
