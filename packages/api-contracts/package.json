@@ -1,0 +1,9 @@
+{
+  "name": "@sightplay/api-contracts",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/public.ts"
+  }
+}

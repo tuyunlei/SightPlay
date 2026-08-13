@@ -61,6 +61,26 @@ exception messages never select a business branch. App Shell remains the sole na
 Identity success changes the public session state and the scene selector performs any resulting route
 authorization without Identity writing browser history.
 
+Authenticated credential and invitation management is the independent Account Access capability.
+Its pure transition owns loading, invitation creation, and credential revocation; its runtime emits a
+`credentialSetChanged` output after an accepted revocation. Application composition maps that output
+to Identity session refresh. React does not call the Account Access HTTP adapter or sequence reloads.
+
+## Identity server
+
+`@sightplay/api-contracts` is the only wire-schema owner. Both HTTP sides runtime-decode unknown JSON;
+one malformed nested item rejects the complete contract rather than being filtered into a different
+meaning. `@sightplay/identity-server` owns records and use cases, while HTTP, WebAuthn, entropy, clock,
+and D1 remain ports or adapters. Registration, authentication, session, and credential operations are
+independent functions over one dependency record; there is no general-purpose manager or service
+locator.
+
+The D1 adapter exposes domain commands, not SQL or key/value primitives. Claim rows have database
+triggers that validate ceremony, invitation, active credential, monotonic counter, and final-key
+preconditions inside the same transaction that mutates records. A failed D1 batch is classified by
+reading structured authoritative state after rollback; adapter behavior never branches on SQLite
+exception wording.
+
 ## Exercise and Practice
 
 Song, random, and coach content compile into one plan:

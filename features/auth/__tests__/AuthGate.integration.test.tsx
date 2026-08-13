@@ -4,34 +4,56 @@ import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AppRoute } from '@sightplay/app-shell';
-import { createBrowserIdentityPorts } from '@sightplay/browser-adapters';
+import { createBrowserIdentityPorts, createBrowserPasskeyPort } from '@sightplay/browser-adapters';
 import { IdentityProvider } from '@sightplay/identity-client';
 
 import { translations } from '../../../i18n';
 import { useUiStore } from '../../../store/uiStore';
 import { AuthGate } from '../AuthGate';
 
-const { registerMock, authenticateMock } = vi.hoisted(() => ({
+const identitySuccess = <T,>(data: T) => ({ ok: true, data, requestId: 'test-request' });
+const authenticationCredential = {
+  id: 'AQID',
+  rawId: 'AQID',
+  type: 'public-key',
+  response: {
+    clientDataJSON: 'BAUG',
+    authenticatorData: 'BwgJ',
+    signature: 'CgsM',
+  },
+};
+const registrationCredential = {
+  id: 'AQID',
+  rawId: 'AQID',
+  type: 'public-key',
+  response: {
+    clientDataJSON: 'BAUG',
+    attestationObject: 'BwgJ',
+    transports: ['internal'],
+  },
+};
+
+const { registerMock, authenticateMock, captureExceptionMock } = vi.hoisted(() => ({
   registerMock: vi.fn(),
   authenticateMock: vi.fn(),
-}));
-
-vi.mock('@passwordless-id/webauthn', () => ({
-  client: {
-    register: registerMock,
-    authenticate: authenticateMock,
-  },
+  captureExceptionMock: vi.fn(),
 }));
 
 vi.mock('@sentry/react', () => ({
   addBreadcrumb: vi.fn(),
   setContext: vi.fn(),
-  captureException: vi.fn(),
+  captureException: captureExceptionMock,
 }));
 
 function AuthGateHarness({ initialRoute = { kind: 'login' } }: { initialRoute?: AppRoute }) {
   const [route, setRoute] = useState<AppRoute>(initialRoute);
-  const [ports] = useState(createBrowserIdentityPorts);
+  const [ports] = useState(() => ({
+    ...createBrowserIdentityPorts(),
+    passkey: createBrowserPasskeyPort({
+      register: registerMock,
+      authenticate: authenticateMock,
+    }),
+  }));
 
   return (
     <IdentityProvider ports={ports}>
@@ -65,7 +87,7 @@ describe('AuthGate integration', () => {
         if (input === '/api/auth/session') {
           return {
             ok: true,
-            json: async () => ({ authenticated: false, hasPasskeys: true }),
+            json: async () => identitySuccess({ authenticated: false, hasPasskeys: true }),
           } as Response;
         }
         return { ok: true, json: async () => ({}) } as Response;
@@ -83,7 +105,7 @@ describe('AuthGate integration', () => {
       'fetch',
       vi.fn(async () => ({
         ok: true,
-        json: async () => ({ authenticated: false, hasPasskeys: true }),
+        json: async () => identitySuccess({ authenticated: false, hasPasskeys: true }),
       }))
     );
 
@@ -99,7 +121,7 @@ describe('AuthGate integration', () => {
       'fetch',
       vi.fn(async () => ({
         ok: true,
-        json: async () => ({ authenticated: true, hasPasskeys: true }),
+        json: async () => identitySuccess({ authenticated: true, hasPasskeys: true }),
       }))
     );
 
@@ -117,7 +139,7 @@ describe('AuthGate integration', () => {
     cancellation.name = 'NotAllowedError';
     authenticateMock
       .mockRejectedValueOnce(cancellation)
-      .mockResolvedValueOnce({ id: 'assertion-1' });
+      .mockResolvedValueOnce(authenticationCredential);
 
     vi.stubGlobal(
       'fetch',
@@ -126,22 +148,27 @@ describe('AuthGate integration', () => {
           sessionChecks += 1;
           return {
             ok: true,
-            json: async () => ({ authenticated: sessionChecks >= 2, hasPasskeys: true }),
+            json: async () =>
+              identitySuccess({ authenticated: sessionChecks >= 2, hasPasskeys: true }),
           } as Response;
         }
         if (input === '/api/auth/login-options') {
           return {
             ok: true,
-            json: async () => ({
-              challenge: 'challenge',
-              allowCredentials: [{ id: 'cred-1', transports: ['internal'] }],
-              userVerification: 'preferred',
-              timeout: 10000,
-            }),
+            json: async () =>
+              identitySuccess({
+                challenge: 'challenge',
+                allowCredentials: [{ id: 'cred-1', transports: ['internal'] }],
+                userVerification: 'preferred',
+                timeout: 10000,
+              }),
           } as Response;
         }
         if (input === '/api/auth/login-verify') {
-          return { ok: true, json: async () => ({}) } as Response;
+          return {
+            ok: true,
+            json: async () => identitySuccess({ completed: true }),
+          } as Response;
         }
         return { ok: true, json: async () => ({}) } as Response;
       })
@@ -161,7 +188,7 @@ describe('AuthGate integration', () => {
   it('lets a user return to passkey login after opening invite registration', async () => {
     const user = userEvent.setup();
     let sessionChecks = 0;
-    authenticateMock.mockResolvedValue({ id: 'assertion-1' });
+    authenticateMock.mockResolvedValue(authenticationCredential);
 
     vi.stubGlobal(
       'fetch',
@@ -170,22 +197,27 @@ describe('AuthGate integration', () => {
           sessionChecks += 1;
           return {
             ok: true,
-            json: async () => ({ authenticated: sessionChecks >= 2, hasPasskeys: true }),
+            json: async () =>
+              identitySuccess({ authenticated: sessionChecks >= 2, hasPasskeys: true }),
           } as Response;
         }
         if (input === '/api/auth/login-options') {
           return {
             ok: true,
-            json: async () => ({
-              challenge: 'challenge',
-              allowCredentials: [{ id: 'cred-1', transports: ['internal'] }],
-              userVerification: 'preferred',
-              timeout: 10000,
-            }),
+            json: async () =>
+              identitySuccess({
+                challenge: 'challenge',
+                allowCredentials: [{ id: 'cred-1', transports: ['internal'] }],
+                userVerification: 'preferred',
+                timeout: 10000,
+              }),
           } as Response;
         }
         if (input === '/api/auth/login-verify') {
-          return { ok: true, json: async () => ({}) } as Response;
+          return {
+            ok: true,
+            json: async () => identitySuccess({ completed: true }),
+          } as Response;
         }
         return { ok: true, json: async () => ({}) } as Response;
       })
@@ -212,7 +244,7 @@ describe('AuthGate integration', () => {
   it('registers with invite code via RegisterCard flow', async () => {
     const user = userEvent.setup();
 
-    registerMock.mockResolvedValue({ id: 'credential-1' });
+    registerMock.mockResolvedValue(registrationCredential);
 
     vi.stubGlobal(
       'fetch',
@@ -220,25 +252,32 @@ describe('AuthGate integration', () => {
         if (input === '/api/auth/session') {
           return {
             ok: true,
-            json: async () => ({ authenticated: false, hasPasskeys: false }),
+            json: async () => identitySuccess({ authenticated: false, hasPasskeys: false }),
           } as Response;
         }
         if (input === '/api/auth/register-options') {
           return {
             ok: true,
-            json: async () => ({
-              challenge: 'challenge',
-              user: { id: 'u1', name: 'user', displayName: 'User' },
-              rp: { id: 'localhost', name: 'SightPlay' },
-              pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
-              authenticatorSelection: { residentKey: 'required', userVerification: 'preferred' },
-            }),
+            json: async () =>
+              identitySuccess({
+                challenge: 'challenge',
+                user: { id: 'u1', name: 'user', displayName: 'User' },
+                rp: { id: 'localhost', name: 'SightPlay' },
+                pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+                authenticatorSelection: {
+                  residentKey: 'required',
+                  userVerification: 'preferred',
+                },
+              }),
           } as Response;
         }
         if (input === '/api/auth/register-verify') {
           const body = JSON.parse((init?.body as string) || '{}');
           expect(body.inviteCode.replace('-', '')).toBe('A2CD2345');
-          return { ok: true, json: async () => ({}) } as Response;
+          return {
+            ok: true,
+            json: async () => identitySuccess({ completed: true }),
+          } as Response;
         }
         return { ok: true, json: async () => ({}) } as Response;
       })
@@ -267,7 +306,7 @@ describe('AuthGate integration', () => {
     const user = userEvent.setup();
     let sessionChecks = 0;
 
-    authenticateMock.mockResolvedValue({ id: 'assertion-1' });
+    authenticateMock.mockResolvedValue(authenticationCredential);
 
     vi.stubGlobal(
       'fetch',
@@ -275,21 +314,28 @@ describe('AuthGate integration', () => {
         if (input === '/api/auth/session') {
           sessionChecks += 1;
           const authenticated = sessionChecks >= 2;
-          return { ok: true, json: async () => ({ authenticated, hasPasskeys: true }) } as Response;
+          return {
+            ok: true,
+            json: async () => identitySuccess({ authenticated, hasPasskeys: true }),
+          } as Response;
         }
         if (input === '/api/auth/login-options') {
           return {
             ok: true,
-            json: async () => ({
-              challenge: 'challenge',
-              allowCredentials: [{ id: 'cred-1', transports: ['internal'] }],
-              userVerification: 'preferred',
-              timeout: 10000,
-            }),
+            json: async () =>
+              identitySuccess({
+                challenge: 'challenge',
+                allowCredentials: [{ id: 'cred-1', transports: ['internal'] }],
+                userVerification: 'preferred',
+                timeout: 10000,
+              }),
           } as Response;
         }
         if (input === '/api/auth/login-verify') {
-          return { ok: true, json: async () => ({}) } as Response;
+          return {
+            ok: true,
+            json: async () => identitySuccess({ completed: true }),
+          } as Response;
         }
         return { ok: true, json: async () => ({}) } as Response;
       })

@@ -2,9 +2,9 @@
 
 Status: in progress
 
-Current branch: `codex/identity-client-runtime`
+Current branch: `codex/transactional-identity-server`
 
-Current base: `origin/develop` at `6a0b400` (PR #11)
+Current base: `origin/develop` at `cf18b34` (PR #12)
 
 ## Goal
 
@@ -46,12 +46,12 @@ capability; auth routes are mutually exclusive; no auth business branch depends 
 
 ## Phase 2 — Identity server and data
 
-- [ ] Introduce shared runtime API contracts and stable error codes.
-- [ ] Introduce Account, Credential, Invitation, Ceremony, and Session models.
-- [ ] Implement transactional IdentityStore and D1 schema/migrations.
+- [x] Introduce shared runtime API contracts and stable error codes.
+- [x] Introduce Account, Credential, Invitation, Ceremony, and Session models.
+- [x] Implement transactional IdentityStore and D1 schema/migrations.
 - [ ] Migrate existing production credentials without changing the RP ID.
-- [ ] Replace fixed `owner`, global passkey arrays, generic KV writes, and stateless session ownership.
-- [ ] Remove or protect the public error-report endpoint and enforce origin/CORS policy.
+- [x] Replace fixed `owner`, global passkey arrays, generic KV writes, and stateless session ownership.
+- [x] Remove or protect the public error-report endpoint and enforce origin/CORS policy.
 
 Exit evidence: concurrency/replay/rollback suites pass against the production repository adapter and a
 preview custom domain completes registration, login, credential management, and logout.
@@ -176,3 +176,56 @@ production release remains a separate explicitly authorized operation.
   stack replaces the remote font, and stale CDN/import-map tags are gone. The built HTML has no font,
   Tailwind, React, or icon CDN dependency; 20 responsive/theme/practice/smoke browser paths pass
   against the self-contained bundle.
+- 2026-08-13: PR #12's final head `d3d3948` passed zero-warning lint, both typechecks, all architecture
+  gates, 459 unit/integration tests, the complete Playwright matrix (58 passed, one documented
+  WebKit virtual-WebAuthn skip), production build, and Cloudflare Preview. The latest-head review
+  completed without new findings, and the PR was squash-merged to `develop` as `cf18b34`.
+- 2026-08-13: Created `codex/transactional-identity-server` from the merged Phase 1 baseline and began
+  Phase 2. The first cut establishes shared runtime-decoded HTTP contracts and pure Identity Server
+  use cases before introducing D1; the cutover will not preserve mutable KV/session dual ownership.
+- 2026-08-13: Added `@sightplay/api-contracts` and moved Identity HTTP decoding to the shared runtime
+  codecs. Malformed nested credential descriptors now reject the whole provider response instead of
+  being silently removed. Added `@sightplay/identity-server` with explicit records, strict origin
+  policy, consumer-owned clock/entropy/WebAuthn/store ports, and independent registration,
+  authentication, session, and credential use cases rather than an Auth manager.
+- 2026-08-13: Implemented the D1 schema and domain-specific `IdentityStore`. SQLite constraints and
+  precondition triggers turn failed invitation, ceremony, counter, and last-credential claims into
+  transaction aborts; semantic failures are classified by authoritative rows rather than exception
+  message matching. Five contract cases pass inside the real Cloudflare workerd/D1 runtime, proving
+  concurrent one-invite registration, late-statement rollback, ceremony replay exclusion, concurrent
+  counter monotonicity, and final-credential protection. The D1 suite is now part of `test:ci`.
+- 2026-08-13: Cut credential and invitation management out of React into
+  `@sightplay/account-access-client`. The pure transition owns asynchronous operation admission and
+  final-key prevention, the disposable runtime invokes a runtime-decoded HTTP port, and application
+  composition maps its `credentialSetChanged` output to Identity refresh. Removed the direct-fetch
+  helper and implementation/static-heavy UI tests; 28 focused transition, disposal, adapter-contract,
+  auth assembly, and account-management behavior proofs pass with all TypeScript projects.
+- 2026-08-13: Removed the fixed-owner JWT/KV runtime, platform KV abstraction, legacy EdgeOne adapter,
+  and unauthenticated raw error-report route. Every Identity HTTP route now decodes the shared contract,
+  invokes a use case, and returns a stable envelope; authenticated mutations require an allowed Origin.
+  Handler tests over real D1 prove anonymous session behavior, request rejection, credential management,
+  last-credential protection, and Origin enforcement.
+- 2026-08-13: Added a fail-closed decoder and idempotent D1 import for the legacy credential export. It
+  maps the prior global credential set to one explicit migration account while preserving credential
+  IDs, SPKI keys, algorithms, counters, and the production RP ID. The operator validator emits only a
+  credential count, fixed account ID, and digest; live export/import and D1 binding remain operational
+  evidence required before this Phase can close.
+- 2026-08-13: The real Chromium virtual-authenticator journey initially exposed two boundary defects:
+  the browser provider emitted padded base64url that the new verifier correctly rejected, and the E2E
+  shim corrupted a shared attestation buffer while manipulating a counter. The browser port now
+  validates and emits the canonical WebAuthn subset, the corrupting shim is gone, and the full real
+  registration → session → logout → reload → login path passes through the actual handler, crypto,
+  cookie, and D1-compatible store assembly (5 system cases pass; WebKit registration remains skipped
+  because its runner lacks the virtual-authenticator boundary).
+- 2026-08-13: Implemented the operational rate-limit policy that the target architecture previously
+  only specified. Identity use cases now consume source, ceremony, invitation, and account limits
+  through a dedicated port; the D1 adapter uses an atomic upsert and stores only digested subjects.
+  Concurrent workerd evidence proves a limit of three admits exactly three of eight contenders and a
+  new bucket opens only at the configured window boundary. The public invitation lookup no longer
+  reaches the repository from its route; it is a rate-limited application use case.
+- 2026-08-13: Phase 2's local delivery checkpoint passed formatting, zero-warning ESLint, three
+  TypeScript projects, dependency/legacy/file-size/dead-code gates, 432 regular tests, 14 real D1
+  tests, production build, and the complete Playwright matrix (58 passed, one documented WebKit
+  virtual-WebAuthn skip). The stable auth fixture now obeys the same canonical credential-ID contract
+  as the production WebAuthn adapter. Production credential import, the deployed `IDENTITY_DB`
+  binding, and custom-domain lifecycle evidence remain intentionally unchecked operational gates.

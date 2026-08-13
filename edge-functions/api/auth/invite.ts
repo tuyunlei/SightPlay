@@ -1,210 +1,104 @@
-import {
-  createEdgeOneContext,
-  type EdgeOneRequestContext,
-  type PlatformContext,
-} from '../../platform';
-import { createRequestContext, logBreadcrumb, logError } from '../../utils/logger';
-import { CORS_HEADERS, getAuthenticatedUser, requireEnv, timingSafeEqual } from '../_auth-helpers';
+import { createInvitations, validateInvitation } from '@sightplay/identity-server';
+
+import type { PlatformContext } from '../../platform';
 
 import {
-  consumeInviteValidationRateLimit,
-  createInviteCode,
-  createInviteRecord,
-  getClientIp,
-  getInviteTtlSeconds,
-  inviteKey,
-  isInviteCodeFormatValid,
-  isInviteRecordExpired,
-  parseInviteRecord,
-  toDisplayInviteCode,
-} from './invite-code';
+  authenticateIdentityRequest,
+  createIdentityRequest,
+  failureResponse,
+  internalFailureResponse,
+  invalidRequestResponse,
+  onRequestOptions,
+  readUnknownJson,
+  resultResponse,
+} from './identity-http';
+import { createIdentityDependencies } from './identity-runtime';
 
-interface InviteCountBody {
-  count?: number;
-}
-
-function getCount(body: InviteCountBody): number {
-  const count = body.count ?? 1;
-  if (!Number.isInteger(count) || count < 1 || count > 10) return 1;
-  return count;
-}
-
-async function generateInviteCodes(
-  platform: PlatformContext,
-  createdBy: string,
-  count: number
-): Promise<string[]> {
-  const codes = new Set<string>();
-  while (codes.size < count) {
-    const code = createInviteCode();
-    if (codes.has(code)) continue;
-    const key = inviteKey(code);
-    const existing = await platform.kv.get(key);
-    if (existing) continue;
-    await platform.kv.put(key, JSON.stringify(createInviteRecord(createdBy)), {
-      expirationTtl: getInviteTtlSeconds(),
-    });
-    codes.add(code);
-  }
-  return [...codes];
-}
-
-export function onRequestOptions(): Response {
-  return new Response(null, { headers: CORS_HEADERS });
-}
+export { onRequestOptions };
 
 export async function handlePostInvite(platform: PlatformContext): Promise<Response> {
-  const requestContext = createRequestContext(platform.request);
-
-  try {
-    logBreadcrumb('invite.generation.start', requestContext, { source: 'user' });
-    const user = await getAuthenticatedUser(platform.request, requireEnv(platform, 'JWT_SECRET'));
-    if (!user) {
-      return new Response(
-        JSON.stringify({ error: 'Authentication required', requestId: requestContext.requestId }),
-        {
-          status: 401,
-          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-        }
-      );
-    }
-
-    const body = (await platform.request.json().catch(() => ({}))) as InviteCountBody;
-    const codes = await generateInviteCodes(platform, user, getCount(body));
-    logBreadcrumb('invite.generation.success', requestContext, {
-      source: 'user',
-      count: codes.length,
-    });
-
-    return new Response(JSON.stringify({ codes }), {
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-    });
-  } catch (error) {
-    logBreadcrumb('invite.generation.failure', requestContext, { source: 'user' });
-    logError('auth.invite.generate', error, requestContext);
-    return new Response(
-      JSON.stringify({ error: 'Internal server error', requestId: requestContext.requestId }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      }
+  return handleInvite(platform, async (request) => {
+    const session = await authenticateIdentityRequest(request, true);
+    if (!session.ok) return resultResponse(session, request.requestId);
+    const count = decodeCount(await readUnknownJson(platform.request));
+    if (count === null) return invalidRequestResponse(request.requestId);
+    const result = await createInvitations(
+      { issuerAccountId: session.value.accountId, count },
+      request.dependencies
     );
-  }
+    return resultResponse(
+      result.ok ? { ok: true, value: { codes: result.value } } : result,
+      request.requestId
+    );
+  });
 }
 
 export async function handlePostInviteAdmin(platform: PlatformContext): Promise<Response> {
-  const requestContext = createRequestContext(platform.request);
-
-  try {
-    logBreadcrumb('invite.generation.start', requestContext, { source: 'admin' });
-    const adminSecret = platform.env('ADMIN_SECRET');
-    const provided = platform.request.headers.get('X-Admin-Secret');
-    if (!adminSecret || !provided || !timingSafeEqual(provided, adminSecret)) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized', requestId: requestContext.requestId }),
-        {
-          status: 401,
-          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-        }
+  return handleInvite(platform, async (request) => {
+    const expected = platform.env('ADMIN_SECRET');
+    const actual = platform.request.headers.get('X-Admin-Secret');
+    if (!expected || !actual || !timingSafeEqual(actual, expected)) {
+      return failureResponse(
+        { code: 'authenticationRequired', retryable: false },
+        request.requestId
       );
     }
-
-    const body = (await platform.request.json().catch(() => ({}))) as InviteCountBody;
-    const codes = await generateInviteCodes(platform, 'admin', getCount(body));
-    logBreadcrumb('invite.generation.success', requestContext, {
-      source: 'admin',
-      count: codes.length,
-    });
-
-    return new Response(JSON.stringify({ codes }), {
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-    });
-  } catch (error) {
-    logBreadcrumb('invite.generation.failure', requestContext, { source: 'admin' });
-    logError('auth.invite.generate-admin', error, requestContext);
-    return new Response(
-      JSON.stringify({ error: 'Internal server error', requestId: requestContext.requestId }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      }
+    const count = decodeCount(await readUnknownJson(platform.request));
+    if (count === null) return invalidRequestResponse(request.requestId);
+    const result = await createInvitations({ issuerAccountId: null, count }, request.dependencies);
+    return resultResponse(
+      result.ok ? { ok: true, value: { codes: result.value } } : result,
+      request.requestId
     );
-  }
-}
-
-function getInviteCodeFromPath(request: Request): string | null {
-  const segments = new URL(request.url).pathname.split('/').filter(Boolean);
-  return segments.at(-1) ?? null;
+  });
 }
 
 export async function handleGetInviteByCode(platform: PlatformContext): Promise<Response> {
-  const requestContext = createRequestContext(platform.request);
-
-  try {
-    logBreadcrumb('invite.validation.start', requestContext);
-    const ip = getClientIp(platform.request);
-    const rate = await consumeInviteValidationRateLimit(platform.kv, ip);
-    if (rate.blocked) {
-      return new Response(
-        JSON.stringify({ error: 'Too many requests', requestId: requestContext.requestId }),
-        {
-          status: 429,
-          headers: {
-            'Content-Type': 'application/json',
-            'Retry-After': String(rate.retryAfterSeconds ?? 3600),
-            ...CORS_HEADERS,
-          },
-        }
-      );
-    }
-
-    const rawCode = getInviteCodeFromPath(platform.request);
-    if (!rawCode || !isInviteCodeFormatValid(rawCode)) {
-      return new Response(JSON.stringify({ valid: false, reason: 'invalid' }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      });
-    }
-
-    const normalized = toDisplayInviteCode(rawCode);
-    const record = parseInviteRecord(await platform.kv.get(inviteKey(normalized)));
-    if (!record) {
-      logBreadcrumb('invite.validation.failure', requestContext, { reason: 'invalid' });
-      return new Response(JSON.stringify({ valid: false, reason: 'invalid' }), {
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      });
-    }
-    if (record.usedBy) {
-      logBreadcrumb('invite.validation.failure', requestContext, { reason: 'used' });
-      return new Response(JSON.stringify({ valid: false, reason: 'used' }), {
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      });
-    }
-    if (isInviteRecordExpired(record)) {
-      logBreadcrumb('invite.validation.failure', requestContext, { reason: 'expired' });
-      return new Response(JSON.stringify({ valid: false, reason: 'expired' }), {
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      });
-    }
-
-    logBreadcrumb('invite.validation.success', requestContext, { expiresAt: record.expiresAt });
-
-    return new Response(JSON.stringify({ valid: true, expiresAt: record.expiresAt }), {
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-    });
-  } catch (error) {
-    logBreadcrumb('invite.validation.failure', requestContext, { reason: 'unexpected_error' });
-    logError('auth.invite.validate', error, requestContext);
-    return new Response(
-      JSON.stringify({ error: 'Internal server error', requestId: requestContext.requestId }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      }
+  return handleInvite(platform, async (request) => {
+    const rawCode = new URL(platform.request.url).pathname.split('/').filter(Boolean).at(-1);
+    if (!rawCode) return invalidRequestResponse(request.requestId);
+    const result = await validateInvitation(
+      { code: rawCode, source: request.source },
+      request.dependencies
     );
-  }
+    return resultResponse(
+      result.ok
+        ? { ok: true, value: { valid: true as const, expiresAt: result.value.expiresAt } }
+        : result,
+      request.requestId
+    );
+  });
 }
 
-export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
-  return handlePostInvite(createEdgeOneContext(context));
+function decodeCount(value: unknown): number | null {
+  if (value === null) return 1;
+  if (typeof value !== 'object' || Array.isArray(value)) return null;
+  const count = (value as Record<string, unknown>).count ?? 1;
+  return Number.isInteger(count) && Number(count) >= 1 && Number(count) <= 10
+    ? Number(count)
+    : null;
+}
+
+function timingSafeEqual(first: string, second: string): boolean {
+  if (first.length !== second.length) return false;
+  const firstBytes = new TextEncoder().encode(first);
+  const secondBytes = new TextEncoder().encode(second);
+  let difference = 0;
+  for (let index = 0; index < firstBytes.length; index += 1) {
+    difference |= firstBytes[index] ^ secondBytes[index];
+  }
+  return difference === 0;
+}
+
+async function handleInvite(
+  platform: PlatformContext,
+  operation: (request: ReturnType<typeof createIdentityRequest>) => Promise<Response>
+): Promise<Response> {
+  const requestId = platform.request.headers.get('X-Request-Id') ?? crypto.randomUUID();
+  try {
+    const dependencies = createIdentityDependencies(platform);
+    return await operation(createIdentityRequest(platform, dependencies));
+  } catch (error) {
+    return internalFailureResponse('identity.invitation', error, platform, requestId);
+  }
 }

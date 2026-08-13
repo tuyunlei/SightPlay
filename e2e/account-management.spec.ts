@@ -1,4 +1,10 @@
-import { test, expect, Page, mockAuthenticatedSession } from './fixtures/app-test';
+import {
+  expect,
+  identitySuccess,
+  mockAuthenticatedSession,
+  test,
+  type Page,
+} from './fixtures/app-test';
 
 type Passkey = { id: string; name: string; createdAt: number };
 
@@ -22,7 +28,7 @@ test.describe('Account Management E2E', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([
+        body: identitySuccess([
           { id: 'pk-1', name: 'MacBook Pro', createdAt: 1700000000000 },
           { id: 'pk-2', name: 'iPhone 15', createdAt: 1701000000000 },
         ]),
@@ -62,7 +68,7 @@ test.describe('Account Management E2E', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(passkeys),
+        body: identitySuccess(passkeys),
       });
     });
 
@@ -85,7 +91,7 @@ test.describe('Account Management E2E', () => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify(currentPasskeys),
+          body: identitySuccess(currentPasskeys),
         });
         return;
       }
@@ -99,7 +105,7 @@ test.describe('Account Management E2E', () => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ ok: true }),
+          body: identitySuccess({ completed: true }),
         });
         return;
       }
@@ -126,7 +132,7 @@ test.describe('Account Management E2E', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([{ id: 'pk-only', name: 'Only Device', createdAt: 1700000000000 }]),
+        body: identitySuccess([{ id: 'pk-only', name: 'Only Device', createdAt: 1700000000000 }]),
       });
     });
 
@@ -136,7 +142,7 @@ test.describe('Account Management E2E', () => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ ok: true }),
+          body: identitySuccess({ completed: true }),
         });
         return;
       }
@@ -163,7 +169,7 @@ test.describe('Account Management E2E', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([{ id: 'pk-1', name: 'MacBook Pro', createdAt: 1700000000000 }]),
+        body: identitySuccess([{ id: 'pk-1', name: 'MacBook Pro', createdAt: 1700000000000 }]),
       });
     });
 
@@ -172,7 +178,7 @@ test.describe('Account Management E2E', () => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ codes: ['ABCD-1234'] }),
+          body: identitySuccess({ codes: ['ABCD-1234'] }),
         });
         return;
       }

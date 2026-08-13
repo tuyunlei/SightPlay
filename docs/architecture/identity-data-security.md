@@ -71,5 +71,8 @@ Provider messages, stack traces, and arbitrary JSON never become product state.
   cross-origin surface uses an allowlist and CSRF analysis.
 - Rate limits are dedicated ports with policies per ceremony, invite, account, and source address;
   they are not incidental KV keys.
+- The D1 rate-limit adapter admits each attempt with one atomic upsert. Subjects are digested before
+  persistence, Cloudflare supplies the trusted client address at the platform boundary, and use cases
+  select the source, ceremony, invitation, or account policy before creating protected state.
 - Secrets remain platform bindings. Logs contain stable codes and identifiers, never credential
   material, invitation codes, session tokens, raw AI prompts, or unredacted user input.

@@ -1,4 +1,4 @@
-import { test, expect, mockAuthenticatedSession } from './fixtures/app-test';
+import { expect, identitySuccess, mockAuthenticatedSession, test } from './fixtures/app-test';
 
 test.describe('Practice Flow', () => {
   test.describe('Unauthenticated State', () => {
@@ -10,7 +10,7 @@ test.describe('Practice Flow', () => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ authenticated: false, hasPasskeys: false }),
+          body: identitySuccess({ authenticated: false, hasPasskeys: false }),
         });
       });
 
@@ -30,7 +30,7 @@ test.describe('Practice Flow', () => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ authenticated: false, hasPasskeys: true }),
+          body: identitySuccess({ authenticated: false, hasPasskeys: true }),
         });
       });
 

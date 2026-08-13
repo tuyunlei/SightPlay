@@ -1,81 +1,27 @@
-import { server } from '@passwordless-id/webauthn';
+import { beginAuthentication } from '@sightplay/identity-server';
+
+import type { PlatformContext } from '../../platform';
 
 import {
-  createEdgeOneContext,
-  type EdgeOneRequestContext,
-  type PlatformContext,
-} from '../../platform';
-import { createRequestContext, logBreadcrumb, logError } from '../../utils/logger';
-import { CORS_HEADERS, resolveOrigin } from '../_auth-helpers';
+  createIdentityRequest,
+  internalFailureResponse,
+  onRequestOptions,
+  resultResponse,
+} from './identity-http';
+import { createIdentityDependencies } from './identity-runtime';
 
-interface Passkey {
-  id: string;
-  publicKey: string;
-  counter: number;
-  name: string;
-  createdAt: number;
-  transports?: string[];
-}
-
-export function onRequestOptions(): Response {
-  return new Response(null, { headers: CORS_HEADERS });
-}
+export { onRequestOptions };
 
 export async function handlePostLoginOptions(platform: PlatformContext): Promise<Response> {
-  const requestContext = createRequestContext(platform.request);
-
+  const requestId = platform.request.headers.get('X-Request-Id') ?? crypto.randomUUID();
   try {
-    logBreadcrumb('auth.login.start', requestContext);
-    const passkeysData = await platform.kv.get('passkeys');
-    const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
-
-    if (passkeys.length === 0) {
-      return new Response(
-        JSON.stringify({ error: 'No passkeys registered', requestId: requestContext.requestId }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-        }
-      );
-    }
-
-    const challenge = server.randomChallenge();
-    const { hostname } = resolveOrigin(platform);
-
-    const options = {
-      challenge,
-      rpId: hostname,
-      allowCredentials: passkeys.map((pk) => ({
-        id: pk.id,
-        type: 'public-key' as const,
-        transports: ['internal'] as AuthenticatorTransport[],
-      })),
-      hints: ['client-device'],
-      userVerification: 'preferred' as const,
-      timeout: 60000,
-    };
-
-    const challengeKey = `challenge:${challenge}`;
-    await platform.kv.put(challengeKey, challenge, { expirationTtl: 300 });
-
-    logBreadcrumb('auth.login.success', requestContext);
-
-    return new Response(JSON.stringify(options), {
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-    });
-  } catch (error) {
-    logBreadcrumb('auth.login.failure', requestContext);
-    logError('auth.login-options', error, requestContext);
-    return new Response(
-      JSON.stringify({ error: 'Internal server error', requestId: requestContext.requestId }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      }
+    const dependencies = createIdentityDependencies(platform);
+    const request = createIdentityRequest(platform, dependencies);
+    return resultResponse(
+      await beginAuthentication({ origin: request.origin, source: request.source }, dependencies),
+      request.requestId
     );
+  } catch (error) {
+    return internalFailureResponse('identity.login-options', error, platform, requestId);
   }
-}
-
-export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
-  return handlePostLoginOptions(createEdgeOneContext(context));
 }

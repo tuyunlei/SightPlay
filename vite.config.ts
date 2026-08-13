@@ -7,7 +7,6 @@ import tailwindcss from '@tailwindcss/vite';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import { defineConfig, type Plugin, type ViteDevServer } from 'vite';
 
-import { devAuthMiddleware } from './scripts/dev-auth-middleware.ts';
 import {
   DEFAULT_DEV_PORT,
   DEFAULT_E2E_PREVIEW_PORT,
@@ -62,7 +61,10 @@ export default defineConfig(({ mode }) => {
       copyEdgeFunctions(),
       {
         name: 'dev-auth',
-        configureServer(server: ViteDevServer) {
+        async configureServer(server: ViteDevServer) {
+          const { devAuthMiddleware } = await server.ssrLoadModule(
+            '/scripts/dev-auth-middleware.ts'
+          );
           server.middlewares.use(devAuthMiddleware(__projectRoot, server));
         },
       },

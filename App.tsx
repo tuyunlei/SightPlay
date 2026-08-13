@@ -1,8 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import { AccountAccessProvider } from '@sightplay/account-access-client';
 import type { AppRoute, ProtectedAppRoute } from '@sightplay/app-shell';
-import { createBrowserIdentityPorts } from '@sightplay/browser-adapters';
-import { IdentityProvider } from '@sightplay/identity-client';
+import {
+  createBrowserAccountAccessPorts,
+  createBrowserIdentityPorts,
+} from '@sightplay/browser-adapters';
+import { IdentityProvider, useIdentity } from '@sightplay/identity-client';
 
 import { useBrowserRoute } from './app/navigation/useBrowserRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -26,6 +30,8 @@ function AuthenticatedApp({
   navigate: Navigate;
   dismissEntry: DismissEntry;
 }) {
+  const identity = useIdentity();
+  const [accountAccessPorts] = useState(createBrowserAccountAccessPorts);
   const lang = useUiStore((state) => state.lang);
   const toggleLang = useUiStore((state) => state.toggleLang);
   const t = translations[lang];
@@ -53,7 +59,7 @@ function AuthenticatedApp({
     };
   }, [sendMessage, t.aiChallengeCompletedUserMessage]);
 
-  return (
+  const content = (
     <div
       className="bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] flex flex-col font-sans"
       style={{ minHeight: '100dvh' }}
@@ -77,6 +83,18 @@ function AuthenticatedApp({
         dismissEntry={dismissEntry}
       />
     </div>
+  );
+
+  const handleAccountAccessOutput = useCallback(() => {
+    identity.refreshSession();
+  }, [identity]);
+
+  return route.kind === 'passkeys' ? (
+    <AccountAccessProvider ports={accountAccessPorts} onOutput={handleAccountAccessOutput}>
+      {content}
+    </AccountAccessProvider>
+  ) : (
+    content
   );
 }
 

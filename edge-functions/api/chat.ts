@@ -1,11 +1,8 @@
-import {
-  createEdgeOneContext,
-  type EdgeOneRequestContext,
-  type PlatformContext,
-} from '../platform';
+import type { PlatformContext } from '../platform';
 import { createRequestContext, logError } from '../utils/logger';
 
-import { CORS_HEADERS, getAuthenticatedUser, requireEnv } from './_auth-helpers';
+import { authenticateIdentityRequest, createIdentityRequest } from './auth/identity-http';
+import { createIdentityDependencies } from './auth/identity-runtime';
 
 interface ChatRequestBody {
   message: string;
@@ -26,7 +23,7 @@ interface GeminiResponse {
 function jsonResponse(body: object, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    headers: { 'Content-Type': 'application/json' },
   });
 }
 
@@ -126,20 +123,23 @@ async function callGemini(
 }
 
 export function onRequestOptions(): Response {
-  return new Response(null, { headers: CORS_HEADERS });
+  return new Response(null, { status: 204, headers: { Allow: 'POST, OPTIONS' } });
 }
 
 export async function handlePostChat(platform: PlatformContext): Promise<Response> {
   const requestContext = createRequestContext(platform.request);
-  const user = await getAuthenticatedUser(platform.request, requireEnv(platform, 'JWT_SECRET'));
-  if (!user)
+  const dependencies = createIdentityDependencies(platform);
+  const identityRequest = createIdentityRequest(platform, dependencies);
+  const session = await authenticateIdentityRequest(identityRequest, true);
+  if (!session.ok)
     return jsonResponse(
       { error: 'Authentication required', requestId: requestContext.requestId },
       401
     );
 
   const { message, clef, lang } = (await platform.request.json()) as ChatRequestBody;
-  const apiKey = requireEnv(platform, 'GEMINI_API_KEY');
+  const apiKey = platform.env('GEMINI_API_KEY');
+  if (!apiKey) throw new Error('GEMINI_API_KEY environment variable not available');
 
   try {
     const systemInstruction = buildSystemInstruction(clef, lang);
@@ -157,8 +157,4 @@ export async function handlePostChat(platform: PlatformContext): Promise<Respons
       500
     );
   }
-}
-
-export async function onRequestPost(context: EdgeOneRequestContext): Promise<Response> {
-  return handlePostChat(createEdgeOneContext(context));
 }

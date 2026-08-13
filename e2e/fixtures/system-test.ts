@@ -83,8 +83,6 @@ export const test = appTest.extend<{ runId: string; system: SystemControl }>({
             const response = credential.response as AuthenticatorAttestationResponse;
             if (!response.getPublicKey()) {
               const publicKey = await testWindow.__sightplayE2EPublicKey(credential.id);
-              const authenticatorData = new Uint8Array(response.getAuthenticatorData());
-              authenticatorData.fill(0, 33, 37);
               Object.defineProperty(response, 'getPublicKey', {
                 configurable: true,
                 value: () => decodeBase64Url(publicKey),
@@ -92,10 +90,6 @@ export const test = appTest.extend<{ runId: string; system: SystemControl }>({
               Object.defineProperty(response, 'getPublicKeyAlgorithm', {
                 configurable: true,
                 value: () => -7,
-              });
-              Object.defineProperty(response, 'getAuthenticatorData', {
-                configurable: true,
-                value: () => authenticatorData.buffer,
               });
             }
           }

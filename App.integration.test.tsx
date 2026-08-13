@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import App from './App';
 
+const identitySuccess = <T,>(data: T) => ({ ok: true, data, requestId: 'test-request' });
+
 const { practiceSessionMock, aiCoachMock, testApiMock, mainAppContentMock } = vi.hoisted(() => ({
   practiceSessionMock: vi.fn(),
   aiCoachMock: vi.fn(),
@@ -65,7 +67,7 @@ describe('App protected runtime lifecycle', () => {
       'fetch',
       vi.fn(async () => ({
         ok: true,
-        json: async () => ({ authenticated: false, hasPasskeys: true }),
+        json: async () => identitySuccess({ authenticated: false, hasPasskeys: true }),
       }))
     );
 
@@ -82,7 +84,7 @@ describe('App protected runtime lifecycle', () => {
       'fetch',
       vi.fn(async () => ({
         ok: true,
-        json: async () => ({ authenticated: true, hasPasskeys: true }),
+        json: async () => identitySuccess({ authenticated: true, hasPasskeys: true }),
       }))
     );
 
@@ -101,7 +103,7 @@ describe('App protected runtime lifecycle', () => {
       'fetch',
       vi.fn(async () => ({
         ok: true,
-        json: async () => ({ authenticated: true, hasPasskeys: true }),
+        json: async () => identitySuccess({ authenticated: true, hasPasskeys: true }),
       }))
     );
 

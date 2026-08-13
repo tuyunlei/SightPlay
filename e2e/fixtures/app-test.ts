@@ -106,12 +106,12 @@ const unexpectedEvents = (state: DiagnosticsState) => {
     if (event.kind === 'pageError') return true;
     if (event.kind === 'requestFailed') {
       // Playwright exposes browser-initiated cancellation only through the protocol error code.
-      // React StrictMode lifecycle replay intentionally aborts Identity's initial session request.
+      // StrictMode lifecycle replay intentionally disposes the two read-only capability requests.
       const url = new URL(event.url);
       if (
         event.failure === 'net::ERR_ABORTED' &&
         event.method === 'GET' &&
-        url.pathname === '/api/auth/session'
+        (url.pathname === '/api/auth/session' || url.pathname === '/api/auth/passkeys')
       ) {
         return false;
       }
@@ -185,12 +185,16 @@ export const test = base.extend<
 export { expect };
 export type { Page };
 
+export function identitySuccess(data: unknown): string {
+  return JSON.stringify({ ok: true, data, requestId: 'e2e-request' });
+}
+
 export async function mockAuthenticatedSession(page: Page): Promise<void> {
   await page.route('**/api/auth/session', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ authenticated: true, hasPasskeys: true }),
+      body: identitySuccess({ authenticated: true, hasPasskeys: true }),
     })
   );
 }

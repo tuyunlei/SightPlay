@@ -1,0 +1,12 @@
+{
+  "name": "@sightplay/account-access-client",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/public.ts"
+  },
+  "peerDependencies": {
+    "react": "^19.2.4"
+  }
+}

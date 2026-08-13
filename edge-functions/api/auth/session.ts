@@ -1,54 +1,38 @@
+import { authenticateSession } from '@sightplay/identity-server';
+
+import type { PlatformContext } from '../../platform';
+
 import {
-  createEdgeOneContext,
-  type EdgeOneRequestContext,
-  type PlatformContext,
-} from '../../platform';
-import { createRequestContext, logError } from '../../utils/logger';
-import { CORS_HEADERS, getAuthenticatedUser, requireEnv } from '../_auth-helpers';
+  createIdentityRequest,
+  internalFailureResponse,
+  onRequestOptions,
+  readSessionToken,
+  resultResponse,
+} from './identity-http';
+import { createIdentityDependencies } from './identity-runtime';
 
-interface Passkey {
-  id: string;
-  publicKey: string;
-  counter: number;
-  name: string;
-  createdAt: number;
-  transports?: string[];
-}
-
-export function onRequestOptions(): Response {
-  return new Response(null, { headers: CORS_HEADERS });
-}
+export { onRequestOptions };
 
 export async function handleGetSession(platform: PlatformContext): Promise<Response> {
-  const requestContext = createRequestContext(platform.request);
-
+  const requestId = platform.request.headers.get('X-Request-Id') ?? crypto.randomUUID();
   try {
-    const user = await getAuthenticatedUser(platform.request, requireEnv(platform, 'JWT_SECRET'));
-
-    const passkeysData = await platform.kv.get('passkeys');
-    const passkeys: Passkey[] = passkeysData ? JSON.parse(passkeysData) : [];
-
-    return new Response(
-      JSON.stringify({
-        authenticated: !!user,
-        hasPasskeys: passkeys.length > 0,
-      }),
+    const dependencies = createIdentityDependencies(platform);
+    const request = createIdentityRequest(platform, dependencies);
+    const hasCredentials = await dependencies.store.hasCredentials();
+    if (!hasCredentials.ok) return resultResponse(hasCredentials, request.requestId);
+    const token = readSessionToken(platform.request);
+    const session = token ? await authenticateSession(token, dependencies) : null;
+    if (session && !session.ok && session.failure.code !== 'sessionInvalid') {
+      return resultResponse(session, request.requestId);
+    }
+    return resultResponse(
       {
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      }
+        ok: true,
+        value: { authenticated: session?.ok === true, hasPasskeys: hasCredentials.value },
+      },
+      request.requestId
     );
   } catch (error) {
-    logError('auth.session.get', error, requestContext);
-    return new Response(
-      JSON.stringify({ error: 'Internal server error', requestId: requestContext.requestId }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-      }
-    );
+    return internalFailureResponse('identity.session', error, platform, requestId);
   }
-}
-
-export async function onRequestGet(context: EdgeOneRequestContext): Promise<Response> {
-  return handleGetSession(createEdgeOneContext(context));
 }

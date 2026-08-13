@@ -1,7 +1,9 @@
 import type { Connect, ViteDevServer } from 'vite';
 import type { IncomingMessage, ServerResponse } from 'http';
 
-import { E2EHarness, MemoryKV } from './e2e-harness.ts';
+import { E2EHarness } from './e2e-harness.ts';
+import { MemoryIdentityStore } from './memory-identity-store.ts';
+import { MemoryIdentityRateLimits } from '@sightplay/identity-server';
 
 // Convert Node.js IncomingMessage to Web API Request
 async function toWebRequest(req: IncomingMessage): Promise<Request> {
@@ -57,60 +59,67 @@ const ROUTES = [
   {
     path: '/api/auth/register-options',
     module: 'edge-functions/api/auth/register-options.ts',
+    handler: 'handlePostRegisterOptions',
     methods: ['POST', 'OPTIONS'],
   },
   {
     path: '/api/auth/register-verify',
     module: 'edge-functions/api/auth/register-verify.ts',
+    handler: 'handlePostRegisterVerify',
     methods: ['POST', 'OPTIONS'],
   },
   {
     path: '/api/auth/login-options',
     module: 'edge-functions/api/auth/login-options.ts',
+    handler: 'handlePostLoginOptions',
     methods: ['POST', 'OPTIONS'],
   },
   {
     path: '/api/auth/login-verify',
     module: 'edge-functions/api/auth/login-verify.ts',
+    handler: 'handlePostLoginVerify',
     methods: ['POST', 'OPTIONS'],
   },
   {
     path: '/api/auth/session',
     module: 'edge-functions/api/auth/session.ts',
+    handler: 'handleGetSession',
     methods: ['GET', 'OPTIONS'],
   },
   {
     path: '/api/auth/logout',
     module: 'edge-functions/api/auth/logout.ts',
+    handler: 'handlePostLogout',
     methods: ['POST', 'OPTIONS'],
   },
   {
     path: '/api/auth/passkeys',
     module: 'edge-functions/api/auth/passkeys.ts',
+    handler: 'handleGetPasskeys',
     methods: ['GET', 'DELETE', 'OPTIONS'],
   },
   {
     path: '/api/auth/invite',
     module: 'edge-functions/api/auth/invite.ts',
+    handler: 'handlePostInvite',
     methods: ['GET', 'POST', 'OPTIONS'],
   },
   {
     path: '/api/chat',
     module: 'edge-functions/api/chat.ts',
+    handler: 'handlePostChat',
     methods: ['POST', 'OPTIONS'],
   },
 ];
 
 export function devAuthMiddleware(projectRoot: string, server: ViteDevServer): Connect.NextHandleFunction {
-  const memoryKV = new MemoryKV();
-  const JWT_SECRET = 'dev-jwt-secret-sightplay';
+  const localIdentityStore = new MemoryIdentityStore();
+  const localIdentityRateLimits = new MemoryIdentityRateLimits();
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
   const e2eHarness =
     process.env.SIGHTPLAY_E2E_MODE === '1'
       ? new E2EHarness(
-          memoryKV,
           process.env.SIGHTPLAY_E2E_CONTROL_TOKEN || 'sightplay-local-e2e',
-          JWT_SECRET,
           process.env.SIGHTPLAY_E2E_REAL_PROVIDER === '1'
         )
       : null;
@@ -142,8 +151,12 @@ export function devAuthMiddleware(projectRoot: string, server: ViteDevServer): C
       const modulePath = `${projectRoot}/${route.module}`;
       const edgeModule = await server.ssrLoadModule(modulePath);
 
-      // Get the handler for this method
-      const handlerName = `onRequest${method.charAt(0) + method.slice(1).toLowerCase()}`;
+      const handlerName =
+        method === 'OPTIONS'
+          ? 'onRequestOptions'
+          : route.path === '/api/auth/passkeys' && method === 'DELETE'
+          ? 'handleDeletePasskey'
+          : route.handler;
       const handler = edgeModule[handlerName];
 
       if (!handler) {
@@ -156,14 +169,34 @@ export function devAuthMiddleware(projectRoot: string, server: ViteDevServer): C
       // Convert to Web Request
       const webRequest = await toWebRequest(req);
 
-      // Create context
+      const identityStore = e2eHarness?.getIdentityStore(webRequest) ?? localIdentityStore;
       const context = {
         request: webRequest,
+        identityStore,
+        identityRateLimits: localIdentityRateLimits,
+        clientAddress: req.socket.remoteAddress,
         fetch: e2eHarness?.getFetch(webRequest),
-        env: {
-          AUTH_STORE: e2eHarness?.getStore(webRequest) ?? memoryKV,
-          JWT_SECRET,
-          GEMINI_API_KEY,
+        env(key: string) {
+          const values: Record<string, string> = {
+            GEMINI_API_KEY,
+            WEBAUTHN_RP_ID: '127.0.0.1',
+            WEBAUTHN_RP_NAME: 'SightPlay',
+            IDENTITY_ALLOWED_ORIGINS:
+              'http://127.0.0.1:4173,http://127.0.0.1:4174,http://127.0.0.1:5173',
+            WEBAUTHN_USER_VERIFICATION: 'preferred',
+            IDENTITY_CEREMONY_TTL_MS: '300000',
+            IDENTITY_INVITATION_TTL_MS: '604800000',
+            IDENTITY_SESSION_TTL_MS: '604800000',
+            IDENTITY_RATE_LIMIT_SOURCE_COUNT: '1000',
+            IDENTITY_RATE_LIMIT_SOURCE_WINDOW_MS: '60000',
+            IDENTITY_RATE_LIMIT_CEREMONY_COUNT: '20',
+            IDENTITY_RATE_LIMIT_CEREMONY_WINDOW_MS: '300000',
+            IDENTITY_RATE_LIMIT_INVITATION_COUNT: '100',
+            IDENTITY_RATE_LIMIT_INVITATION_WINDOW_MS: '60000',
+            IDENTITY_RATE_LIMIT_ACCOUNT_COUNT: '100',
+            IDENTITY_RATE_LIMIT_ACCOUNT_WINDOW_MS: '3600000',
+          };
+          return values[key];
         },
       };
 
