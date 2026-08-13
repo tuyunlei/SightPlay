@@ -1,8 +1,10 @@
 import { Send, Wand2, X } from 'lucide-react';
-import React from 'react';
+import React, { useRef, useState } from 'react';
+
+import { useGuidance } from '@sightplay/guidance';
 
 import { translations } from '../../i18n';
-import { ChatMessage, ClefType, Note } from '../../types';
+import { ClefType, Note } from '../../types';
 
 import { ChatMessageList } from './ChatMessageList';
 import { QuickActions } from './QuickActions';
@@ -13,12 +15,6 @@ interface AiChatDrawerProps {
   clef: ClefType;
   targetNote: Note | null;
   t: typeof translations.en;
-  chatHistory: ChatMessage[];
-  chatInput: string;
-  isLoadingAi: boolean;
-  onChatInputChange: (value: string) => void;
-  onSendMessage: (text: string) => void;
-  chatEndRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({
@@ -27,18 +23,16 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({
   clef,
   targetNote,
   t,
-  chatHistory,
-  chatInput,
-  isLoadingAi,
-  onChatInputChange,
-  onSendMessage,
-  chatEndRef,
 }) => {
+  const guidance = useGuidance();
+  const [chatInput, setChatInput] = useState('');
+  const chatEndRef = useRef<HTMLDivElement>(null);
   if (!isOpen) return null;
 
   const handleSend = (text: string) => {
-    if (!text.trim() || isLoadingAi) return;
-    onSendMessage(text);
+    if (!text.trim() || guidance.view.isLoading) return;
+    guidance.sendMessage(text);
+    setChatInput('');
   };
 
   return (
@@ -63,8 +57,8 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({
 
         <div className="flex-1 flex flex-col gap-3 overflow-hidden p-4">
           <ChatMessageList
-            chatHistory={chatHistory}
-            isLoadingAi={isLoadingAi}
+            chatHistory={guidance.view.messages}
+            isLoadingAi={guidance.view.isLoading}
             t={t}
             chatEndRef={chatEndRef}
           />
@@ -73,7 +67,7 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({
             <input
               type="text"
               value={chatInput}
-              onChange={(e) => onChatInputChange(e.target.value)}
+              onChange={(e) => setChatInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend(chatInput)}
               placeholder={t.inputPlaceholder}
               data-testid="chat-drawer-input"
@@ -81,7 +75,7 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({
             />
             <button
               onClick={() => handleSend(chatInput)}
-              disabled={!chatInput.trim() || isLoadingAi}
+              disabled={!chatInput.trim() || guidance.view.isLoading}
               className="absolute right-1.5 p-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
               <Send size={14} />

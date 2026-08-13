@@ -2,7 +2,7 @@
 
 Status: in progress
 
-Current branch: `codex/practice-core`
+Current branch: `codex/guidance-core`
 
 Current base: `codex/transactional-identity-server` at `99e0f30` (PR #13), stacked on
 `origin/develop` at `cf18b34`
@@ -71,11 +71,11 @@ invariants; real WebMIDI/Web Audio system paths still pass.
 
 ## Phase 4 — Guidance and presentation
 
-- [ ] Unify chat, hints, and recommendations under Guidance public contracts.
-- [ ] Validate provider output before producing an `ExerciseProposal`.
-- [ ] Make product fallback/retry decisions in the Guidance model rather than adapters.
-- [ ] Adapt notation, piano, library, and settings UI to feature ViewModels and Intents.
-- [ ] Remove cross-feature callbacks, mutable coordination refs, and implementation-shaped props.
+- [x] Unify chat, hints, and recommendations under Guidance public contracts.
+- [x] Validate provider output before producing an `ExerciseProposal`.
+- [x] Make product fallback/retry decisions in the Guidance model rather than adapters.
+- [x] Adapt notation, piano, library, and settings UI to feature ViewModels and Intents.
+- [x] Remove cross-feature callbacks, mutable coordination refs, and implementation-shaped props.
 
 Exit evidence: Guidance cannot write Practice directly; every provider failure maps through a tested
 structured result; presentation modules contain no business transitions.
@@ -256,3 +256,28 @@ production release remains a separate explicitly authorized operation.
   Pure evidence includes 16,384 deterministic mixed transitions plus 1,920 cross-seed generated frames;
   real WebMIDI and fake-capture Web Audio system paths remain green. Phase 4 Guidance is next; Phase 2's
   production migration and deployed D1/custom-domain proof remains a separate operational gate.
+- 2026-08-13: Phase 4 gives chat, contextual hints, recommendations, and Coach-completion feedback one
+  pure Guidance owner. Practice emits authoritative accepted/completed events; Guidance consumes their
+  application-mapped observations and emits only validated exercise proposals or exact recommendation
+  actions. One exhaustive App mapping reaches Practice/App Shell public intents, and an assembled test
+  runs the real Guidance and Practice runtimes to prove a provider proposal becomes the same finite
+  Practice plan used by other sources.
+- 2026-08-13: Both chat HTTP sides now runtime-decode the stable Guidance envelope and every nested
+  proposal field. Transport adapters return structured failures without product fallback; Guidance owns
+  connection recovery, local hint fallback, timer/rate policy, stale result rejection, and cancellation.
+  Stable browser mocks use the shared envelope and the real-provider canary validates the enveloped
+  result rather than accepting the removed legacy shape.
+- 2026-08-13: Deleted `useAiCoach`, `useContextualHints`, `useRecommendations`, `geminiService`, the
+  legacy recommendation domain/interpreter, and their shape-oriented tests in the same cutover. React
+  retains only disposable presentation state such as drawer visibility, input draft, refs, and copy
+  feedback; song retry is now one semantic Practice intent rather than UI plan reconstruction. The full
+  browser and delivery checkpoints remain pending before this branch is committed and Phase 4 is called
+  delivered.
+- 2026-08-13: The complete browser matrix caught and corrected one policy leak before delivery: song
+  streaks requested contextual hints even though that projection exists only in random practice. Hint
+  admission is now source-typed in the pure model; songs retain completion recommendations and Coach
+  exercises retain explicit completion feedback. The final Phase 4 checkpoint passes formatting,
+  zero-warning ESLint, all TypeScript projects, dependency/legacy/file-size/dead-code gates, 266 regular
+  tests, 15 real D1 tests, production build, and complete Playwright (58 passed, one documented WebKit
+  virtual-WebAuthn skip). Phase 4 is delivered; Phase 5 architecture/CI convergence is next while the
+  separately authorized production Identity migration and deployed D1/custom-domain proof remain open.

@@ -1,9 +1,9 @@
 import React from 'react';
 
+import type { GuidanceRecommendation } from '@sightplay/guidance';
 import { usePractice } from '@sightplay/practice';
 
 import { getSongById } from '../data/songs';
-import type { Recommendation } from '../domain/recommendations';
 import { SongComplete } from '../features/library/SongComplete';
 import { SongPractice } from '../features/library/SongPractice';
 import { RecommendationPanel } from '../features/recommendations/RecommendationPanel';
@@ -11,13 +11,13 @@ import { translations } from '../i18n';
 
 type Props = {
   songId: string;
-  recommendations: Recommendation[];
+  recommendations: readonly GuidanceRecommendation[];
   t: typeof translations.en;
   onExit: () => void;
   onRetry: () => void;
   onBackToLibrary: () => void;
-  onApplyRec: (rec: Recommendation) => void;
-  onDismissRec: () => void;
+  onApplyRec: (id: string) => void;
+  onDismissRec: (id: string) => void;
 };
 
 export const SongPracticeSection: React.FC<Props> = ({

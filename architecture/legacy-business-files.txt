@@ -1,9 +1,5 @@
-hooks/useAiCoach.ts
-hooks/useContextualHints.ts
 hooks/useLanguage.ts
-hooks/useRecommendations.ts
 hooks/useTestAPI.ts
-services/geminiService.ts
 store/uiStore.ts
 views/ContentView.tsx
 views/MainAppContent.tsx

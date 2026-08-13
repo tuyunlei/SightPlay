@@ -140,6 +140,9 @@ function observeWrongMicrophone(
 
 function acceptTarget(state: PracticeState, target: ScoreFrame, at: number): PracticeTransition {
   const nextCursor = state.cursor + 1;
+  const score = computeScore(state.score, state.streak);
+  const streak = state.streak + 1;
+  const stats = acceptAttempt(state.stats, state.hadMistake, at - state.lastAcceptedAt);
   const completed = state.plan.kind === 'finite' && frameAt(state.plan, nextCursor) === null;
   const exit = scheduleEffect(state, 'exitCleanup', EXIT_CLEANUP_MS, target.id);
   const completion = completed
@@ -158,16 +161,29 @@ function acceptTarget(state: PracticeState, target: ScoreFrame, at: number): Pra
     lockedUntil: at + PROCESSING_LOCKOUT_MS,
     exitingFrames: [...state.exitingFrames, target],
     status: 'correct',
-    score: computeScore(state.score, state.streak),
-    streak: state.streak + 1,
-    stats: acceptAttempt(state.stats, state.hadMistake, at - state.lastAcceptedAt),
+    score,
+    streak,
+    stats,
     completion: completion.effect
       ? { kind: 'pending', token: completion.effect.token }
       : state.completion,
   };
   return {
     state: nextState,
-    effects: [exit.effect, ...(completion.effect ? [completion.effect] : [])],
+    effects: [
+      {
+        kind: 'attemptAccepted',
+        epoch: state.epoch,
+        plan: state.plan,
+        hadMistake: state.hadMistake,
+        score,
+        streak,
+        stats,
+        acceptedAt: at,
+      },
+      exit.effect,
+      ...(completion.effect ? [completion.effect] : []),
+    ],
   };
 }
 

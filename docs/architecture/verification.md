@@ -41,6 +41,18 @@ implementation-shape assertions.
 - Disposal cancels input subscriptions and scheduled effects.
 - A stored seed and action sequence reproduce the same generated exercise and result.
 
+### Guidance
+
+- Malformed requests, envelopes, replies, and nested proposals are rejected before entering Guidance.
+- One conversation request is admitted at a time; stale and post-disposal results cannot change state or
+  emit an exercise.
+- Accepted Practice events deterministically trigger hint and recommendation decisions; timer tokens and
+  rate limits are model state rather than React refs.
+- Provider failure selects structured recovery in Guidance, while localized presentation only projects
+  the chosen semantic message.
+- A validated proposal reaches Practice through the exhaustive application mapping and starts the same
+  Practice core used by songs and random exercises.
+
 ### Identity server
 
 - Concurrent use of one invitation produces exactly one successful registration.

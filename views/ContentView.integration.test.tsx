@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { AppContentRoute } from '@sightplay/app-shell';
+import { GuidanceProvider, type GuidancePorts } from '@sightplay/guidance';
 import { createRandomExercise, PracticeProvider, type PracticePorts } from '@sightplay/practice';
 
 import { translations } from '../i18n';
@@ -37,7 +38,16 @@ vi.mock('./RandomPracticeView', () => ({
 
 function ContentViewHarness({ initialRoute }: { initialRoute: AppContentRoute }) {
   const [route, setRoute] = useState(initialRoute);
-  const [chatInput, setChatInput] = useState('');
+  const [guidancePorts] = useState<GuidancePorts>(() => ({
+    clock: { now: () => 0 },
+    scheduler: { schedule: () => vi.fn() },
+    chat: {
+      request: async () => ({
+        ok: true,
+        reply: { replyText: 'test', challengeData: null },
+      }),
+    },
+  }));
   const [ports] = useState<PracticePorts>(() => ({
     clock: { now: () => 0 },
     scheduler: { schedule: () => vi.fn() },
@@ -64,22 +74,17 @@ function ContentViewHarness({ initialRoute }: { initialRoute: AppContentRoute })
   return (
     <>
       <output data-testid="current-route">{JSON.stringify(route)}</output>
-      <PracticeProvider ports={ports} initialPlan={plan}>
-        <ContentView
-          route={route}
-          navigate={navigate}
-          dismissEntry={navigate}
-          t={translations.zh}
-          toggleLang={vi.fn()}
-          chatInput={chatInput}
-          setChatInput={setChatInput}
-          chatHistory={[]}
-          isLoadingAi={false}
-          sendMessage={vi.fn()}
-          chatEndRef={{ current: null }}
-          lang="zh"
-        />
-      </PracticeProvider>
+      <GuidanceProvider ports={guidancePorts} initialContext={{ clef: 'treble', language: 'zh' }}>
+        <PracticeProvider ports={ports} initialPlan={plan}>
+          <ContentView
+            route={route}
+            navigate={navigate}
+            dismissEntry={navigate}
+            t={translations.zh}
+            toggleLang={vi.fn()}
+          />
+        </PracticeProvider>
+      </GuidanceProvider>
     </>
   );
 }

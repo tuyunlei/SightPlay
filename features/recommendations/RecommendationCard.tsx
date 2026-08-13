@@ -1,15 +1,16 @@
 import { Lightbulb, X } from 'lucide-react';
 import React from 'react';
 
-import type { Recommendation } from '../../domain/recommendations';
+import type { GuidanceRecommendation } from '@sightplay/guidance';
+
 import { translations } from '../../i18n';
 
 type TranslationMap = typeof translations.en;
 
 interface RecommendationCardProps {
-  recommendation: Recommendation;
+  recommendation: GuidanceRecommendation;
   t: TranslationMap;
-  onApply: (rec: Recommendation) => void;
+  onApply: (id: string) => void;
   onDismiss: (id: string) => void;
 }
 
@@ -19,9 +20,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
   onApply,
   onDismiss,
 }) => {
-  const title = (t as Record<string, string>)[recommendation.titleKey] ?? recommendation.titleKey;
-  const desc =
-    (t as Record<string, string>)[recommendation.descriptionKey] ?? recommendation.descriptionKey;
+  const { title, description } = recommendationText(recommendation, t);
 
   return (
     <div
@@ -31,11 +30,11 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
       <Lightbulb size={18} className="mt-0.5 shrink-0 text-indigo-500" />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">{title}</p>
-        <p className="text-xs text-gray-600 dark:text-slate-300">{desc}</p>
+        <p className="text-xs text-gray-600 dark:text-slate-300">{description}</p>
         {recommendation.action && (
           <button
             data-testid="recommendation-apply"
-            onClick={() => onApply(recommendation)}
+            onClick={() => onApply(recommendation.id)}
             className="mt-2 rounded bg-indigo-500 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-600 transition-colors"
           >
             {t.recApply}
@@ -52,3 +51,38 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
     </div>
   );
 };
+
+function recommendationText(
+  recommendation: GuidanceRecommendation,
+  t: TranslationMap
+): { readonly title: string; readonly description: string } {
+  const content = recommendation.content;
+  switch (content.kind) {
+    case 'tryHarderSong':
+      return {
+        title: t.recTryHarderSongTitle,
+        description:
+          content.difficulty === 'intermediate'
+            ? t.recTryHarderSongDesc_intermediate
+            : t.recTryHarderSongDesc_advanced,
+      };
+    case 'keepPracticing':
+      return { title: t.recKeepPracticingTitle, description: t.recKeepPracticingDesc };
+    case 'tryBass':
+      return { title: t.recTryBassTitle, description: t.recTryBassDesc };
+    case 'expandRange':
+      return { title: t.recExpandRangeTitle, description: t.recExpandRangeDesc };
+    case 'trySong':
+      return { title: t.recTrySongTitle, description: t.recTrySongDesc };
+    case 'narrowRange':
+      return { title: t.recNarrowRangeTitle, description: t.recNarrowRangeDesc };
+    case 'slowDown':
+      return { title: t.recSlowDownTitle, description: t.recSlowDownDesc };
+    default:
+      return assertNever(content);
+  }
+}
+
+function assertNever(value: never): never {
+  throw new Error(`Unhandled Guidance recommendation: ${JSON.stringify(value)}`);
+}

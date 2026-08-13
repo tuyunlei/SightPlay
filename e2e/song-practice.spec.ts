@@ -121,13 +121,6 @@ test.describe('Song Library Practice flow', () => {
   });
 
   test('complete a song then return to library from score screen', async ({ page }) => {
-    await page.route('**/api/chat', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ replyText: 'Nice work.', challengeData: null }),
-      })
-    );
     await openSongLibrary(page);
     await page.getByText('Twinkle Twinkle Little Star').click();
 

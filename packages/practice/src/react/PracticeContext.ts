@@ -8,11 +8,12 @@ import type {
   PracticeRange,
   RandomExerciseConfig,
 } from '../model/types';
-import type { PracticeOutput } from '../runtime/practiceRuntime';
+import type { PracticeOutput } from '../runtime/contracts';
 
 export interface PracticeActions {
   canAcceptInput(): boolean;
   startExercise(plan: ExercisePlan): void;
+  restartExercise(): void;
   startRandom(config: RandomExerciseConfig): void;
   selectClef(clef: Clef): void;
   selectPracticeRange(practiceRange: PracticeRange): void;

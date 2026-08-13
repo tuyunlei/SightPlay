@@ -105,10 +105,18 @@ production session to be replayed.
 
 ## Guidance
 
-Conversation, hints, and recommendations are Guidance submodules. They consume `PracticeEvent` and may
-output a validated `ExerciseProposal`; they cannot import or mutate Practice. Provider responses are
-runtime-decoded into a provider-independent result before Guidance chooses retry, fallback, or user
-recovery.
+`@sightplay/guidance` owns conversation admission, provider request epochs, semantic messages, hint
+trigger/rate/timer policy, recommendation/dismissal policy, completion feedback, and structured
+recovery. It consumes application-mapped `attemptAccepted` and `exerciseCompleted` observations and may
+emit a validated `ExerciseProposal` or an exact recommendation action; it cannot import or mutate
+Practice.
+
+`@sightplay/api-contracts` decodes the complete chat request, stable envelope, reply, and nested proposal
+before either HTTP side treats it as valid. `@sightplay/browser-adapters` maps transport and stable error
+codes to Guidance's provider-independent `GuidanceChatResult`; it never selects copy or manufactures a
+successful fallback. Application composition is the sole mapping from Guidance output to Practice/App
+Shell intent, and that mapping is exhaustive. Chat input and drawer visibility remain local presentation
+state because they are discardable and own no async operation.
 
 ## Local UI state
 

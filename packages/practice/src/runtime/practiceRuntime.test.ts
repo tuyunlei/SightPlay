@@ -87,10 +87,14 @@ describe('Practice runtime lifecycle', () => {
     test.emitMidi({ kind: 'released', pitch: midi(60) });
     expect(runtime.getView().completedCount).toBe(1);
     expect(test.scheduled.size).toBe(2);
+    expect(output).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'attemptAccepted', hadMistake: false })
+    );
 
     test.setNow(1_120);
     [...test.scheduled].forEach((task) => task());
-    expect(output).toHaveBeenCalledOnce();
+    expect(output).toHaveBeenCalledTimes(2);
+    expect(output).toHaveBeenLastCalledWith(expect.objectContaining({ kind: 'exerciseCompleted' }));
 
     runtime.dispose();
     expect(test.ports.midi.dispose).toHaveBeenCalledOnce();
@@ -131,6 +135,24 @@ describe('Practice runtime lifecycle', () => {
     runtime.start();
     await vi.waitFor(() => expect(test.ports.midi.start).toHaveBeenCalledTimes(2));
     expect(runtime.getState().epoch).not.toBe(firstEpoch);
+    runtime.dispose();
+  });
+
+  it('restarts the current exercise atomically through one semantic intent', () => {
+    const test = harness();
+    const runtime = createPracticeRuntime(test.ports, exercise('song'));
+    runtime.start();
+    const initialEpoch = runtime.getState().epoch;
+
+    runtime.dispatch({ kind: 'restartExercise' });
+
+    expect(runtime.getState()).toMatchObject({
+      plan: { metadata: { id: 'song' } },
+      cursor: 0,
+      score: 0,
+      completion: { kind: 'active' },
+    });
+    expect(runtime.getState().epoch).not.toBe(initialEpoch);
     runtime.dispose();
   });
 });

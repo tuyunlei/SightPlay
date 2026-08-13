@@ -126,6 +126,16 @@ export type PracticeAction =
 
 export type PracticeEffect =
   | {
+      readonly kind: 'attemptAccepted';
+      readonly epoch: SessionEpoch;
+      readonly plan: ExercisePlan;
+      readonly hadMistake: boolean;
+      readonly score: number;
+      readonly streak: number;
+      readonly stats: SessionStats;
+      readonly acceptedAt: number;
+    }
+  | {
       readonly kind: 'schedule';
       readonly epoch: SessionEpoch;
       readonly token: EffectToken;
@@ -140,6 +150,10 @@ export type PracticeEffect =
       readonly kind: 'exerciseCompleted';
       readonly epoch: SessionEpoch;
       readonly plan: ExercisePlan;
+      readonly score: number;
+      readonly streak: number;
+      readonly stats: SessionStats;
+      readonly completedAt: number;
     };
 
 export interface PracticeTransition {

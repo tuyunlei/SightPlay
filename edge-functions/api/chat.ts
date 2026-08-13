@@ -1,24 +1,16 @@
+import {
+  decodeChatReply,
+  decodeChatRequest,
+  guidanceFailed,
+  guidanceSucceeded,
+  type ChatRequestDto,
+} from '@sightplay/api-contracts';
+
 import type { PlatformContext } from '../platform';
 import { createRequestContext, logError } from '../utils/logger';
 
 import { authenticateIdentityRequest, createIdentityRequest } from './auth/identity-http';
 import { createIdentityDependencies } from './auth/identity-runtime';
-
-interface ChatRequestBody {
-  message: string;
-  clef: string;
-  lang: 'zh' | 'en';
-}
-
-interface GeminiResponse {
-  candidates?: Array<{
-    content?: {
-      parts?: Array<{
-        text?: string;
-      }>;
-    };
-  }>;
-}
 
 function jsonResponse(body: object, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -27,7 +19,10 @@ function jsonResponse(body: object, status = 200): Response {
   });
 }
 
-function buildSystemInstruction(clef: string, lang: string): string {
+function buildSystemInstruction(
+  clef: ChatRequestDto['clef'],
+  lang: ChatRequestDto['lang']
+): string {
   const langInstruction =
     lang === 'zh' ? 'Respond in Simplified Chinese (Mandarin).' : 'Respond in English.';
 
@@ -109,17 +104,53 @@ async function callGemini(
       ...requestContext,
       status: response.status,
     });
-    return jsonResponse({ error: 'Gemini API error', requestId: requestContext.requestId }, 502);
+    return jsonResponse(
+      guidanceFailed('provider_unavailable', true, requestContext.requestId),
+      502
+    );
   }
 
-  const data = (await response.json()) as GeminiResponse;
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  const text = extractProviderText(await response.json());
 
   if (!text) {
-    return jsonResponse({ error: 'No response from AI', requestId: requestContext.requestId }, 502);
+    return jsonResponse(
+      guidanceFailed('invalid_provider_response', true, requestContext.requestId),
+      502
+    );
   }
 
-  return jsonResponse(JSON.parse(text));
+  try {
+    const decoded = decodeChatReply(JSON.parse(text));
+    return decoded.ok
+      ? jsonResponse(guidanceSucceeded(decoded.value, requestContext.requestId))
+      : jsonResponse(
+          guidanceFailed('invalid_provider_response', true, requestContext.requestId),
+          502
+        );
+  } catch {
+    return jsonResponse(
+      guidanceFailed('invalid_provider_response', true, requestContext.requestId),
+      502
+    );
+  }
+}
+
+function extractProviderText(value: unknown): string | null {
+  if (!isRecord(value) || !Array.isArray(value.candidates)) return null;
+  const candidate = value.candidates[0];
+  if (
+    !isRecord(candidate) ||
+    !isRecord(candidate.content) ||
+    !Array.isArray(candidate.content.parts)
+  ) {
+    return null;
+  }
+  const part = candidate.content.parts[0];
+  return isRecord(part) && typeof part.text === 'string' ? part.text : null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 export function onRequestOptions(): Response {
@@ -132,14 +163,28 @@ export async function handlePostChat(platform: PlatformContext): Promise<Respons
   const identityRequest = createIdentityRequest(platform, dependencies);
   const session = await authenticateIdentityRequest(identityRequest, true);
   if (!session.ok)
-    return jsonResponse(
-      { error: 'Authentication required', requestId: requestContext.requestId },
-      401
-    );
+    return jsonResponse(guidanceFailed('unauthorized', false, requestContext.requestId), 401);
 
-  const { message, clef, lang } = (await platform.request.json()) as ChatRequestBody;
+  let rawRequest: unknown;
+  try {
+    rawRequest = await platform.request.json();
+  } catch {
+    return jsonResponse(guidanceFailed('invalid_request', false, requestContext.requestId), 400);
+  }
+  const request = decodeChatRequest(rawRequest);
+  if (!request.ok) {
+    return jsonResponse(guidanceFailed('invalid_request', false, requestContext.requestId), 400);
+  }
+  const { message, clef, lang } = request.value;
   const apiKey = platform.env('GEMINI_API_KEY');
-  if (!apiKey) throw new Error('GEMINI_API_KEY environment variable not available');
+  if (!apiKey) {
+    logError(
+      'chat.configuration',
+      'GEMINI_API_KEY environment variable not available',
+      requestContext
+    );
+    return jsonResponse(guidanceFailed('internal', true, requestContext.requestId), 500);
+  }
 
   try {
     const systemInstruction = buildSystemInstruction(clef, lang);
@@ -152,9 +197,6 @@ export async function handlePostChat(platform: PlatformContext): Promise<Respons
     );
   } catch (error) {
     logError('chat.post', error, requestContext);
-    return jsonResponse(
-      { error: 'Internal server error', requestId: requestContext.requestId },
-      500
-    );
+    return jsonResponse(guidanceFailed('internal', true, requestContext.requestId), 500);
   }
 }

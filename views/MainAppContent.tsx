@@ -6,20 +6,13 @@ import { BackgroundDecor } from '../components/layout/BackgroundDecor';
 import { PasskeyButton } from '../components/layout/PasskeyButton';
 import { NavigationTabs } from '../components/navigation/NavigationTabs';
 import { PasskeyManagement } from '../features/auth/PasskeyManagement';
-import { Language, translations } from '../i18n';
+import { translations } from '../i18n';
 
 import { ContentView } from './ContentView';
 
 type MainAppContentProps = {
   t: typeof translations.en;
   toggleLang: () => void;
-  chatInput: string;
-  setChatInput: (input: string) => void;
-  chatHistory: Array<{ role: 'user' | 'ai'; text: string; hasAction?: boolean }>;
-  isLoadingAi: boolean;
-  sendMessage: (message: string) => void;
-  chatEndRef: React.RefObject<HTMLDivElement | null>;
-  lang: Language;
   route: ProtectedAppRoute;
   navigate: (route: AppRoute, replace?: boolean) => void;
   dismissEntry: (fallbackRoute: AppRoute) => void;

@@ -5,10 +5,15 @@ import App from './App';
 
 const identitySuccess = <T,>(data: T) => ({ ok: true, data, requestId: 'test-request' });
 
-const { aiCoachMock, testApiMock, mainAppContentMock } = vi.hoisted(() => ({
-  aiCoachMock: vi.fn(),
+const { guidancePortsMock, testApiMock, mainAppContentMock } = vi.hoisted(() => ({
+  guidancePortsMock: vi.fn(),
   testApiMock: vi.fn(),
   mainAppContentMock: vi.fn(),
+}));
+
+vi.mock('@sightplay/browser-adapters', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@sightplay/browser-adapters')>()),
+  createBrowserGuidancePorts: guidancePortsMock,
 }));
 
 vi.mock('@sentry/react', () => ({
@@ -19,10 +24,6 @@ vi.mock('@sentry/react', () => ({
 
 vi.mock('@passwordless-id/webauthn', () => ({
   client: { register: vi.fn(), authenticate: vi.fn() },
-}));
-
-vi.mock('./hooks/useAiCoach', () => ({
-  useAiCoach: aiCoachMock,
 }));
 
 vi.mock('./hooks/useTestAPI', () => ({
@@ -49,13 +50,15 @@ describe('App protected runtime lifecycle', () => {
       configurable: true,
       value: requestMidiAccess,
     });
-    aiCoachMock.mockReturnValue({
-      chatInput: '',
-      setChatInput: vi.fn(),
-      chatHistory: [],
-      isLoadingAi: false,
-      sendMessage: vi.fn(),
-      chatEndRef: { current: null },
+    guidancePortsMock.mockReturnValue({
+      chat: {
+        request: vi.fn(async () => ({
+          ok: true,
+          reply: { replyText: 'test', challengeData: null },
+        })),
+      },
+      clock: { now: () => 0 },
+      scheduler: { schedule: () => vi.fn() },
     });
   });
 
@@ -72,7 +75,7 @@ describe('App protected runtime lifecycle', () => {
 
     expect(await screen.findByTestId('login-screen')).toBeTruthy();
     expect(requestMidiAccess).not.toHaveBeenCalled();
-    expect(aiCoachMock).not.toHaveBeenCalled();
+    expect(guidancePortsMock).not.toHaveBeenCalled();
     expect(testApiMock).not.toHaveBeenCalled();
   });
 
@@ -90,7 +93,7 @@ describe('App protected runtime lifecycle', () => {
     expect(await screen.findByTestId('protected-app')).toBeTruthy();
     expect(window.location.pathname).toBe('/practice');
     expect(requestMidiAccess).toHaveBeenCalledTimes(1);
-    expect(aiCoachMock).toHaveBeenCalled();
+    expect(guidancePortsMock).toHaveBeenCalledOnce();
     expect(testApiMock).toHaveBeenCalled();
   });
 

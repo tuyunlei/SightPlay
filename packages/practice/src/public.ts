@@ -46,4 +46,4 @@ export { PracticeProvider } from './react/PracticeProvider';
 export type { PracticeClient } from './react/PracticeContext';
 export { usePractice } from './react/usePractice';
 export { createPracticeRuntime } from './runtime/practiceRuntime';
-export type { PracticeIntent, PracticeOutput, PracticeRuntime } from './runtime/practiceRuntime';
+export type { PracticeIntent, PracticeOutput, PracticeRuntime } from './runtime/contracts';

@@ -30,6 +30,9 @@ importers:
       '@sightplay/browser-adapters':
         specifier: workspace:*
         version: link:packages/browser-adapters
+      '@sightplay/guidance':
+        specifier: workspace:*
+        version: link:packages/guidance
       '@sightplay/identity-client':
         specifier: workspace:*
         version: link:packages/identity-client
@@ -185,12 +188,21 @@ importers:
       '@sightplay/api-contracts':
         specifier: workspace:*
         version: link:../api-contracts
+      '@sightplay/guidance':
+        specifier: workspace:*
+        version: link:../guidance
       '@sightplay/identity-client':
         specifier: workspace:*
         version: link:../identity-client
       '@sightplay/practice':
         specifier: workspace:*
         version: link:../practice
+
+  packages/guidance:
+    dependencies:
+      react:
+        specifier: ^19.2.4
+        version: 19.2.4
 
   packages/identity-client:
     dependencies:

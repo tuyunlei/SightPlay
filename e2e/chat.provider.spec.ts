@@ -29,10 +29,12 @@ test('@provider real Gemini returns the SightPlay chat contract', async ({ page,
   });
 
   expect(result.status).toBe(200);
-  expect(result.body.replyText).toEqual(expect.any(String));
+  expect(result.body.ok).toBe(true);
+  expect(result.body.data.replyText).toEqual(expect.any(String));
   expect(
-    result.body.challengeData === null ||
-      (typeof result.body.challengeData === 'object' && result.body.challengeData !== null)
+    result.body.data.challengeData === null ||
+      (typeof result.body.data.challengeData === 'object' &&
+        result.body.data.challengeData !== null)
   ).toBe(true);
-  expect(result.body.replyText.trim().length).toBeGreaterThan(0);
+  expect(result.body.data.replyText.trim().length).toBeGreaterThan(0);
 });

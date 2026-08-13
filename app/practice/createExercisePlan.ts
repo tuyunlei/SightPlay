@@ -1,3 +1,4 @@
+import type { ExerciseProposal } from '@sightplay/guidance';
 import {
   createFiniteExercise,
   createRandomExercise,
@@ -8,7 +9,6 @@ import {
 } from '@sightplay/practice';
 
 import { getSongById } from '../../data/songs';
-import type { GeneratedChallenge } from '../../types';
 
 export const DEFAULT_RANDOM_CONFIG: RandomExerciseConfig = {
   clef: 'treble',
@@ -17,7 +17,9 @@ export const DEFAULT_RANDOM_CONFIG: RandomExerciseConfig = {
   includeAccidentals: false,
 };
 
-export function createInitialRandomExercise(seed: number): ExercisePlan {
+export function createInitialRandomExercise(
+  seed: number
+): Extract<ExercisePlan, { kind: 'generated' }> {
   const result = createRandomExercise({ seed, config: DEFAULT_RANDOM_CONFIG });
   if (!result.ok) throw new Error('The browser seed port returned an invalid random seed');
   return result.value;
@@ -42,7 +44,7 @@ export function createSongExercise(
 }
 
 export function createCoachExercise(
-  challenge: GeneratedChallenge,
+  challenge: ExerciseProposal,
   clef: Clef
 ): Extract<ExercisePlan, { kind: 'finite' }> | null {
   const pitches = challenge.notes.map(parseScientificPitch);

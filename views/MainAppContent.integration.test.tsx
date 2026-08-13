@@ -53,13 +53,6 @@ function Harness() {
         dismissEntry={dismissEntry}
         t={translations.en}
         toggleLang={vi.fn()}
-        chatInput=""
-        setChatInput={vi.fn()}
-        chatHistory={[]}
-        isLoadingAi={false}
-        sendMessage={vi.fn()}
-        chatEndRef={{ current: null }}
-        lang="en"
       />
     </>
   );

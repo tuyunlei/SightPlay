@@ -1,3 +1,5 @@
+import { guidanceFailed, guidanceSucceeded } from '@sightplay/api-contracts';
+
 import { test, expect, Page, mockAuthenticatedSession } from './fixtures/app-test';
 
 type ChatMockOptions = {
@@ -8,6 +10,8 @@ type ChatMockOptions = {
 async function mockChatApi(page: Page, options: ChatMockOptions = {}) {
   const aiReplies = ['Mock AI reply - round 1', 'Mock AI reply - round 2'];
   let callCount = 0;
+  let successCount = 0;
+  let remainingFailures = options.shouldFail ? 1 : 0;
   let releaseResponse = () => undefined;
   const responseGate = new Promise<void>((resolve) => {
     releaseResponse = resolve;
@@ -18,11 +22,12 @@ async function mockChatApi(page: Page, options: ChatMockOptions = {}) {
 
     if (options.deferred) await responseGate;
 
-    if (options.shouldFail) {
+    if (remainingFailures > 0) {
+      remainingFailures -= 1;
       await route.fulfill({
         status: 500,
         contentType: 'application/json',
-        body: JSON.stringify({ error: 'mocked failure' }),
+        body: JSON.stringify(guidanceFailed('internal', true, `mock-${callCount}`)),
       });
       return;
     }
@@ -32,15 +37,20 @@ async function mockChatApi(page: Page, options: ChatMockOptions = {}) {
       clef: string;
       lang: string;
     };
+    successCount += 1;
 
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        replyText: aiReplies[Math.min(callCount - 1, aiReplies.length - 1)],
-        challengeData: null,
-        echo: requestBody.message,
-      }),
+      body: JSON.stringify(
+        guidanceSucceeded(
+          {
+            replyText: aiReplies[Math.min(successCount - 1, aiReplies.length - 1)],
+            challengeData: null,
+          },
+          `mock-${callCount}-${requestBody.message.length}`
+        )
+      ),
     });
   });
 
@@ -104,10 +114,7 @@ test.describe('AI conversation E2E', () => {
     );
   });
 
-  test('should show localized AI connection error when API fails', async ({
-    page,
-    diagnostics,
-  }) => {
+  test('should accept a retry after a failed AI request', async ({ page, diagnostics }) => {
     diagnostics.allowHttpError('/api/chat', 500);
     await mockAuthenticatedSession(page);
     await mockChatApi(page, { shouldFail: true });
@@ -116,9 +123,9 @@ test.describe('AI conversation E2E', () => {
 
     await sendMessage(page, 'Can you help me?');
 
-    await expect(
-      page.getByText(/sorry, i'm having trouble connecting|抱歉，连接出现问题/i)
-    ).toBeVisible();
+    await expect(chatDrawerInput(page)).toBeEnabled();
+    await sendMessage(page, 'Please try again');
+    await expect(page.getByText('Mock AI reply - round 1', { exact: true })).toBeVisible();
   });
 
   test('should not send empty or whitespace-only message', async ({ page }) => {

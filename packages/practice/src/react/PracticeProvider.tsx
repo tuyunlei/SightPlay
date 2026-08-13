@@ -2,7 +2,8 @@ import { type ReactNode, useEffect, useMemo, useState, useSyncExternalStore } fr
 
 import type { ExercisePlan } from '../model/types';
 import type { PracticePorts } from '../ports';
-import { createPracticeRuntime, type PracticeOutput } from '../runtime/practiceRuntime';
+import type { PracticeOutput } from '../runtime/contracts';
+import { createPracticeRuntime } from '../runtime/practiceRuntime';
 
 import { PracticeContext, type PracticeActions, type PracticeClient } from './PracticeContext';
 
@@ -36,6 +37,7 @@ export function PracticeProvider({
     () => ({
       canAcceptInput: runtime.canAcceptInput,
       startExercise: (plan) => runtime.dispatch({ kind: 'startExercise', plan }),
+      restartExercise: () => runtime.dispatch({ kind: 'restartExercise' }),
       startRandom: (config) => runtime.dispatch({ kind: 'configureRandom', config }),
       selectClef: (clef) => runtime.dispatch({ kind: 'selectClef', clef }),
       selectPracticeRange: (practiceRange) =>

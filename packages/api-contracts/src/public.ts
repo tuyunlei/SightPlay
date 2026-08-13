@@ -1,4 +1,17 @@
 export type { DecodeResult } from './codec';
+export { decodeChatApiResult, decodeChatReply, decodeChatRequest } from './guidance/codec';
+export { guidanceFailed, guidanceSucceeded } from './guidance/envelope';
+export type {
+  ChatReplyDto,
+  ChatRequestDto,
+  ExerciseProposalDto,
+  GuidanceApiFailure,
+  GuidanceApiResult,
+  GuidanceApiSuccess,
+  GuidanceClefDto,
+  GuidanceErrorCode,
+  GuidanceLanguageDto,
+} from './guidance/types';
 export {
   decodeApiFailure,
   decodeApiResult,

@@ -1,3 +1,5 @@
+import { guidanceSucceeded } from '@sightplay/api-contracts';
+
 import {
   test,
   expect,
@@ -139,10 +141,15 @@ test.describe('Practice Interaction E2E', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          replyText: 'Try staying near middle C and read one note at a time.',
-          challengeData: null,
-        }),
+        body: JSON.stringify(
+          guidanceSucceeded(
+            {
+              replyText: 'Try staying near middle C and read one note at a time.',
+              challengeData: null,
+            },
+            'hint-mock'
+          )
+        ),
       });
     });
 

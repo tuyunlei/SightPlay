@@ -52,8 +52,15 @@ describe('Practice transition', () => {
       stats: { totalAttempts: 1, cleanHits: 0 },
       heldPitches: [],
     });
-    expect(accepted.effects).toHaveLength(1);
-    expect(accepted.effects[0]).toMatchObject({ kind: 'schedule', effect: 'exitCleanup' });
+    expect(accepted.effects).toHaveLength(2);
+    expect(accepted.effects[0]).toMatchObject({
+      kind: 'attemptAccepted',
+      hadMistake: true,
+      score: 10,
+      streak: 1,
+      stats: { totalAttempts: 1, cleanHits: 0 },
+    });
+    expect(accepted.effects[1]).toMatchObject({ kind: 'schedule', effect: 'exitCleanup' });
   });
 
   it('requires the complete chord before release can advance the frame', () => {
@@ -134,7 +141,15 @@ describe('Practice transition', () => {
     });
     expect(completed.state.completion.kind).toBe('completed');
     expect(completed.effects).toEqual([
-      { kind: 'exerciseCompleted', epoch: completed.state.epoch, plan: single },
+      {
+        kind: 'exerciseCompleted',
+        epoch: completed.state.epoch,
+        plan: single,
+        score: 10,
+        streak: 1,
+        stats: { totalAttempts: 1, cleanHits: 1, bpm: 300 },
+        completedAt: 1_120,
+      },
     ]);
     expect(
       transitionPractice(completed.state, {

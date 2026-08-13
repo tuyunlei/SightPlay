@@ -1,24 +1,23 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { AccountAccessProvider } from '@sightplay/account-access-client';
 import type { AppRoute, ProtectedAppRoute } from '@sightplay/app-shell';
 import {
   createBrowserAccountAccessPorts,
+  createBrowserGuidancePorts,
   createBrowserIdentityPorts,
   createBrowserPracticePorts,
 } from '@sightplay/browser-adapters';
+import { GuidanceProvider } from '@sightplay/guidance';
 import { IdentityProvider, useIdentity } from '@sightplay/identity-client';
 import { PracticeProvider, usePractice } from '@sightplay/practice';
 
+import { GuidancePracticeBridge } from './app/guidance/GuidancePracticeBridge';
 import { useBrowserRoute } from './app/navigation/useBrowserRoute';
-import {
-  createCoachExercise,
-  createInitialRandomExercise,
-} from './app/practice/createExercisePlan';
+import { createInitialRandomExercise } from './app/practice/createExercisePlan';
 import { usePracticeRoute } from './app/practice/usePracticeRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthGate } from './features/auth/AuthGate';
-import { useAiCoach } from './hooks/useAiCoach';
 import { useTestAPI } from './hooks/useTestAPI';
 import { translations } from './i18n';
 import { useUiStore } from './store/uiStore';
@@ -38,22 +37,28 @@ function AuthenticatedApp({
 }) {
   const identity = useIdentity();
   const [accountAccessPorts] = useState(createBrowserAccountAccessPorts);
+  const [guidancePorts] = useState(createBrowserGuidancePorts);
   const [practicePorts] = useState(createBrowserPracticePorts);
   const [initialPlan] = useState(() => createInitialRandomExercise(practicePorts.seed.nextSeed()));
   const lang = useUiStore((state) => state.lang);
   const toggleLang = useUiStore((state) => state.toggleLang);
   const t = translations[lang];
   const content = (
-    <PracticeProvider ports={practicePorts} initialPlan={initialPlan}>
-      <PracticeApplication
-        route={route}
-        navigate={navigate}
-        dismissEntry={dismissEntry}
-        t={t}
-        lang={lang}
-        toggleLang={toggleLang}
-      />
-    </PracticeProvider>
+    <GuidanceProvider
+      ports={guidancePorts}
+      initialContext={{ clef: initialPlan.config.clef, language: lang }}
+    >
+      <PracticeProvider ports={practicePorts} initialPlan={initialPlan}>
+        <PracticeApplication
+          route={route}
+          navigate={navigate}
+          dismissEntry={dismissEntry}
+          t={t}
+          lang={lang}
+          toggleLang={toggleLang}
+        />
+      </PracticeProvider>
+    </GuidanceProvider>
   );
 
   const handleAccountAccessOutput = useCallback(() => {
@@ -85,48 +90,18 @@ function PracticeApplication({
   toggleLang: () => void;
 }) {
   const practice = usePractice();
-  const subscribePracticeOutput = practice.onOutput;
   usePracticeRoute(route, practice);
   useTestAPI(practice);
-
-  const { chatInput, setChatInput, chatHistory, isLoadingAi, sendMessage, chatEndRef } = useAiCoach(
-    {
-      clef: practice.view.clef,
-      lang,
-      onLoadChallenge: (challenge) => {
-        const plan = createCoachExercise(challenge, practice.view.clef);
-        if (!plan) return 0;
-        practice.startExercise(plan);
-        return plan.frames.length;
-      },
-    }
-  );
-
-  useEffect(() => {
-    return subscribePracticeOutput((output) => {
-      if (output.kind === 'microphoneFailed') {
-        alert(t.micError);
-      } else if (output.plan.source === 'coach') {
-        sendMessage(t.aiChallengeCompletedUserMessage);
-      }
-    });
-  }, [sendMessage, subscribePracticeOutput, t.aiChallengeCompletedUserMessage, t.micError]);
 
   return (
     <div
       className="bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] flex flex-col font-sans"
       style={{ minHeight: '100dvh' }}
     >
+      <GuidancePracticeBridge language={lang} navigate={navigate} t={t} />
       <MainAppContent
         t={t}
         toggleLang={toggleLang}
-        chatInput={chatInput}
-        setChatInput={setChatInput}
-        chatHistory={chatHistory}
-        isLoadingAi={isLoadingAi}
-        sendMessage={sendMessage}
-        chatEndRef={chatEndRef}
-        lang={lang}
         route={route}
         navigate={navigate}
         dismissEntry={dismissEntry}

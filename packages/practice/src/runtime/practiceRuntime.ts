@@ -11,34 +11,7 @@ import {
 } from '../model/types';
 import type { MidiInputSignal, PracticePorts } from '../ports';
 
-export type PracticeOutput =
-  | { readonly kind: 'exerciseCompleted'; readonly plan: ExercisePlan }
-  | { readonly kind: 'microphoneFailed' };
-
-export type PracticeIntent =
-  | { readonly kind: 'startExercise'; readonly plan: ExercisePlan }
-  | { readonly kind: 'configureRandom'; readonly config: RandomExerciseConfig }
-  | { readonly kind: 'selectClef'; readonly clef: RandomExerciseConfig['clef'] }
-  | {
-      readonly kind: 'selectPracticeRange';
-      readonly practiceRange: RandomExerciseConfig['practiceRange'];
-    }
-  | { readonly kind: 'selectHandMode'; readonly handMode: RandomExerciseConfig['handMode'] }
-  | { readonly kind: 'toggleMicrophone' }
-  | { readonly kind: 'resetStats' }
-  | { readonly kind: 'simulateMidiPressed'; readonly pitch: number }
-  | { readonly kind: 'simulateMidiReleased'; readonly pitch: number };
-
-export interface PracticeRuntime {
-  getState(): PracticeState;
-  getView(): PracticeView;
-  canAcceptInput(): boolean;
-  subscribe(listener: () => void): () => void;
-  onOutput(listener: (output: PracticeOutput) => void): () => void;
-  dispatch(intent: PracticeIntent): void;
-  start(): void;
-  dispose(): void;
-}
+import type { PracticeIntent, PracticeOutput, PracticeRuntime } from './contracts';
 
 export class PracticeRuntimeImpl implements PracticeRuntime {
   private state: PracticeState;
@@ -99,6 +72,10 @@ export class PracticeRuntimeImpl implements PracticeRuntime {
     if (!this.active) return;
     if (intent.kind === 'startExercise') {
       this.replaceExercise(intent.plan);
+      return;
+    }
+    if (intent.kind === 'restartExercise') {
+      this.replaceExercise(this.state.plan);
       return;
     }
     if (intent.kind === 'configureRandom') {
@@ -177,6 +154,21 @@ export class PracticeRuntimeImpl implements PracticeRuntime {
 
   private runEffect(effect: PracticeEffect, generation: number): void {
     if (!this.isCurrent(generation)) return;
+    if (effect.kind === 'attemptAccepted') {
+      this.outputListeners.forEach((listener) =>
+        listener({
+          kind: 'attemptAccepted',
+          epoch: effect.epoch,
+          plan: effect.plan,
+          hadMistake: effect.hadMistake,
+          score: effect.score,
+          streak: effect.streak,
+          stats: effect.stats,
+          acceptedAt: effect.acceptedAt,
+        })
+      );
+      return;
+    }
     if (effect.kind === 'schedule') {
       this.scheduleEffect(effect, generation);
       return;
@@ -194,7 +186,15 @@ export class PracticeRuntimeImpl implements PracticeRuntime {
       return;
     }
     this.outputListeners.forEach((listener) =>
-      listener({ kind: 'exerciseCompleted', plan: effect.plan })
+      listener({
+        kind: 'exerciseCompleted',
+        epoch: effect.epoch,
+        plan: effect.plan,
+        score: effect.score,
+        streak: effect.streak,
+        stats: effect.stats,
+        completedAt: effect.completedAt,
+      })
     );
   }
 
@@ -265,3 +265,5 @@ export function createPracticeRuntime(
 ): PracticeRuntime {
   return new PracticeRuntimeImpl(ports, initialPlan);
 }
+
+export type { PracticeIntent, PracticeOutput, PracticeRuntime } from './contracts';

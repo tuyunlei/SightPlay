@@ -43,6 +43,7 @@
     "@sightplay/api-contracts": "workspace:*",
     "@sightplay/app-shell": "workspace:*",
     "@sightplay/browser-adapters": "workspace:*",
+    "@sightplay/guidance": "workspace:*",
     "@sightplay/identity-client": "workspace:*",
     "@sightplay/identity-server": "workspace:*",
     "@sightplay/practice": "workspace:*",

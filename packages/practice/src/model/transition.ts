@@ -129,6 +129,16 @@ function applyElapsedEffect(
       pendingEffects,
       completion: { kind: 'completed', completedAt: action.now },
     },
-    effects: [{ kind: 'exerciseCompleted', epoch: state.epoch, plan: state.plan }],
+    effects: [
+      {
+        kind: 'exerciseCompleted',
+        epoch: state.epoch,
+        plan: state.plan,
+        score: state.score,
+        streak: state.streak,
+        stats: state.stats,
+        completedAt: action.now,
+      },
+    ],
   };
 }
