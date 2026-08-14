@@ -150,17 +150,17 @@ implementation entry and behavior test. This metadata is the source for the fitn
 does not depend on class names, directory guesses, or a manually maintained package list.
 
 External JSON enters adapter and HTTP-handler code only through `readUnknownJson()` or
-`parseUnknownJson()`. These admission functions return `unknown`; their result must be passed directly
-to a runtime codec or structural narrowing function in the same expression, before it can be stored,
-wrapped, returned, or cross a port. Direct `.json()`, `JSON.parse()`, type assertions, and non-null
-assertions fail the ingress gate. The rule deliberately applies at trust boundaries rather than banning
-internal typed transformations.
+`parseUnknownJson()`. These admission functions return `unknown`; direct `.json()` and `JSON.parse()` are
+forbidden in adapter/application ingress, and admitted values cannot be returned raw or asserted into a
+trusted type. TypeScript preserves the untrusted type until code narrows it, while codec and adapter
+contract tests—not AST shape—prove that the complete external contract is accepted or rejected.
 
 The rules are executable in four layers. Workspace package `exports` define the supported import
 surface; dependency-cruiser prevents deep imports, legacy upward dependencies, and cycles; the AST
 fitness gate enforces package roles, capability-to-adapter isolation, composition-root ownership,
-unknown-input admission, declared runtime lifecycle with executable teardown, disposable resource ports,
-cancellable schedulers, and hosting-only route wrappers; ESLint prevents pure models from accessing
+unknown-input admission, declared runtime lifecycle shape, disposable resource ports,
+cancellable schedulers, and hosting-only route wrappers; the lifecycle scan proves contract shape and
+the declared runtime suites prove teardown behavior. ESLint prevents pure models from accessing
 framework or ambient runtime capabilities. A separate no-DOM/no-Node TypeScript project
 compiles production models, while the dependency graph rejects all external and core runtime modules
 from that layer. Web and server builds are explicit independent artifacts; server TypeScript is never

@@ -5,6 +5,7 @@ onlyBuiltDependencies:
   - '@sentry/cli'
   - esbuild
   - unrs-resolver
+  - workerd
 
 overrides:
   '@sentry/bundler-plugins>rollup': 4.62.4

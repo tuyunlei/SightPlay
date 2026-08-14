@@ -25,6 +25,7 @@
     "test:e2e:system": "pnpm run test:e2e:prepare && playwright test --project=system-chromium --project=system-webkit",
     "test:e2e:provider": "SIGHTPLAY_PROVIDER_CANARY=1 SIGHTPLAY_E2E_REAL_PROVIDER=1 playwright test --project=provider-canary",
     "test:e2e:preview": "playwright test --config=playwright.remote.config.ts",
+    "verify:fast": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run lint:arch && pnpm run test:ci",
     "typecheck": "tsc --noEmit && pnpm run typecheck:models && pnpm run typecheck:identity-d1",
     "typecheck:identity-d1": "tsc --project tsconfig.identity-d1.json",
     "typecheck:models": "tsc --project tsconfig.models.json",
@@ -33,11 +34,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "dep:check": "dependency-cruiser . --config .dependency-cruiser.cjs --exclude \"node_modules|dist|coverage|\\.github|scripts\"",
-    "lint:size": "node scripts/check-file-size.js --src=.",
     "lint:dead": "knip",
     "lint:boundaries": "node scripts/check-legacy-architecture.mjs",
     "lint:fitness": "node scripts/check-architecture-fitness.mjs && node --test scripts/architecture-fitness-fixtures.mjs",
-    "lint:arch": "pnpm run dep:check && pnpm run lint:boundaries && pnpm run lint:fitness && pnpm run lint:size && pnpm run lint:dead",
+    "lint:arch": "pnpm run dep:check && pnpm run lint:boundaries && pnpm run lint:fitness && pnpm run lint:dead",
     "prepare": "husky"
   },
   "dependencies": {

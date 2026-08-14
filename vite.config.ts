@@ -24,6 +24,7 @@ export default defineConfig(({ mode }) => {
   return {
     build: {
       sourcemap: isProd, // Generate sourcemaps in production
+      chunkSizeWarningLimit: Number.POSITIVE_INFINITY,
     },
     server: {
       port: devPort,

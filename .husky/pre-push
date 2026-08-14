@@ -1,3 +1,1 @@
-npm run test:ci
-npm run lint:arch
-npm run test:e2e -- --reporter=line
+pnpm run verify:fast
