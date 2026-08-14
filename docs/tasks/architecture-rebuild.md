@@ -4,8 +4,8 @@ Status: in progress
 
 Current branch: `codex/architecture-fitness-gates`
 
-Current base: `codex/guidance-core` at `da3d44b` (PR #15), stacked through Practice and the
-transactional Identity server on `origin/develop` at `cf18b34`
+Current base: `origin/develop` at `cf18b34`. PR #16 now contains the complete formerly stacked Identity,
+Practice, Guidance, and architecture-fitness rebuild; PRs #13–#15 are superseded delivery slices.
 
 ## Goal
 
@@ -115,6 +115,16 @@ production release remains a separate explicitly authorized operation.
   create independently deployed services.
 
 ## Progress log
+
+- 2026-08-14: Retargeted PR #16 from its Guidance parent directly to `develop`, then closed and reopened
+  it so GitHub evaluated the real complete merge diff. CI run `31783961426` passed arch, lint, typecheck,
+  276 regular tests, 19 workerd/D1 tests, the complete browser matrix, and independent web/server build;
+  Cloudflare Pages also passed at head `814d6ba`. The generated Preview `0d2c6f9e.sightplay.pages.dev`
+  returned an anonymous session, accepted its own SightPlay Pages origin through the Identity handler,
+  wrote the probe rate limit to PPE D1, and rejected a foreign Pages origin. The single probe row was
+  deleted and PPE accounts, credentials, invitations, ceremonies, sessions, bootstrap claims, and rate
+  limits were reverified empty. Full remote registration/login remains intentionally separate because it
+  requires temporarily bootstrapping an account rather than merely proving Preview topology.
 
 - 2026-08-14: Re-audited the rebuild against its completion contract instead of treating green leaf PRs
   as delivery. Strengthened the architecture fitness gate so capability packages cannot import adapters,
