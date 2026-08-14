@@ -22,8 +22,8 @@ can mechanically prove; runtime correctness remains the responsibility of behavi
 - [x] Remove file-total-line and default-export policy gates that do not prove product correctness.
 - [x] Remove dependency-cruiser rules for deleted legacy source roots; retain the one-way legacy-root gate.
 - [x] Clear persistent Knip configuration hints without dropping Pages or local-runtime entrypoints.
-- [x] Use a pnpm-10-compatible setup action, current artifact action, and an explicit workerd install-script
-      allowance instead of accepting permanent action/dependency warnings.
+- [x] Use pnpm setup's standalone mode, the current artifact action, and an explicit workerd
+      install-script allowance instead of accepting permanent action/dependency warnings.
 - [x] Replace lifecycle and ingress AST claims that admitted no-op implementations or rejected unrelated
       typed code; retain structural boundaries and rely on existing runtime/adapter behavior suites.
 - [x] Pass the complete local deterministic gate without warnings.
@@ -62,5 +62,8 @@ can mechanically prove; runtime correctness remains the responsibility of behavi
   minute 26 seconds, and E2E in 3 minutes 5 seconds, all in parallel. Log review found no project
   file-size or Knip warnings, then identified three toolchain leftovers: pnpm action v6 bootstrapping pnpm
   11 before switching to pinned pnpm 10, an intentionally skipped workerd postinstall, and obsolete
-  `upload-artifact@v4` runtime warnings. The follow-up pins the Node-24 pnpm v5 action compatible with pnpm
-  10, explicitly allows workerd's required binary postinstall, and upgrades artifact upload to v7.
+  `upload-artifact@v4` runtime warnings. The follow-up explicitly allows workerd's required binary
+  postinstall and upgrades artifact upload to v7. A first pnpm v5 trial removed the layout warning but
+  exposed that action's own Node 24 `url.parse()` deprecation; the final configuration uses v6 standalone
+  installation so it reads the pinned pnpm 10 version without bootstrapping pnpm 11 or suppressing warning
+  codes.
