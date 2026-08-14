@@ -188,6 +188,35 @@ describe('Identity HTTP assembly over D1', () => {
     });
   });
 
+  it('admits only generated Preview origins owned by the SightPlay Pages project', async () => {
+    const previewConfiguration = {
+      ...configuration,
+      WEBAUTHN_RP_ID: 'sightplay.pages.dev',
+      IDENTITY_ALLOWED_ORIGINS: '',
+      IDENTITY_ALLOWED_HTTPS_SUBDOMAIN_SUFFIXES: 'sightplay.pages.dev',
+    };
+    const request = (requestOrigin: string) =>
+      platform(
+        '/api/auth/register-options',
+        {
+          method: 'POST',
+          headers: { Origin: requestOrigin, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ inviteCode: 'ABCD-EFGH' }),
+        },
+        previewConfiguration
+      );
+
+    const admitted = await handlePostRegisterOptions(
+      request('https://80827304.sightplay.pages.dev')
+    );
+    expect(admitted.status).toBe(400);
+    expect(await admitted.json()).toMatchObject({ error: { code: 'invitationInvalid' } });
+
+    const rejected = await handlePostRegisterOptions(request('https://80827304.other.pages.dev'));
+    expect(rejected.status).toBe(403);
+    expect(await rejected.json()).toMatchObject({ error: { code: 'originRejected' } });
+  });
+
   it('authenticates account management and preserves the final credential invariant', async () => {
     await seedAuthenticatedAccount();
     const headers = { Cookie: `sightplay_session=${token}`, Origin: origin };

@@ -42,13 +42,13 @@ Do not begin the production maintenance window merely because Cloudflare reports
 deployment. Use the preview data boundary defined in the
 [Cloudflare environment contract](cloudflare-environments.md), then prove the named PPE environment:
 
-1. Record the `sightplay` preview deployment of `develop`, disposable PPE D1 database, binding scope, and
-   `https://develop.sightplay.xclz.org`. The origin must be explicitly allowed and compatible with RP ID
-   `sightplay.xclz.org`; a `pages.dev` hostname is delivery evidence only.
+1. Record the `sightplay` pull-request Preview deployment, its generated `*.sightplay.pages.dev` URL,
+   disposable PPE D1 database, and binding scope. Preview must use RP ID `sightplay.pages.dev`; Preview
+   credentials are deliberately separate from credentials scoped to production RP ID `sightplay.xclz.org`.
 2. Apply the same migrations to the PPE D1 database and bind it as `IDENTITY_DB` in the Pages preview environment.
    Require `GET /api/auth/session` to return a valid anonymous success envelope; a structured 500 means the
    runtime is not ready even if the deployment check is green.
-3. On the PPE custom domain, use the one-time bootstrap capability described in the environment contract
+3. On the generated Preview URL, use the one-time bootstrap capability described in the environment contract
    to issue the first disposable invitation. Register the first account, remove the bootstrap secret, prove
    the capability is closed, then prove session refresh, logout, Passkey login, authenticated invitation
    creation, credential listing, non-final removal, and final-credential rejection. Record browser,
@@ -57,8 +57,9 @@ deployment. Use the preview data boundary defined in the
    first-run import, exact idempotent rerun, count/fingerprint comparison, and rollback from an induced late
    failure without copying production credentials into PPE.
 
-PPE evidence proves binding, schema, application wiring, WebAuthn origin/RP policy, and the operational
-procedure. It does not prove that the production export is valid or authorize a production data change.
+PPE evidence proves binding, schema, application wiring, the Preview WebAuthn origin/RP policy, and the
+operational procedure. It does not prove that existing production credentials work with the production RP,
+that the production export is valid, or that a production data change is authorized.
 Proceed only after the named production account/project/database and maintenance window are explicitly
 approved.
 

@@ -124,6 +124,7 @@ function createDependencies(
       rpId: 'sightplay.example',
       rpName: 'SightPlay',
       allowedOrigins: ['https://sightplay.example'],
+      allowedHttpsSubdomainSuffixes: [],
       userVerification: 'required',
       ceremonyTtlMs: 60_000,
       invitationTtlMs: 604_800_000,

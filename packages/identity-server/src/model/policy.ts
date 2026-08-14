@@ -11,6 +11,7 @@ export interface IdentityPolicy {
   readonly rpId: string;
   readonly rpName: string;
   readonly allowedOrigins: readonly string[];
+  readonly allowedHttpsSubdomainSuffixes: readonly string[];
   readonly userVerification: 'required' | 'preferred';
   readonly ceremonyTtlMs: number;
   readonly invitationTtlMs: number;
@@ -24,8 +25,9 @@ export function validateIdentityPolicy(
   if (
     policy.rpId.length === 0 ||
     policy.rpName.length === 0 ||
-    policy.allowedOrigins.length === 0 ||
+    (policy.allowedOrigins.length === 0 && policy.allowedHttpsSubdomainSuffixes.length === 0) ||
     policy.allowedOrigins.some((origin) => origin.length === 0) ||
+    policy.allowedHttpsSubdomainSuffixes.some((suffix) => !isCanonicalDomain(suffix)) ||
     !Number.isSafeInteger(policy.ceremonyTtlMs) ||
     policy.ceremonyTtlMs <= 0 ||
     !Number.isSafeInteger(policy.invitationTtlMs) ||
@@ -46,5 +48,38 @@ export function validateIdentityPolicy(
 }
 
 export function acceptsOrigin(policy: IdentityPolicy, origin: string): boolean {
-  return policy.allowedOrigins.includes(origin);
+  if (policy.allowedOrigins.includes(origin)) return true;
+
+  const hostname = parseCanonicalHttpsOrigin(origin);
+  if (hostname === undefined) return false;
+
+  return policy.allowedHttpsSubdomainSuffixes.some(
+    (suffix) => hostname !== suffix && hostname.endsWith(`.${suffix}`)
+  );
+}
+
+function isCanonicalDomain(value: string): boolean {
+  return value.length <= 253 && value.split('.').every(isCanonicalDomainLabel);
+}
+
+function parseCanonicalHttpsOrigin(value: string): string | undefined {
+  const prefix = 'https://';
+  if (!value.startsWith(prefix)) return undefined;
+  const hostname = value.slice(prefix.length);
+  return isCanonicalDomain(hostname) ? hostname : undefined;
+}
+
+function isCanonicalDomainLabel(label: string): boolean {
+  if (label.length === 0 || label.length > 63) return false;
+  if (!isLowercaseLetterOrDigit(label[0]) || !isLowercaseLetterOrDigit(label[label.length - 1])) {
+    return false;
+  }
+  return [...label].every((character) => isLowercaseLetterOrDigit(character) || character === '-');
+}
+
+function isLowercaseLetterOrDigit(character: string | undefined): boolean {
+  return (
+    character !== undefined &&
+    ((character >= 'a' && character <= 'z') || (character >= '0' && character <= '9'))
+  );
 }

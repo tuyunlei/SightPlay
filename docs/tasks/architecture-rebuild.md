@@ -55,7 +55,7 @@ capability; auth routes are mutually exclusive; no auth business branch depends 
 - [x] Remove or protect the public error-report endpoint and enforce origin/CORS policy.
 
 Exit evidence: concurrency/replay/rollback suites pass against the production repository adapter and a
-preview custom domain completes registration, login, credential management, and logout.
+generated Pages Preview completes registration, login, credential management, and logout.
 
 ## Phase 3 — Exercise, Instrument Input, and Practice
 
@@ -108,13 +108,22 @@ production release remains a separate explicitly authorized operation.
   management. Revisit only through a superseding decision record.
 - D1 is the first transactional adapter candidate. If an invariant cannot be proven under its concrete
   API, use a Durable Object serialization boundary rather than weakening the domain contract.
-- Live inventory confirms the `sightplay` Pages project had no D1 binding and the former PPE domain no
-  longer exists. Phase 2 uses distinct production and preview D1 bindings on that project and restores
-  `develop.sightplay.xclz.org` under the single-project contract from Decision 0004.
+- Phase 2 uses distinct production and preview D1 bindings on the existing `sightplay` Pages project.
+  Production keeps `sightplay.xclz.org`; pull-request Preview uses Pages-generated hostnames and the
+  separate `sightplay.pages.dev` RP ID under Decision 0004.
 - The rebuild remains a modular monolith. Package boundaries are correctness controls, not a plan to
   create independently deployed services.
 
 ## Progress log
+
+- 2026-08-14: A Codex session-log and live Cloudflare inventory audit found that the fixed
+  `develop.sightplay.xclz.org` PPE topology was an unnecessary detour: it duplicated Pages-native Preview,
+  coupled a stable hostname to PR #16, and incorrectly reused the production RP ID. Decision 0004 and the
+  runbooks now use generated `*.sightplay.pages.dev` origins with RP ID `sightplay.pages.dev` and the shared
+  disposable PPE D1, while production remains `sightplay.xclz.org` with Production D1. Removed the custom
+  domain, CNAME, preview bootstrap secret, local Keychain material, generated invitation, bootstrap claim,
+  and rate-limit row; both D1 databases and the Git-owned deployment flow remain. Removing the two known
+  secret-bearing deployments follows the first clean replacement Preview so no active branch alias is lost.
 
 - 2026-08-13: Replaced the permanent broad-secret invitation administrator route with an explicit
   empty-store bootstrap capability. `IDENTITY_BOOTSTRAP_SECRET` is configuration-gated; a singleton D1
@@ -321,25 +330,10 @@ production release remains a separate explicitly authorized operation.
   builds, and the complete Playwright matrix (51 passed, one documented WebKit virtual-WebAuthn skip).
   A local Pages runtime additionally proved the single catch-all returns application-owned 204/404/405
   contracts. Phase 5 is complete; Phase 2 remains open only for the explicitly authorized deployed D1,
-  migration, custom-domain, and real Passkey lifecycle evidence.
-- 2026-08-13: Latest-head PR #16 deployment passes artifact and catch-all checks, but session GET remains
-  a structured 500 because no D1 is bound. Read-only Cloudflare inventory confirms `sightplay` uses
-  production branch `main`, has only active custom domain `sightplay.xclz.org`, retains the legacy
-  production KV, and has no production or preview D1 binding. Historical OpenClaw records recovered the
-  former `develop.sightplay.xclz.org` PPE attempt, whose certificate never reached success in the preserved
-  transcript and whose DNS is now absent. Decision 0004 retains one Pages project with distinct production
-  and preview D1 bindings; generated previews share disposable PPE data, while only the stable custom PPE
-  origin is admitted for Identity mutations.
+  migration, generated-Preview, and real Passkey lifecycle evidence.
 - 2026-08-13: Authorized Cloudflare OAuth inventory found no existing D1 databases. Created empty APAC
   databases `sightplay-identity-production` and `sightplay-identity-ppe`; neither was bound at creation. The
   first remote migration exposed Cloudflare's `CASE`/trigger SQL-splitter defect that local SQLite and local
   D1 do not reproduce. Parenthesizing each trigger `CASE` preserves its behavior and allowed all three
-  migrations to apply to both remote databases. Deployed preview binding, custom-domain restoration, and
-  real Passkey proof remain in progress; production data import and release remain separately gated.
-- 2026-08-13: Cloudflare Preview deployment `8ec62c2f` bound the PPE D1 successfully: the generated URL
-  serves the web artifact and `GET /api/auth/session` returns the anonymous Identity envelope instead of
-  the prior internal 500. Added the one-time bootstrap secret to the preview environment through encrypted
-  stdin. `develop.sightplay.xclz.org` is now active with certificate and domain verification complete, and
-  its proxied CNAME targets the PR candidate's Cloudflare-provided branch alias. The stable origin returns
-  the anonymous Identity session envelope and recognizes the bootstrap capability; a single disposable
-  invitation has been issued for the remaining real-device Passkey lifecycle proof.
+  migrations to apply to both remote databases. Deployed Preview binding and real Passkey proof remain in
+  progress; production data import and release remain separately gated.

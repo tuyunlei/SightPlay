@@ -27,10 +27,10 @@ function readIdentityPolicy(platform: PlatformContext): IdentityPolicy {
   return {
     rpId: requireConfig(platform, 'WEBAUTHN_RP_ID'),
     rpName: requireConfig(platform, 'WEBAUTHN_RP_NAME'),
-    allowedOrigins: requireConfig(platform, 'IDENTITY_ALLOWED_ORIGINS')
-      .split(',')
-      .map((origin) => origin.trim())
-      .filter(Boolean),
+    allowedOrigins: readList(platform.env('IDENTITY_ALLOWED_ORIGINS')),
+    allowedHttpsSubdomainSuffixes: readList(
+      platform.env('IDENTITY_ALLOWED_HTTPS_SUBDOMAIN_SUFFIXES')
+    ),
     userVerification:
       requireConfig(platform, 'WEBAUTHN_USER_VERIFICATION') === 'required'
         ? 'required'
@@ -45,6 +45,13 @@ function readIdentityPolicy(platform: PlatformContext): IdentityPolicy {
       account: readRateLimit(platform, 'ACCOUNT'),
     },
   };
+}
+
+function readList(value: string | undefined): readonly string[] {
+  return (value ?? '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function readRateLimit(platform: PlatformContext, scope: string) {
