@@ -1,7 +1,5 @@
 import { expect, mockAuthenticatedSession, test } from './fixtures/app-test';
 
-test.use({ randomValue: 0.45 });
-
 test('@critical fake capture device drives the real Web Audio pitch pipeline', async ({ page }) => {
   await mockAuthenticatedSession(page);
   await page.goto('/');
@@ -13,7 +11,7 @@ test('@critical fake capture device drives the real Web Audio pitch pipeline', a
   await expect
     .poll(async () => Number(await page.getByTestId('score-display').first().textContent()), {
       timeout: 10_000,
-      message: '440 Hz fixture should be detected as the deterministic A4 target',
+      message: 'the real audio pipeline should accept the generated Practice target',
     })
     .toBeGreaterThan(0);
 });

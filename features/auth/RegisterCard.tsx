@@ -3,8 +3,8 @@ import { useState } from 'react';
 
 import { useIdentity } from '@sightplay/identity-client';
 
+import { useLanguage } from '../../app/presentation/useLanguage';
 import { translations } from '../../i18n';
-import { useUiStore } from '../../store/uiStore';
 import { normalizeInviteCode, toDisplayInviteCode } from '../../utils/inviteCode';
 
 import { identityFailureMessage } from './identityFailureMessage';
@@ -129,8 +129,7 @@ export function RegisterCard({
   onReturnToLogin,
 }: RegisterCardProps) {
   const identity = useIdentity();
-  const lang = useUiStore((state) => state.lang);
-  const t = translations[lang];
+  const { t } = useLanguage();
 
   const [inviteCode, setInviteCode] = useState(() =>
     initialInviteCode ? formatInviteInput(initialInviteCode) : ''

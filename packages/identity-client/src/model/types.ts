@@ -32,6 +32,7 @@ export interface LoginCredentialDescriptor {
 
 export interface LoginOptions {
   challenge: string;
+  rpId: string;
   allowCredentials: readonly LoginCredentialDescriptor[];
   userVerification?: UserVerification;
   timeout?: number;

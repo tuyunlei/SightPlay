@@ -2,8 +2,8 @@ import { KeyRound } from 'lucide-react';
 
 import { useIdentity } from '@sightplay/identity-client';
 
+import { useLanguage } from '../../app/presentation/useLanguage';
 import { translations } from '../../i18n';
-import { useUiStore } from '../../store/uiStore';
 
 import { identityFailureMessage } from './identityFailureMessage';
 
@@ -71,8 +71,7 @@ function LoginCard({ t, isLoading, error, onLogin, onRegister }: LoginCardProps)
 
 export function LoginScreen({ onRegister }: LoginScreenProps) {
   const identity = useIdentity();
-  const lang = useUiStore((state) => state.lang);
-  const t = translations[lang];
+  const { t } = useLanguage();
   const isLoading = identity.view.operation === 'login';
   const error = identity.view.failure
     ? identityFailureMessage(t, identity.view.failure.code)

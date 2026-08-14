@@ -66,7 +66,7 @@ export default defineConfig({
           args: [
             '--use-fake-device-for-media-stream',
             '--use-fake-ui-for-media-stream',
-            '--use-file-for-fake-audio-capture=/tmp/sightplay-e2e-a4.wav',
+            '--use-file-for-fake-audio-capture=/tmp/sightplay-e2e-practice-range.wav',
           ],
         },
       },

@@ -214,10 +214,11 @@ const PianoDisplay: React.FC<PianoDisplayProps> = ({ targetNote, detectedNote, p
     const containerWidth = scrollRef.current.clientWidth;
     const scrollPos = keyData.x - containerWidth / 2 + WHITE_KEY_WIDTH / 2;
 
-    scrollRef.current.scrollTo({
-      left: scrollPos,
-      behavior: 'smooth',
-    });
+    if (typeof scrollRef.current.scrollTo === 'function') {
+      scrollRef.current.scrollTo({ left: scrollPos, behavior: 'smooth' });
+    } else {
+      scrollRef.current.scrollLeft = scrollPos;
+    }
   }, [targetMidi]);
 
   return (

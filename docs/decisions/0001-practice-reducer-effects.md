@@ -1,8 +1,14 @@
 # 0001 — Practice Decisions and Runtime Effects
 
-Status: accepted
+Status: superseded by [0002](0002-capability-modules-and-functional-core.md)
 
 Date: 2026-08-10
+
+Superseded on 2026-08-13 when Phase 3 removed the Zustand adapter, legacy setter compatibility,
+React-side Practice orchestration, and the referenced `domain/practiceCore` implementation. The
+historical decision below explains the first transition toward pure decisions; the current contract is
+the capability-owned Practice model, runtime, ports, and React projection defined by Decision 0002 and
+`docs/architecture/module-contracts.md`.
 
 ## Context
 

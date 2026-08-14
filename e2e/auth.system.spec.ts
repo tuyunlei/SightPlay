@@ -28,7 +28,11 @@ test.describe('real local system journeys', () => {
     });
     expect(authenticatedSession).toEqual({
       ok: true,
-      body: { authenticated: true, hasPasskeys: true },
+      body: {
+        ok: true,
+        data: { authenticated: true, hasPasskeys: true },
+        requestId: expect.any(String),
+      },
     });
 
     await page.getByTitle(/manage passkeys|管理 Passkey/i).click();
@@ -80,7 +84,11 @@ test.describe('real local system journeys', () => {
     });
     expect(authenticatedSession).toEqual({
       ok: true,
-      body: { authenticated: true, hasPasskeys: true },
+      body: {
+        ok: true,
+        data: { authenticated: true, hasPasskeys: true },
+        requestId: expect.any(String),
+      },
     });
 
     await page.getByTitle(/manage passkeys|管理 Passkey/i).click();

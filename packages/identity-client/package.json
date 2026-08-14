@@ -3,6 +3,14 @@
   "private": true,
   "type": "module",
   "sideEffects": false,
+  "sightplayArchitecture": {
+    "role": "capability",
+    "lifecycle": {
+      "kind": "managed-runtime",
+      "entry": "src/runtime/identityRuntime.ts",
+      "test": "src/runtime/identityRuntime.test.ts"
+    }
+  },
   "exports": {
     ".": "./src/public.ts"
   },

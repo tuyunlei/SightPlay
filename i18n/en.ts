@@ -53,6 +53,7 @@ export const en = {
   hintPracticeRange: 'Try narrowing your practice range to build confidence.',
   openAiChat: 'AI Coach',
   closeChat: 'Close',
+  languageToggle: 'Switch language',
   songLibrary: 'Song Library',
   difficulty_beginner: 'Beginner',
   difficulty_intermediate: 'Intermediate',

@@ -23,6 +23,20 @@ The transactional identity store owns these conceptual records:
 Raw invitation codes, session tokens, and challenges are not stored as retrievable secrets. Repository
 interfaces expose atomic domain commands, not generic key/value operations.
 
+## Empty-store bootstrap
+
+An empty Identity database has no authenticated account that can issue its first invitation. The only
+exception is the explicitly named `POST /api/auth/bootstrap/invitations` capability. It requires
+`IDENTITY_BOOTSTRAP_SECRET`, is unavailable when that secret is absent, and the Identity use case rejects
+it permanently after the first bootstrap batch or any pre-existing identity state. A D1 claim and the
+invitations commit in one transaction, so concurrent requests cannot both succeed. The operator removes
+the secret immediately after registering the first account; all later invitations use the authenticated
+account capability.
+
+Bootstrap still passes through invitation normalization, digesting, TTL policy, rate limits, and the
+transactional `IdentityStore`. Operators must not seed invitation rows directly or preserve a general
+administrator route as a second business implementation.
+
 ## Atomic commands
 
 - `completeRegistration` consumes one valid registration ceremony and one valid invitation, creates
@@ -60,8 +74,9 @@ Provider messages, stack traces, and arbitrary JSON never become product state.
   verification policy.
 - Sessions are opaque, revocable, server-side records delivered through Secure, HttpOnly, SameSite
   cookies. Logout revokes the session before clearing the cookie.
-- Preview Passkey evidence uses an HTTPS custom domain compatible with the configured RP ID. Localhost
-  can prove a separate development RP or a fake client, not production credential compatibility.
+- Preview Passkey evidence uses a generated HTTPS `*.sightplay.pages.dev` origin with parent RP ID
+  `sightplay.pages.dev`; only origins belonging to the SightPlay Pages project are allowed. Localhost can
+  prove a separate development RP or a fake client, not Preview or production credential compatibility.
 
 ## Operational security
 
@@ -71,5 +86,8 @@ Provider messages, stack traces, and arbitrary JSON never become product state.
   cross-origin surface uses an allowlist and CSRF analysis.
 - Rate limits are dedicated ports with policies per ceremony, invite, account, and source address;
   they are not incidental KV keys.
+- The D1 rate-limit adapter admits each attempt with one atomic upsert. Subjects are digested before
+  persistence, Cloudflare supplies the trusted client address at the platform boundary, and use cases
+  select the source, ceremony, invitation, or account policy before creating protected state.
 - Secrets remain platform bindings. Logs contain stable codes and identifiers, never credential
   material, invitation codes, session tokens, raw AI prompts, or unredacted user input.

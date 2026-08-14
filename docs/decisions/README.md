@@ -37,3 +37,4 @@ explained at the relevant code boundary.
 - [0001 — Practice Decisions and Runtime Effects](0001-practice-reducer-effects.md)
 - [0002 — Capability Modules and Functional Core](0002-capability-modules-and-functional-core.md)
 - [0003 — Transactional Account and Credential Identity](0003-transactional-identity-model.md)
+- [0004 — Use the Pages Preview Environment as PPE](0004-shared-preview-ppe.md)

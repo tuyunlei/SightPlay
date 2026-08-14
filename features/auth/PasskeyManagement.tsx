@@ -1,24 +1,18 @@
 import { KeyRound, Trash2, Ticket, X, Copy, Check } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
+import { useAccountAccess } from '@sightplay/account-access-client';
+import type { CredentialSummary } from '@sightplay/account-access-client';
 import { useIdentity } from '@sightplay/identity-client';
 
-import { translations } from '../../i18n';
-import { useUiStore } from '../../store/uiStore';
+import { useLanguage } from '../../app/presentation/useLanguage';
 
-import { deletePasskeyById, generateInviteCode } from './passkey-api';
-interface Passkey {
-  id: string;
-  name: string;
-  createdAt: number;
-}
 interface PasskeyManagementProps {
   onClose: () => void;
 }
 
 function ModalHeader({ onClose }: { onClose: () => void }) {
-  const lang = useUiStore((state) => state.lang);
-  const t = translations[lang];
+  const { t } = useLanguage();
   return (
     <div className="mb-6 flex items-center justify-between">
       <div className="flex items-center gap-3">
@@ -49,8 +43,7 @@ function InviteCodeDisplay({
   onCopy: () => void;
   onClose: () => void;
 }) {
-  const lang = useUiStore((state) => state.lang);
-  const t = translations[lang];
+  const { t } = useLanguage();
 
   return (
     <div className="space-y-3">
@@ -97,12 +90,11 @@ function PasskeyList({
   isLoading,
   onRemove,
 }: {
-  passkeys: Passkey[];
+  passkeys: readonly CredentialSummary[];
   isLoading: boolean;
   onRemove: (id: string) => void;
 }) {
-  const lang = useUiStore((state) => state.lang);
-  const t = translations[lang];
+  const { t } = useLanguage();
 
   if (isLoading)
     return (
@@ -147,8 +139,7 @@ function GenerateInviteButton({
   isGenerating: boolean;
   onClick: () => void;
 }) {
-  const lang = useUiStore((state) => state.lang);
-  const t = translations[lang];
+  const { t } = useLanguage();
 
   return (
     <button
@@ -170,70 +161,48 @@ function GenerateInviteButton({
     </button>
   );
 }
-async function loadPasskeysFromApi(): Promise<Passkey[]> {
-  const response = await fetch('/api/auth/passkeys', { credentials: 'include' });
-  return response.ok ? await response.json() : [];
-}
-function usePasskeyManagementState() {
-  const { refreshSession } = useIdentity();
-  const [passkeys, setPasskeys] = useState<Passkey[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [inviteCode, setInviteCode] = useState<string | null>(null);
+function usePasskeyPresentationState() {
+  const accountAccess = useAccountAccess();
   const [copied, setCopied] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const lang = useUiStore((state) => state.lang);
-  const t = translations[lang];
+  const { t } = useLanguage();
 
-  useEffect(() => {
-    loadPasskeysFromApi()
-      .then(setPasskeys)
-      .finally(() => setIsLoading(false));
-  }, []);
-
-  const handleGenerateInvite = async () => {
-    setIsGenerating(true);
-    setError(null);
-    try {
-      setInviteCode(await generateInviteCode());
-    } catch {
-      setError(t.inviteCodeFailed);
-    } finally {
-      setIsGenerating(false);
-    }
+  const handleGenerateInvite = () => {
+    accountAccess.clearFailure();
+    accountAccess.requestInvitation();
   };
 
   const handleCopyInvite = () => {
-    if (!inviteCode) return;
-    navigator.clipboard.writeText(inviteCode);
+    if (!accountAccess.state.invitationCode) return;
+    void navigator.clipboard.writeText(accountAccess.state.invitationCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleRemovePasskey = async (id: string) => {
-    if (passkeys.length === 1) return setError(t.passkeyCannotRemoveLast);
+  const handleRemovePasskey = (id: string) => {
+    if (accountAccess.state.credentials.length === 1) return;
     if (!confirm(t.passkeyRemoveConfirm)) return;
-
-    if (await deletePasskeyById(id)) {
-      setPasskeys(await loadPasskeysFromApi());
-      refreshSession();
-      return;
-    }
-    setError(t.passkeyRemoveFailed);
+    accountAccess.requestCredentialRevocation(id);
   };
 
+  const failure = accountAccess.state.failure;
+  const error = failure
+    ? failure.code === 'invitationRejected'
+      ? t.inviteCodeFailed
+      : t.passkeyRemoveFailed
+    : null;
+
   return {
-    passkeys,
-    isLoading,
-    isGenerating,
-    inviteCode,
+    passkeys: accountAccess.state.credentials,
+    isLoading: !accountAccess.state.loaded,
+    isGenerating: accountAccess.state.operation?.kind === 'creatingInvitation',
+    inviteCode: accountAccess.state.invitationCode,
     copied,
     error,
     handleGenerateInvite,
     handleCopyInvite,
     handleRemovePasskey,
     handleCloseInvite: () => {
-      setInviteCode(null);
+      accountAccess.dismissInvitation();
       setCopied(false);
     },
   };
@@ -251,9 +220,8 @@ export function PasskeyManagement({ onClose }: PasskeyManagementProps) {
     handleCopyInvite,
     handleRemovePasskey,
     handleCloseInvite,
-  } = usePasskeyManagementState();
-  const lang = useUiStore((state) => state.lang);
-  const t = translations[lang];
+  } = usePasskeyPresentationState();
+  const { t } = useLanguage();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-bg-overlay)] p-4 backdrop-blur-sm">

@@ -1,54 +1,12 @@
-import type { KVStore } from '../edge-functions/platform/index.ts';
-import { inviteKey } from '../edge-functions/api/auth/invite-code.ts';
-import { createCookie, signJWT } from '../edge-functions/api/_auth-helpers.ts';
+import {
+  asTimestamp,
+  createSystemIdentityPorts,
+} from '../packages/identity-server/src/public.ts';
+
+import { MemoryIdentityStore } from './memory-identity-store.ts';
 
 const E2E_RUN_HEADER = 'X-SightPlay-E2E-Run';
 const E2E_CONTROL_HEADER = 'X-SightPlay-E2E-Control';
-
-type StoredValue = { value: string; expiresAt?: number };
-
-export class MemoryKV implements KVStore {
-  private readonly store = new Map<string, StoredValue>();
-
-  async get(key: string): Promise<string | null> {
-    const entry = this.store.get(key);
-    if (!entry) return null;
-    if (entry.expiresAt && Date.now() > entry.expiresAt) {
-      this.store.delete(key);
-      return null;
-    }
-    return entry.value;
-  }
-
-  async put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void> {
-    this.store.set(key, {
-      value,
-      expiresAt: options?.expirationTtl
-        ? Date.now() + options.expirationTtl * 1000
-        : undefined,
-    });
-  }
-
-  async delete(key: string): Promise<void> {
-    this.store.delete(key);
-  }
-
-  scoped(runId: string): KVStore {
-    const prefix = `${runId}:`;
-    return {
-      get: (key) => this.get(`${prefix}${key}`),
-      put: (key, value, options) => this.put(`${prefix}${key}`, value, options),
-      delete: (key) => this.delete(`${prefix}${key}`),
-    };
-  }
-
-  clearScope(runId: string): void {
-    const prefix = `${runId}:`;
-    for (const key of this.store.keys()) {
-      if (key.startsWith(prefix)) this.store.delete(key);
-    }
-  }
-}
 
 type ChatScenario =
   | { kind: 'success'; replyText: string; challengeData?: object | null }
@@ -69,11 +27,11 @@ const json = (body: object, status = 200, headers?: HeadersInit) =>
 
 export class E2EHarness {
   private readonly chatScenarios = new Map<string, ChatScenario>();
+  private readonly identityStores = new Map<string, MemoryIdentityStore>();
+  private readonly system = createSystemIdentityPorts();
 
   constructor(
-    private readonly kv: MemoryKV,
     private readonly controlToken: string,
-    private readonly jwtSecret: string,
     private readonly allowRealProvider = false
   ) {}
 
@@ -81,8 +39,13 @@ export class E2EHarness {
     return request.headers.get(E2E_RUN_HEADER) || 'default';
   }
 
-  getStore(request: Request): KVStore {
-    return this.kv.scoped(this.getRunId(request));
+  getIdentityStore(request: Request): MemoryIdentityStore {
+    const runId = this.getRunId(request);
+    const existing = this.identityStores.get(runId);
+    if (existing) return existing;
+    const created = new MemoryIdentityStore();
+    this.identityStores.set(runId, created);
+    return created;
   }
 
   async handleControl(request: Request): Promise<Response | null> {
@@ -94,52 +57,34 @@ export class E2EHarness {
 
     const runId = this.getRunId(request);
     const command = (await request.json()) as ControlCommand;
-    const store = this.kv.scoped(runId);
+    const identityStore = this.getIdentityStore(request);
 
     switch (command.action) {
       case 'reset':
-        this.kv.clearScope(runId);
+        this.identityStores.delete(runId);
         this.chatScenarios.delete(runId);
         return json({ ok: true });
       case 'seedInvite': {
-        const now = Date.now();
-        const expiresAt = command.expiresAt ?? now + 60 * 60 * 1000;
-        await store.put(
-          inviteKey(command.code),
-          JSON.stringify({ createdBy: 'e2e', createdAt: now, expiresAt }),
-          { expirationTtl: Math.max(1, Math.ceil((expiresAt - now) / 1000)) }
+        const expiresAt = asTimestamp(command.expiresAt ?? Date.now() + 60 * 60 * 1000);
+        await identityStore.seedInvitation(
+          command.code,
+          expiresAt,
+          this.system.secrets
         );
         return json({ ok: true });
       }
       case 'seedAuthenticatedSession': {
-        const now = Math.floor(Date.now() / 1000);
-        const token = await signJWT(
-          { sub: 'owner', iat: now, exp: now + 60 * 60 },
-          this.jwtSecret
-        );
-        await store.put(
-          'passkeys',
-          JSON.stringify([
-            {
-              id: 'e2e-seeded-passkey',
-              publicKey: 'not-used-by-seeded-session',
-              counter: 0,
-              name: 'E2E seeded session',
-              createdAt: Date.now(),
-            },
-          ])
+        const token = this.system.secrets.createSessionToken();
+        await identityStore.seedAuthenticatedSession(
+          token,
+          asTimestamp(Date.now()),
+          this.system.secrets
         );
         return json(
           { ok: true },
           200,
           {
-            'Set-Cookie': createCookie('auth_token', token, {
-              maxAge: 60 * 60,
-              httpOnly: true,
-              secure: new URL(request.url).protocol === 'https:',
-              sameSite: 'Lax',
-              path: '/',
-            }),
+            'Set-Cookie': `sightplay_session=${encodeURIComponent(token)}; Max-Age=3600; Path=/; HttpOnly; SameSite=Lax`,
           }
         );
       }

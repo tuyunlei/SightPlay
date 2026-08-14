@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures/app-test';
+import { expect, identitySuccess, test } from './fixtures/app-test';
 
 test.describe('ErrorBoundary degraded UI', () => {
   test('renders fallback UI instead of blank screen and retry recovers', async ({
@@ -10,7 +10,7 @@ test.describe('ErrorBoundary degraded UI', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ authenticated: true, hasPasskeys: true }),
+        body: identitySuccess({ authenticated: true, hasPasskeys: true }),
       });
     });
     await page.addInitScript(() => {

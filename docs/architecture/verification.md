@@ -41,6 +41,18 @@ implementation-shape assertions.
 - Disposal cancels input subscriptions and scheduled effects.
 - A stored seed and action sequence reproduce the same generated exercise and result.
 
+### Guidance
+
+- Malformed requests, envelopes, replies, and nested proposals are rejected before entering Guidance.
+- One conversation request is admitted at a time; stale and post-disposal results cannot change state or
+  emit an exercise.
+- Accepted Practice events deterministically trigger hint and recommendation decisions; timer tokens and
+  rate limits are model state rather than React refs.
+- Provider failure selects structured recovery in Guidance, while localized presentation only projects
+  the chosen semantic message.
+- A validated proposal reaches Practice through the exhaustive application mapping and starts the same
+  Practice core used by songs and random exercises.
+
 ### Identity server
 
 - Concurrent use of one invitation produces exactly one successful registration.
@@ -51,12 +63,23 @@ implementation-shape assertions.
 
 ## CI architecture gates
 
-- Package exports and dependency rules enforce feature isolation and model purity.
-- Runtime schemas are required at every network/provider ingress.
+- Package exports, declared package roles, and dependency rules enforce capability isolation and model
+  purity; stateful capabilities cannot coordinate each other by importing public APIs.
+- Network/provider JSON remains `unknown` until a runtime codec accepts the complete contract. Direct JSON
+  parsing and type assertions in ingress code fail CI.
 - Exhaustive union handling fails typecheck when a state or effect is added without interpretation.
-- Effectful features must include a disposal contract test.
+- Every capability declares its lifecycle. A managed runtime names an implementation and executable
+  disposal test; resource-starting ports require disposal and schedulers require cancellation handles.
 - Unexpected browser console errors and unhandled requests fail assembled and E2E tests.
 - Production-only test APIs and direct cross-feature store access are forbidden.
+
+`lint:fitness` executes the repository scan and isolated negative fixtures. The negative fixtures must
+demonstrate that CI rejects capability coupling, capability-owned adapters, browser-adapter construction
+outside `App.tsx`, missing lifecycle declarations, asserted or escaping unknown JSON, an empty or untested
+runtime teardown, a resource-starting port without disposal, and a scheduler without cancellation;
+multiple Cloudflare route files or a catch-all containing application logic also fail. The positive
+fixture proves the corresponding compliant slice and exact shared-handler catch-all are admitted. These
+fixtures test the gate itself rather than standing in for feature behavior tests.
 
 When a defect escapes, repair the nearest false or missing proof first. Add higher-layer coverage only
 when the escaped behavior depends on assembly or a real boundary that the lower layer cannot observe.

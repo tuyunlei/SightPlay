@@ -1,0 +1,20 @@
+{
+  "name": "@sightplay/guidance",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "sightplayArchitecture": {
+    "role": "capability",
+    "lifecycle": {
+      "kind": "managed-runtime",
+      "entry": "src/runtime/guidanceRuntime.ts",
+      "test": "src/runtime/guidanceRuntime.test.ts"
+    }
+  },
+  "exports": {
+    ".": "./src/public.ts"
+  },
+  "dependencies": {
+    "react": "^19.2.4"
+  }
+}

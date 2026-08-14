@@ -1,10 +1,9 @@
-import type { KVStore } from '../edge-functions/platform';
+import type { D1DatabasePort } from '@sightplay/identity-server';
 
 export type PagesFunction = (context: {
   request: Request;
   env: Record<string, unknown> & {
-    AUTH_STORE: KVStore;
-    JWT_SECRET: string;
+    IDENTITY_DB: D1DatabasePort;
     GEMINI_API_KEY: string;
   };
   params: Record<string, string>;

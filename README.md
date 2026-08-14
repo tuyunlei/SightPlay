@@ -46,7 +46,10 @@ loopback dev/API server on port 4173 and built preview on 4174; override them wi
 
 The public application is [sightplay.xclz.org](https://sightplay.xclz.org), deployed through
 Cloudflare Pages and its Pages Functions. `wrangler.toml` owns the runtime configuration; see the
-E2E guide for the boundary between a remote smoke check and real Passkey evidence.
+E2E guide for the boundary between a remote smoke check and real Passkey evidence. Transactional
+Identity deployment and credential cutover follow the
+[Cloudflare environment contract](docs/guides/cloudflare-environments.md) and
+[Identity migration runbook](docs/guides/identity-migration.md).
 
 ## How It Works
 
@@ -61,7 +64,7 @@ E2E guide for the boundary between a remote smoke check and real Passkey evidenc
 
 - React + TypeScript + Vite
 - TailwindCSS
-- Zustand (state management)
+- Capability-owned functional cores with typed actions, effects, and injected ports
 - Web MIDI API / Web Audio API
 - Google Gemini AI
 

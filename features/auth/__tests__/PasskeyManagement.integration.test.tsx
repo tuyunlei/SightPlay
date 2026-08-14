@@ -1,166 +1,99 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { AccountAccessProvider, type AccountAccessPorts } from '@sightplay/account-access-client';
+import { PreferencesProvider } from '@sightplay/preferences';
+
 import { translations } from '../../../i18n';
-import { useUiStore } from '../../../store/uiStore';
 import { PasskeyManagement } from '../PasskeyManagement';
 
-const { checkSessionMock, logoutMock, writeTextMock } = vi.hoisted(() => ({
-  checkSessionMock: vi.fn(),
-  logoutMock: vi.fn(),
-  writeTextMock: vi.fn().mockResolvedValue(undefined),
-}));
+const { logoutMock } = vi.hoisted(() => ({ logoutMock: vi.fn() }));
 
 vi.mock('@sightplay/identity-client', () => ({
-  useIdentity: () => ({
-    refreshSession: checkSessionMock,
-    logout: logoutMock,
-  }),
+  useIdentity: () => ({ logout: logoutMock }),
 }));
 
-describe('PasskeyManagement integration', () => {
+function renderManagement(api: AccountAccessPorts['api'], onCredentialSetChanged = vi.fn()) {
+  render(
+    <PreferencesProvider initialLanguage="en">
+      <AccountAccessProvider
+        ports={{ api }}
+        onOutput={(output) => {
+          if (output.kind === 'credentialSetChanged') onCredentialSetChanged();
+        }}
+      >
+        <PasskeyManagement onClose={vi.fn()} />
+      </AccountAccessProvider>
+    </PreferencesProvider>
+  );
+  return onCredentialSetChanged;
+}
+
+describe('PasskeyManagement assembled behavior', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useUiStore.setState({ lang: 'en' });
-
-    Object.defineProperty(global.navigator, 'clipboard', {
-      value: { writeText: writeTextMock },
-      configurable: true,
-      writable: true,
-    });
-
     window.confirm = vi.fn(() => true);
   });
 
-  it('renders passkey list and updates after deleting one passkey', async () => {
+  it('executes credential revocation through the core and reports the resulting capability output', async () => {
     const user = userEvent.setup();
-    let passkeys = [
-      { id: 'pk-1', name: 'Phone', createdAt: Date.now() },
-      { id: 'pk-2', name: 'Laptop', createdAt: Date.now() },
-    ];
+    const api: AccountAccessPorts['api'] = {
+      listCredentials: vi.fn(async () => ({
+        ok: true as const,
+        value: [
+          { id: 'phone', name: 'Phone', createdAt: 1 },
+          { id: 'laptop', name: 'Laptop', createdAt: 2 },
+        ],
+      })),
+      createInvitation: vi.fn(),
+      revokeCredential: vi.fn(async () => ({ ok: true as const, value: undefined })),
+    };
+    const onCredentialSetChanged = renderManagement(api);
 
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (input: string, init?: RequestInit) => {
-        if (input === '/api/auth/passkeys' && !init?.method) {
-          return { ok: true, json: async () => passkeys } as Response;
-        }
-        if (input === '/api/auth/passkeys?id=pk-2' && init?.method === 'DELETE') {
-          passkeys = passkeys.filter((item) => item.id !== 'pk-2');
-          return { ok: true } as Response;
-        }
-        return { ok: false, json: async () => ({}) } as Response;
-      })
+    await user.click(
+      (await screen.findAllByRole('button', { name: translations.en.passkeyRemove }))[1]
     );
 
-    render(<PasskeyManagement onClose={vi.fn()} />);
-
-    expect(await screen.findByText('Phone')).toBeTruthy();
-    expect(screen.getByText('Laptop')).toBeTruthy();
-
-    const removeButtons = screen.getAllByRole('button', { name: translations.en.passkeyRemove });
-    await user.click(removeButtons[1]);
-
-    await waitFor(() => {
-      expect(screen.getByText('Phone')).toBeTruthy();
-      expect(screen.queryByText('Laptop')).toBeFalsy();
-    });
-
-    expect(checkSessionMock).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(screen.queryByText('Laptop')).toBeNull());
+    expect(api.revokeCredential).toHaveBeenCalledWith('laptop', expect.any(AbortSignal));
+    expect(onCredentialSetChanged).toHaveBeenCalledTimes(1);
   });
 
-  it('generates invite code and supports copy interaction', async () => {
+  it('creates an invitation through the injected capability and preserves copy as local UI feedback', async () => {
     const user = userEvent.setup();
-
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (input: string, init?: RequestInit) => {
-        if (input === '/api/auth/passkeys') {
-          return {
-            ok: true,
-            json: async () => [{ id: 'pk-1', name: 'Phone', createdAt: Date.now() }],
-          } as Response;
-        }
-        if (input === '/api/auth/invite' && init?.method === 'POST') {
-          return { ok: true, json: async () => ({ codes: ['ABCD-EFGH'] }) } as Response;
-        }
-        return { ok: false, json: async () => ({}) } as Response;
-      })
-    );
-
-    render(<PasskeyManagement onClose={vi.fn()} />);
+    const writeText = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+    const api: AccountAccessPorts['api'] = {
+      listCredentials: vi.fn(async () => ({
+        ok: true as const,
+        value: [{ id: 'phone', name: 'Phone', createdAt: 1 }],
+      })),
+      createInvitation: vi.fn(async () => ({ ok: true as const, value: 'ABCD-EFGH' })),
+      revokeCredential: vi.fn(),
+    };
+    renderManagement(api);
 
     await user.click(
       await screen.findByRole('button', { name: translations.en.inviteCodeGenerate })
     );
+    await user.click(await screen.findByRole('button', { name: translations.en.inviteCodeCopy }));
 
-    expect(await screen.findByText('ABCD-EFGH')).toBeTruthy();
-
-    await user.click(screen.getByText(translations.en.inviteCodeCopy));
-
-    await waitFor(() => {
-      expect(screen.getByText(translations.en.inviteCodeCopied)).toBeTruthy();
-    });
+    expect(writeText).toHaveBeenCalledWith('ABCD-EFGH');
   });
 
-  it('calls auth logout when logout button is clicked', async () => {
+  it('keeps logout as an Identity intent rather than an Account Access mutation', async () => {
     const user = userEvent.setup();
-
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(
-        async () =>
-          ({
-            ok: true,
-            json: async () => [{ id: 'pk-1', name: 'Phone', createdAt: Date.now() }],
-          }) as Response
-      )
-    );
-
-    render(<PasskeyManagement onClose={vi.fn()} />);
-
-    await screen.findByText('Phone');
-    await user.click(screen.getByRole('button', { name: translations.en.authLogoutButton }));
-
-    expect(logoutMock).toHaveBeenCalledTimes(1);
-  });
-
-  it('keeps list + invite + logout functional across language switch', async () => {
-    const user = userEvent.setup();
-
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (input: string, init?: RequestInit) => {
-        if (input === '/api/auth/passkeys') {
-          return {
-            ok: true,
-            json: async () => [{ id: 'pk-1', name: 'Phone', createdAt: Date.now() }],
-          } as Response;
-        }
-        if (input === '/api/auth/invite' && init?.method === 'POST') {
-          return { ok: true, json: async () => ({ codes: ['ZXCV-BNMQ'] }) } as Response;
-        }
-        return { ok: false, json: async () => ({}) } as Response;
-      })
-    );
-
-    render(<PasskeyManagement onClose={vi.fn()} />);
-
-    expect(await screen.findByText('Phone')).toBeTruthy();
-
-    act(() => {
-      useUiStore.setState({ lang: 'zh' });
+    renderManagement({
+      listCredentials: vi.fn(async () => ({ ok: true as const, value: [] })),
+      createInvitation: vi.fn(),
+      revokeCredential: vi.fn(),
     });
 
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: translations.zh.inviteCodeGenerate })).toBeTruthy();
-    });
-
-    await user.click(screen.getByRole('button', { name: translations.zh.inviteCodeGenerate }));
-    expect(await screen.findByText('ZXCV-BNMQ')).toBeTruthy();
-
-    await user.click(screen.getByRole('button', { name: translations.zh.authLogoutButton }));
+    await user.click(await screen.findByRole('button', { name: translations.en.authLogoutButton }));
     expect(logoutMock).toHaveBeenCalledTimes(1);
   });
 });

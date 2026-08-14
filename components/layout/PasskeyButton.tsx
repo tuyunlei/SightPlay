@@ -1,6 +1,6 @@
 import { KeyRound } from 'lucide-react';
 
-import { useLanguage } from '../../hooks/useLanguage';
+import { useLanguage } from '../../app/presentation/useLanguage';
 
 type PasskeyButtonProps = {
   onClick: () => void;

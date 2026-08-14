@@ -110,7 +110,7 @@
 
 - [x] 邀请码数据模型（KV 存储，字段：code、createdBy、usedBy、expiresAt） ← `d1f4daf`
 - [x] 邀请码格式：8 位 `XXXX-XXXX`，字符集 32 个（排除 0/O/I/1/L） ← `d1f4daf`
-- [x] API：管理员生成邀请码（`X-Admin-Secret` 鉴权，支持批量） ← `d1f4daf`
+- [x] API：已认证账号生成邀请码；空身份库使用一次性 bootstrap capability
 - [x] API：已注册用户生成邀请码（每码限用一次，一周过期） ← `d1f4daf`
 - [x] 注册页面改造：移除邀请链接入口，改为输入邀请码 ← `d1f4daf`
 - [x] 注册流程：验证邀请码 → 注册 → 标记已使用 ← `d1f4daf`

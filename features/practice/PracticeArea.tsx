@@ -1,17 +1,12 @@
 import { ChevronDown, ChevronUp, Piano } from 'lucide-react';
 import React, { useState } from 'react';
 
+import type { PracticeView } from '@sightplay/practice';
+
 import PianoDisplay from '../../components/PianoDisplay';
 import StaffDisplay from '../../components/StaffDisplay';
 import { translations } from '../../i18n';
-import { PracticeStatus } from '../../store/practiceStore';
-import {
-  ClefType,
-  GeneratedChallenge,
-  HandPracticeMode,
-  Note,
-  PracticeRangeMode,
-} from '../../types';
+import { ClefType, HandPracticeMode, Note, PracticeRangeMode } from '../../types';
 
 import { ChallengeProgress } from './ChallengeProgress';
 import { HandModeSelector } from './HandModeSelector';
@@ -19,20 +14,8 @@ import { PracticeRangeSelector } from './PracticeRangeSelector';
 import { TargetInfo } from './TargetInfo';
 
 interface PracticeAreaProps {
-  clef: ClefType;
-  practiceRange: PracticeRangeMode;
-  handMode: HandPracticeMode;
-  noteQueue: Note[];
-  exitingNotes: Note[];
-  detectedNote: Note | null;
-  status: PracticeStatus;
-  targetNote: Note | null;
-  pressedKeys: Map<number, { note: Note; isCorrect: boolean; targetId?: string | null }>;
-  challengeSequence: Note[];
-  challengeIndex: number;
-  challengeInfo: GeneratedChallenge | null;
+  view: PracticeView;
   t: typeof translations.en;
-  isMidiConnected: boolean;
   onPracticeRangeChange: (mode: PracticeRangeMode) => void;
   onHandModeChange: (mode: HandPracticeMode) => void;
 }
@@ -68,7 +51,7 @@ type PracticeMainPanelProps = {
   noteQueue: Note[];
   exitingNotes: Note[];
   detectedNote: Note | null;
-  status: PracticeStatus;
+  status: PracticeView['status'];
   targetNote: Note | null;
   pressedKeys: Map<number, { note: Note; isCorrect: boolean; targetId?: string | null }>;
   t: typeof translations.en;
@@ -156,47 +139,44 @@ const PracticeMainPanel: React.FC<PracticeMainPanelProps> = ({
 };
 
 const PracticeArea: React.FC<PracticeAreaProps> = ({
-  clef,
-  practiceRange,
-  handMode,
-  noteQueue,
-  exitingNotes,
-  detectedNote,
-  status,
-  targetNote,
-  pressedKeys,
-  challengeSequence,
-  challengeIndex,
-  challengeInfo,
+  view,
   t,
-  isMidiConnected,
   onPracticeRangeChange,
   onHandModeChange,
 }) => {
-  const isChallengeActive = challengeSequence.length > 0;
+  const clef = view.clef === 'treble' ? ClefType.TREBLE : ClefType.BASS;
+  const noteQueue = [...view.noteQueue];
+  const exitingNotes = [...view.exitingNotes];
+  const pressedKeys = new Map(
+    view.pressedKeys.map((pressed) => [
+      pressed.midi,
+      { note: pressed.note, isCorrect: pressed.isCorrect, targetId: pressed.targetId },
+    ])
+  );
+  const isExerciseActive = view.source !== 'random';
 
   return (
     <div className="md:col-span-2 flex flex-col gap-3 sm:gap-4 justify-start">
       <PracticeMainPanel
         clef={clef}
-        practiceRange={practiceRange}
-        handMode={handMode}
+        practiceRange={view.practiceRange}
+        handMode={view.handMode}
         noteQueue={noteQueue}
         exitingNotes={exitingNotes}
-        detectedNote={detectedNote}
-        status={status}
-        targetNote={targetNote}
+        detectedNote={view.detectedNote}
+        status={view.status}
+        targetNote={view.targetNote}
         pressedKeys={pressedKeys}
         t={t}
-        isMidiConnected={isMidiConnected}
-        isChallengeActive={isChallengeActive}
+        isMidiConnected={view.isMidiConnected}
+        isChallengeActive={isExerciseActive}
         onPracticeRangeChange={onPracticeRangeChange}
         onHandModeChange={onHandModeChange}
       />
       <ChallengeProgress
-        challengeSequence={challengeSequence}
-        challengeIndex={challengeIndex}
-        challengeInfo={challengeInfo}
+        title={view.metadata.title}
+        current={view.completedCount}
+        total={view.totalCount ?? 0}
       />
     </div>
   );

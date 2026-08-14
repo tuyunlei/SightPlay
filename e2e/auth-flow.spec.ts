@@ -1,4 +1,4 @@
-import { test, expect, Page } from './fixtures/app-test';
+import { expect, identitySuccess, test, type Page } from './fixtures/app-test';
 
 async function mockBypassAuth(page: Page, scenario: 'register' | 'login') {
   let isAuthenticatedNow = false;
@@ -7,7 +7,7 @@ async function mockBypassAuth(page: Page, scenario: 'register' | 'login') {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
+      body: identitySuccess({
         authenticated: isAuthenticatedNow,
         hasPasskeys: scenario === 'login' || isAuthenticatedNow,
       }),
@@ -19,7 +19,7 @@ async function mockBypassAuth(page: Page, scenario: 'register' | 'login') {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
+        body: identitySuccess({
           challenge: btoa('mock-challenge'),
           rp: { name: 'SightPlay', id: 'localhost' },
           user: {
@@ -42,7 +42,7 @@ async function mockBypassAuth(page: Page, scenario: 'register' | 'login') {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true }),
+        body: identitySuccess({ completed: true }),
       });
     });
   } else {
@@ -50,8 +50,9 @@ async function mockBypassAuth(page: Page, scenario: 'register' | 'login') {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
+        body: identitySuccess({
           challenge: btoa('mock-challenge'),
+          rpId: '127.0.0.1',
           allowCredentials: [
             {
               id: btoa('credential-123'),
@@ -70,7 +71,7 @@ async function mockBypassAuth(page: Page, scenario: 'register' | 'login') {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true }),
+        body: identitySuccess({ completed: true }),
       });
     });
   }
@@ -86,8 +87,8 @@ async function mockBypassAuth(page: Page, scenario: 'register' | 'login') {
     };
 
     const createMockCredential = () => ({
-      id: 'mock-credential-id',
-      rawId: mockBuffer('mock-credential-id'),
+      id: 'AQID',
+      rawId: new Uint8Array([1, 2, 3]).buffer,
       type: 'public-key',
       authenticatorAttachment: 'platform',
       response: {
@@ -142,7 +143,7 @@ test.describe('Authentication Flow E2E', () => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ authenticated: false, hasPasskeys: false }),
+          body: identitySuccess({ authenticated: false, hasPasskeys: false }),
         });
       });
 
@@ -175,7 +176,7 @@ test.describe('Authentication Flow E2E', () => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ authenticated: true, hasPasskeys: true }),
+          body: identitySuccess({ authenticated: true, hasPasskeys: true }),
         });
       });
 

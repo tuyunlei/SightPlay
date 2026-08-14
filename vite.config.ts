@@ -1,31 +1,17 @@
-import { cpSync } from 'fs';
 import path from 'path';
 
 import babel from '@rolldown/plugin-babel';
 import { sentryVitePlugin } from '@sentry/vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
-import { defineConfig, type Plugin, type ViteDevServer } from 'vite';
+import { defineConfig, type ViteDevServer } from 'vite';
 
-import { devAuthMiddleware } from './scripts/dev-auth-middleware.ts';
 import {
   DEFAULT_DEV_PORT,
   DEFAULT_E2E_PREVIEW_PORT,
   LOOPBACK_HOST,
   resolvePort,
 } from './scripts/server-config.ts';
-
-const __projectRoot = path.resolve(import.meta.dirname);
-
-function copyEdgeFunctions(): Plugin {
-  return {
-    name: 'copy-edge-functions',
-    apply: 'build',
-    closeBundle() {
-      cpSync('edge-functions', 'dist/edge-functions', { recursive: true });
-    },
-  };
-}
 
 export default defineConfig(({ mode }) => {
   const isProd = mode === 'production';
@@ -59,11 +45,13 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       babel({ presets: [reactCompilerPreset()] }),
-      copyEdgeFunctions(),
       {
         name: 'dev-auth',
-        configureServer(server: ViteDevServer) {
-          server.middlewares.use(devAuthMiddleware(__projectRoot, server));
+        async configureServer(server: ViteDevServer) {
+          const { devAuthMiddleware } = await server.ssrLoadModule(
+            '/scripts/dev-auth-middleware.ts'
+          );
+          server.middlewares.use(devAuthMiddleware());
         },
       },
       // Upload sourcemaps to Sentry in production if auth token is available

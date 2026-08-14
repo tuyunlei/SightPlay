@@ -1,0 +1,12 @@
+{
+  "name": "@sightplay/api-contracts",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "sightplayArchitecture": {
+    "role": "contracts"
+  },
+  "exports": {
+    ".": "./src/public.ts"
+  }
+}

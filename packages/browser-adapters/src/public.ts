@@ -1,3 +1,14 @@
+export { createBrowserAccountAccessPorts } from './identity/createBrowserAccountAccessPorts';
 export { createBrowserIdentityPorts } from './identity/createBrowserIdentityPorts';
-export { createBrowserPasskeyPort, passkeyFailureContract } from './identity/browserPasskey';
+export { createBrowserPasskeyPort } from './identity/browserPasskey';
+export type { BrowserWebAuthnProvider } from './identity/browserPasskey';
 export { createHttpIdentityApi, identityHttpContract } from './identity/httpIdentityApi';
+export { createHttpAccountAccessApi } from './identity/httpAccountAccessApi';
+export { createBrowserMicrophoneInput } from './practice/browserMicrophoneInput';
+export type { BrowserMicrophoneEnvironment } from './practice/browserMicrophoneInput';
+export { createBrowserMidiInput } from './practice/browserMidiInput';
+export type { BrowserMidiEnvironment } from './practice/browserMidiInput';
+export { createBrowserPracticePorts } from './practice/createBrowserPracticePorts';
+export { createBrowserGuidancePorts } from './guidance/createBrowserGuidancePorts';
+export { createHttpGuidanceChat } from './guidance/httpGuidanceChat';
+export { detectMidiPitch } from './practice/pitchDetection';

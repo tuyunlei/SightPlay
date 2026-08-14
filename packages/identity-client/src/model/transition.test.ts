@@ -27,7 +27,7 @@ describe('Identity transition', () => {
     state = reduce(state, {
       kind: 'loginOptionsReceived',
       operationId: 2,
-      options: { challenge: 'challenge', allowCredentials: [] },
+      options: { challenge: 'challenge', rpId: 'sightplay.example', allowCredentials: [] },
     });
     state = reduce(state, {
       kind: 'authenticationCreated',

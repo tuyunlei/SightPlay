@@ -1,0 +1,20 @@
+{
+  "name": "@sightplay/identity-server",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "sightplayArchitecture": {
+    "role": "capability",
+    "lifecycle": {
+      "kind": "request-scoped"
+    }
+  },
+  "exports": {
+    ".": "./src/public.ts"
+  },
+  "dependencies": {
+    "@passwordless-id/webauthn": "^2.3.4",
+    "@sightplay/api-contracts": "workspace:*",
+    "@simplewebauthn/server": "^13.3.2"
+  }
+}

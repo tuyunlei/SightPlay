@@ -1,0 +1,20 @@
+{
+  "name": "@sightplay/practice",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "sightplayArchitecture": {
+    "role": "capability",
+    "lifecycle": {
+      "kind": "managed-runtime",
+      "entry": "src/runtime/practiceRuntime.ts",
+      "test": "src/runtime/practiceRuntime.test.ts"
+    }
+  },
+  "exports": {
+    ".": "./src/public.ts"
+  },
+  "dependencies": {
+    "react": "^19.2.4"
+  }
+}

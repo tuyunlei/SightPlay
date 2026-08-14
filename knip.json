@@ -1,7 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["edge-functions/**/*.ts", "functions/**/*.ts"],
+  "entry": ["functions/**/*.ts", "scripts/dev-auth-middleware.ts"],
   "project": ["**/*.{ts,tsx}"],
-  "ignoreDependencies": ["tailwindcss"],
+  "ignoreDependencies": ["cloudflare", "tailwindcss", "wrangler"],
   "ignoreExportsUsedInFile": true
 }
