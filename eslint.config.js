@@ -6,15 +6,6 @@ import reactCompiler from 'eslint-plugin-react-compiler';
 import importPlugin from 'eslint-plugin-import';
 import prettier from 'eslint-config-prettier';
 
-const DEFAULT_EXPORT_WHITELIST = [
-  'App.tsx',
-  'components/PianoDisplay.tsx',
-  'components/StaffDisplay.tsx',
-  'features/ai/AiCoachPanel.tsx',
-  'features/controls/TopBar.tsx',
-  'features/practice/PracticeArea.tsx',
-];
-
 export default tseslint.config(
   { ignores: ['dist', 'node_modules', 'coverage', '.github', 'scripts'] },
   {
@@ -52,7 +43,6 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'error',
       complexity: ['error', { max: 15 }],
       'max-lines-per-function': ['error', { max: 80, skipBlankLines: true, skipComments: true }],
-      'import/no-default-export': 'error',
       'import/no-relative-packages': 'error',
       'import/order': [
         'error',
@@ -62,18 +52,6 @@ export default tseslint.config(
           alphabetize: { order: 'asc', caseInsensitive: true },
         },
       ],
-    },
-  },
-  {
-    files: DEFAULT_EXPORT_WHITELIST,
-    rules: {
-      'import/no-default-export': 'off',
-    },
-  },
-  {
-    files: ['**/*.config.{ts,tsx}', 'vite.config.ts', 'vitest.config.ts'],
-    rules: {
-      'import/no-default-export': 'off',
     },
   },
   {

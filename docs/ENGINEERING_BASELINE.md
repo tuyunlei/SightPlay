@@ -61,8 +61,9 @@ Verified on 2026-08-10: frozen install, formatting, lint (zero warnings), typech
 The E2E server released `127.0.0.1:4173` after the run; an unrelated process already using port 3000
 was not reused or modified.
 
-Non-blocking output remains: five files are within 50 lines of the 300-line size limit, and the
-production bundle is 585.75 kB minified (above Vite's 500 kB advisory threshold).
+The production bundle was 585.75 kB minified at this historical checkpoint, above Vite's 500 kB advisory
+threshold. File line count is not a current CI gate; local function complexity and behavior-oriented
+module boundaries carry that signal more directly.
 
 ## Remaining risk
 

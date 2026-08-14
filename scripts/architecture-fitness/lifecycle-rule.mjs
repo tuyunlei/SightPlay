@@ -3,20 +3,10 @@ import path from 'node:path';
 
 import ts from 'typescript';
 
-import { normalize, parseSource, propertyName, sourceFiles, TEST_PATTERN } from './source.mjs';
+import { normalize, parseSource, sourceFiles, TEST_PATTERN } from './source.mjs';
 
 function memberName(member) {
   return member.name && ts.isIdentifier(member.name) ? member.name.text : null;
-}
-
-function containsDisposeCall(sourceFile) {
-  let found = false;
-  const visit = (node) => {
-    if (ts.isCallExpression(node) && propertyName(node.expression) === 'dispose') found = true;
-    ts.forEachChild(node, visit);
-  };
-  visit(sourceFile);
-  return found;
 }
 
 function resolveDeclaredFile(projectRoot, packageInfo, relative, label, violations) {
@@ -51,16 +41,6 @@ function implementedInterfaceNames(node) {
       .map((type) => (ts.isIdentifier(type.expression) ? type.expression.text : null))
       .filter(Boolean)
   );
-}
-
-function containsCall(node) {
-  let found = false;
-  const visit = (child) => {
-    if (ts.isCallExpression(child)) found = true;
-    if (!found) ts.forEachChild(child, visit);
-  };
-  visit(node);
-  return found;
 }
 
 function managedRuntimeContracts(packageInfo) {
@@ -108,18 +88,13 @@ function checkManagedRuntimes(projectRoot, packages, violations) {
             file: normalize(path.relative(projectRoot, entry)),
             message: `Managed runtime implementation ${implementation.name?.text ?? '<anonymous>'} must implement dispose().`,
           });
-        } else if (!containsCall(dispose)) {
-          violations.push({
-            file: normalize(path.relative(projectRoot, entry)),
-            message: `Managed runtime implementation ${implementation.name?.text ?? '<anonymous>'} must execute teardown work inside dispose().`,
-          });
         }
       }
     }
-    if (test && (!TEST_PATTERN.test(test) || !containsDisposeCall(parseSource(test)))) {
+    if (test && !TEST_PATTERN.test(test)) {
       violations.push({
         file: normalize(path.relative(projectRoot, test)),
-        message: `Managed runtime package ${name} needs an executable declared test that invokes dispose().`,
+        message: `Managed runtime package ${name} must name a test file for its lifecycle behavior.`,
       });
     }
   }

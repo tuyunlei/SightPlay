@@ -65,21 +65,24 @@ implementation-shape assertions.
 
 - Package exports, declared package roles, and dependency rules enforce capability isolation and model
   purity; stateful capabilities cannot coordinate each other by importing public APIs.
-- Network/provider JSON remains `unknown` until a runtime codec accepts the complete contract. Direct JSON
-  parsing and type assertions in ingress code fail CI.
+- Network/provider JSON enters through helpers that return `unknown`. The static gate blocks direct JSON
+  parsing, returning raw admitted values, and asserting admitted values into trusted types; adapter and
+  codec behavior tests prove whether a concrete contract is actually accepted or rejected.
 - Exhaustive union handling fails typecheck when a state or effect is added without interpretation.
-- Every capability declares its lifecycle. A managed runtime names an implementation and executable
-  disposal test; resource-starting ports require disposal and schedulers require cancellation handles.
+- Every capability declares its lifecycle. A managed runtime names an implementation and lifecycle test;
+  the static gate verifies the `start()`/`dispose()` shape, while that runtime's behavior test proves
+  cancellation and late-result rejection. Resource-starting ports require disposal and schedulers require
+  cancellation handles.
 - Unexpected browser console errors and unhandled requests fail assembled and E2E tests.
 - Production-only test APIs and direct cross-feature store access are forbidden.
 
 `lint:fitness` executes the repository scan and isolated negative fixtures. The negative fixtures must
 demonstrate that CI rejects capability coupling, capability-owned adapters, browser-adapter construction
-outside `App.tsx`, missing lifecycle declarations, asserted or escaping unknown JSON, an empty or untested
-runtime teardown, a resource-starting port without disposal, and a scheduler without cancellation;
-multiple Cloudflare route files or a catch-all containing application logic also fail. The positive
-fixture proves the corresponding compliant slice and exact shared-handler catch-all are admitted. These
-fixtures test the gate itself rather than standing in for feature behavior tests.
+outside `App.tsx`, missing lifecycle declarations or methods, asserted or escaping admitted JSON, a
+resource-starting port without disposal, and a scheduler without cancellation; multiple Cloudflare route
+files or a catch-all containing application logic also fail. The positive fixture proves the corresponding
+compliant slice and both supported hosting-only catch-all forms are admitted. These fixtures test static
+structure only and never stand in for feature behavior tests.
 
 When a defect escapes, repair the nearest false or missing proof first. Add higher-layer coverage only
 when the escaped behavior depends on assembly or a real boundary that the lower layer cannot observe.

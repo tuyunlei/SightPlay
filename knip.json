@@ -1,7 +1,11 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["functions/**/*.ts", "scripts/dev-auth-middleware.ts"],
-  "project": ["**/*.{ts,tsx}"],
-  "ignoreDependencies": ["cloudflare", "tailwindcss", "wrangler"],
+  "workspaces": {
+    ".": {
+      "entry": ["functions/**/*.ts", "scripts/dev-auth-middleware.ts"],
+      "project": ["**/*.{ts,tsx}"],
+      "ignoreDependencies": ["cloudflare", "tailwindcss"]
+    }
+  },
   "ignoreExportsUsedInFile": true
 }

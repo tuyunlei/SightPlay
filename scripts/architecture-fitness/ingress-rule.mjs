@@ -36,6 +36,12 @@ const UNKNOWN_JSON_ADMISSIONS = new Set(['readUnknownJson', 'parseUnknownJson'])
 function admissionBindings(source) {
   const bindings = new Set();
   for (const statement of source.statements.filter(ts.isImportDeclaration)) {
+    if (
+      !ts.isStringLiteral(statement.moduleSpecifier) ||
+      statement.moduleSpecifier.text !== '@sightplay/api-contracts'
+    ) {
+      continue;
+    }
     if (!statement.importClause?.namedBindings || !ts.isNamedImports(statement.importClause.namedBindings))
       continue;
     for (const element of statement.importClause.namedBindings.elements) {
@@ -47,37 +53,66 @@ function admissionBindings(source) {
 }
 
 function isUnknownJsonAdmission(node, bindings) {
-  if (!ts.isCallExpression(node)) return false;
-  return ts.isIdentifier(node.expression)
-    ? bindings.has(node.expression.text)
-    : UNKNOWN_JSON_ADMISSIONS.has(propertyName(node.expression));
+  return (
+    ts.isCallExpression(node) &&
+    ts.isIdentifier(node.expression) &&
+    bindings.has(node.expression.text)
+  );
 }
 
-function isImmediatelyConsumed(node) {
-  let parent = node.parent;
+function unwrap(node) {
+  let current = node;
   while (
-    parent &&
-    (ts.isAwaitExpression(parent) ||
-      ts.isParenthesizedExpression(parent) ||
-      ts.isNonNullExpression(parent))
+    ts.isAwaitExpression(current) ||
+    ts.isParenthesizedExpression(current) ||
+    ts.isNonNullExpression(current)
   ) {
-    parent = parent.parent;
+    current = current.expression;
   }
-  return Boolean(parent && ts.isCallExpression(parent));
+  return current;
+}
+
+function admissionVariables(source, bindings) {
+  const variables = new Set();
+  const visit = (node) => {
+    if (
+      ts.isVariableDeclaration(node) &&
+      ts.isIdentifier(node.name) &&
+      node.initializer &&
+      containsAdmission(node.initializer, bindings)
+    ) {
+      variables.add(node.name.text);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  return variables;
+}
+
+function containsAdmission(node, bindings) {
+  let found = false;
+  const visit = (child) => {
+    if (isUnknownJsonAdmission(child, bindings)) found = true;
+    if (!found) ts.forEachChild(child, visit);
+  };
+  visit(node);
+  return found;
+}
+
+function isRawAdmissionValue(node, bindings, variables) {
+  const value = unwrap(node);
+  return (
+    isUnknownJsonAdmission(value, bindings) ||
+    (ts.isIdentifier(value) && variables.has(value.text))
+  );
 }
 
 function checkBoundaryFile(projectRoot, absolute, violations) {
   const source = parseSource(absolute);
   const admissions = admissionBindings(source);
+  const variables = admissionVariables(source, admissions);
   const visit = (node) => {
     if (ts.isCallExpression(node)) {
-      if (isUnknownJsonAdmission(node, admissions) && !isImmediatelyConsumed(node)) {
-        violations.push({
-          file: normalize(path.relative(projectRoot, absolute)),
-          message:
-            'Raw unknown JSON cannot escape an ingress boundary; pass it directly to a runtime decoder or structural narrowing function.',
-        });
-      }
       if (propertyName(node.expression) === 'json' && !isStaticResponseJson(node.expression)) {
         violations.push({
           file: normalize(path.relative(projectRoot, absolute)),
@@ -94,14 +129,25 @@ function checkBoundaryFile(projectRoot, absolute, violations) {
       }
     }
     if (
-      (ts.isAsExpression(node) && !isConstAssertion(node)) ||
-      ts.isTypeAssertionExpression(node) ||
-      ts.isNonNullExpression(node)
+      ((ts.isAsExpression(node) && !isConstAssertion(node)) ||
+        ts.isTypeAssertionExpression(node) ||
+        ts.isNonNullExpression(node)) &&
+      isRawAdmissionValue(node.expression, admissions, variables)
     ) {
       violations.push({
         file: normalize(path.relative(projectRoot, absolute)),
         message:
-          'Ingress code cannot assert external data into a trusted type; narrow it structurally or use a codec.',
+          'Ingress code cannot assert admitted JSON into a trusted type; narrow it structurally or use a codec.',
+      });
+    }
+    if (
+      ts.isReturnStatement(node) &&
+      node.expression &&
+      isRawAdmissionValue(node.expression, admissions, variables)
+    ) {
+      violations.push({
+        file: normalize(path.relative(projectRoot, absolute)),
+        message: 'Raw admitted JSON cannot be returned from an ingress boundary.',
       });
     }
     ts.forEachChild(node, visit);
