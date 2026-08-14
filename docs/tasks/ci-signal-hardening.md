@@ -1,6 +1,6 @@
 # CI Signal Hardening
 
-Status: in progress
+Status: ready for review
 
 Branch: `codex/ci-signal-hardening`
 
@@ -30,7 +30,7 @@ can mechanically prove; runtime correctness remains the responsibility of behavi
       typed code; retain structural boundaries and rely on existing runtime/adapter behavior suites.
 - [x] Pass the complete local deterministic gate without warnings.
 - [x] Pass the full local Playwright and side-effect-free build evidence.
-- [ ] Pass the new GitHub Actions workflow without persistent configuration warnings.
+- [x] Pass the new GitHub Actions workflow without persistent configuration warnings.
 - [ ] After the new check names exist on `develop`, configure branch protection for `develop` and `main`
       as a separately reviewed repository operation.
 
@@ -75,3 +75,8 @@ can mechanically prove; runtime correctness remains the responsibility of behavi
   workerd, artifact, Knip, or file-size warnings; the only remaining output was Vite's generic 500 kB raw
   chunk advisory for a 196.6 kB gzip artifact. Because no product loading budget justifies that default,
   the build now disables the advisory instead of replacing it with another arbitrary threshold.
+- 2026-08-14: Final PR #17 head `eb9b980` passed `quality` in 1 minute 11 seconds, side-effect-free
+  `build` in 24 seconds, E2E in 3 minutes 4 seconds, and Cloudflare Pages. The complete run
+  `31799028676` contains no project, pnpm, workerd, artifact, Knip, file-size, deprecation, or bundle
+  advisory warnings. Source delivery is ready for review; branch protection remains the separate
+  repository-setting decision recorded above.
