@@ -26,7 +26,7 @@ production deployment, or infrastructure secrets.
 - Use Husky as the single Git-hook manager. The inactive duplicate Lefthook configuration was
   removed; the pre-commit hook runs `lint-staged` through pnpm.
 - Permit install scripts only for the build binaries used by this repository: `@sentry/cli`,
-  `esbuild`, and `unrs-resolver`.
+  `esbuild`, `unrs-resolver`, and `workerd`.
 - Use narrow, same-major pnpm overrides only where current direct tools still resolve known-vulnerable
   transitive patches (Rollup, minimatch/brace-expansion, flatted, and picomatch).
 

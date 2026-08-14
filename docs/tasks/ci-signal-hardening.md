@@ -22,6 +22,8 @@ can mechanically prove; runtime correctness remains the responsibility of behavi
 - [x] Remove file-total-line and default-export policy gates that do not prove product correctness.
 - [x] Remove dependency-cruiser rules for deleted legacy source roots; retain the one-way legacy-root gate.
 - [x] Clear persistent Knip configuration hints without dropping Pages or local-runtime entrypoints.
+- [x] Use a pnpm-10-compatible setup action, current artifact action, and an explicit workerd install-script
+      allowance instead of accepting permanent action/dependency warnings.
 - [x] Replace lifecycle and ingress AST claims that admitted no-op implementations or rejected unrelated
       typed code; retain structural boundaries and rely on existing runtime/adapter behavior suites.
 - [x] Pass the complete local deterministic gate without warnings.
@@ -56,3 +58,9 @@ can mechanically prove; runtime correctness remains the responsibility of behavi
   skipped. Local output still contains the host's `NO_COLOR`/Playwright color conflict and Vite's generic
   raw-chunk advisory; neither is being relabeled as product correctness evidence. Remote workflow evidence
   remains pending.
+- 2026-08-14: PR #17's first workflow proved the new topology: build finished in 25 seconds, quality in 1
+  minute 26 seconds, and E2E in 3 minutes 5 seconds, all in parallel. Log review found no project
+  file-size or Knip warnings, then identified three toolchain leftovers: pnpm action v6 bootstrapping pnpm
+  11 before switching to pinned pnpm 10, an intentionally skipped workerd postinstall, and obsolete
+  `upload-artifact@v4` runtime warnings. The follow-up pins the Node-24 pnpm v5 action compatible with pnpm
+  10, explicitly allows workerd's required binary postinstall, and upgrades artifact upload to v7.
