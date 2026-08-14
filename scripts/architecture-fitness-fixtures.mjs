@@ -66,10 +66,12 @@ test('rejects capability coupling, asserted JSON, and a runtime without disposal
       },
       {
         'src/model/state.ts': "import type { Beta } from '@sightplay/beta'; export type A = Beta;",
+        'src/runtime/adapterLeak.ts':
+          "import { load } from '@sightplay/browser-adapters'; export const leak = load;",
         'src/ports.ts':
           'export interface DevicePort { start(): void } export interface SchedulerPort { schedule(task: () => void): void }',
         'src/runtime/alphaRuntime.ts':
-          'export interface AlphaRuntime { start(): void; dispose(): void } export class Engine implements AlphaRuntime { start() {} }',
+          'export interface AlphaRuntime { start(): void; dispose(): void } export class Engine implements AlphaRuntime { start() {} dispose() {} }',
         'src/runtime/alphaRuntime.test.ts':
           "import { Engine } from './alphaRuntime'; new Engine().start();",
       }
@@ -80,8 +82,13 @@ test('rejects capability coupling, asserted JSON, and a runtime without disposal
       { role: 'adapters' },
       {
         'src/http.ts':
-          'export async function load(response: Response) { return (await response.json()) as { ok: true }; }',
+          "import { readUnknownJson as admit } from '@sightplay/api-contracts'; export async function load(response: Response) { const raw = await admit(response); return (await response.json()) as { ok: true }; }",
       }
+    );
+    sourceAt(
+      root,
+      'features/Broken.tsx',
+      "import { createBrowserPracticePorts } from '@sightplay/browser-adapters'; export const broken = createBrowserPracticePorts;"
     );
     sourceAt(
       root,
@@ -92,13 +99,16 @@ test('rejects capability coupling, asserted JSON, and a runtime without disposal
     const messages = checkArchitectureFitness(root).map(({ message }) => message);
     assert(messages.some((message) => message.includes('must declare lifecycle.kind')));
     assert(messages.some((message) => message.includes('cannot import capability package beta')));
+    assert(messages.some((message) => message.includes('cannot import adapters package browser-adapters')));
     assert(messages.some((message) => message.includes('readUnknownJson')));
     assert(messages.some((message) => message.includes('cannot assert external data')));
-    assert(messages.some((message) => message.includes('must implement dispose')));
+    assert(messages.some((message) => message.includes('execute teardown work')));
     assert(messages.some((message) => message.includes('invokes dispose')));
     assert(messages.some((message) => message.includes('starts resources but has no dispose')));
     assert(messages.some((message) => message.includes('must return a cancellation function')));
     assert(messages.some((message) => message.includes('exactly one /api/* catch-all')));
+    assert(messages.some((message) => message.includes('cannot construct browser adapters')));
+    assert(messages.some((message) => message.includes('Raw unknown JSON cannot escape')));
   });
 });
 
@@ -128,7 +138,7 @@ test('accepts isolated capabilities, unknown JSON admission, and tested disposal
         'src/ports.ts':
           'export interface DevicePort { start(): void; dispose(): void } export interface SchedulerPort { schedule(task: () => void): () => void }',
         'src/runtime/alphaRuntime.ts':
-          'export interface AlphaRuntime { start(): void; dispose(): void } export class Engine implements AlphaRuntime { start() {} dispose() {} }',
+          'export interface AlphaRuntime { start(): void; dispose(): void } export class Engine implements AlphaRuntime { start() {} dispose() { this.cancel(); } private cancel() {} }',
         'src/runtime/alphaRuntime.test.ts':
           "import { Engine } from './alphaRuntime'; new Engine().dispose();",
       }
@@ -139,8 +149,13 @@ test('accepts isolated capabilities, unknown JSON admission, and tested disposal
       { role: 'adapters' },
       {
         'src/http.ts':
-          "import { readUnknownJson } from '@sightplay/api-contracts'; export const load = readUnknownJson;",
+          "import { readUnknownJson as admit } from '@sightplay/api-contracts'; const narrow = (value: unknown) => typeof value === 'string' ? value : null; export async function load(response: Response) { return narrow(await admit(response)); }",
       }
+    );
+    sourceAt(
+      root,
+      'App.tsx',
+      "import { load } from '@sightplay/browser-adapters'; export const app = load;"
     );
     sourceAt(
       root,

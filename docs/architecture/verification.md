@@ -74,8 +74,9 @@ implementation-shape assertions.
 - Production-only test APIs and direct cross-feature store access are forbidden.
 
 `lint:fitness` executes the repository scan and isolated negative fixtures. The negative fixtures must
-demonstrate that CI rejects capability coupling, missing lifecycle declarations, asserted external JSON,
-an undisposable runtime, a resource-starting port without teardown, and a scheduler without cancellation;
+demonstrate that CI rejects capability coupling, capability-owned adapters, browser-adapter construction
+outside `App.tsx`, missing lifecycle declarations, asserted or escaping unknown JSON, an empty or untested
+runtime teardown, a resource-starting port without disposal, and a scheduler without cancellation;
 multiple Cloudflare route files or a catch-all containing application logic also fail. The positive
 fixture proves the corresponding compliant slice and exact shared-handler catch-all are admitted. These
 fixtures test the gate itself rather than standing in for feature behavior tests.

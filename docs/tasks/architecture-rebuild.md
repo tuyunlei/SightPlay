@@ -94,13 +94,13 @@ production release remains a separate explicitly authorized operation.
 
 ## Current completion audit
 
-| Completion condition                                                                    | Status                                              | Authoritative evidence                                                                                                                                                                                                                         |
-| --------------------------------------------------------------------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Legacy horizontal directories do not own workflows and no v1/v2 state is double-written | Proven in source                                    | Empty `architecture/legacy-business-files.txt`; `lint:boundaries`; no production files under `hooks/`, `services/`, `store/`, or `views/`; capability public contracts and one application composition root                                    |
-| Anonymous state cannot start protected runtime                                          | Proven deterministically                            | `App.integration.test.tsx` constructs no Practice/MIDI/Guidance ports while anonymous; `AuthGate.integration.test.tsx` rejects protected children before authorization                                                                         |
-| Random, song, and AI exercises share Practice                                           | Proven deterministically and at browser boundary    | All three compile to `ExercisePlan`; Guidance-to-Practice assembly proof; random/song WebMIDI and real Web Audio paths drive the same Practice runtime                                                                                         |
-| Identity invariants are transactional                                                   | Proven in workerd/D1; cloud lifecycle still pending | 18 D1 tests include one-time bootstrap, concurrent invite use, rollback, replay exclusion, monotonic counters, final-credential protection, rate limits, and import idempotency; deployed binding/migration remains Phase 2's operational gate |
-| CI mechanically rejects architectural regressions                                       | Proven by positive and negative fixtures            | Package roles/exports, dependency-cruiser, no-DOM model compile, unknown-JSON admission, managed runtime disposal, cancellable resource ports, single Cloudflare catch-all, legacy baseline, dead-code, and size gates run in CI               |
+| Completion condition                                                                    | Status                                              | Authoritative evidence                                                                                                                                                                                                                                                                               |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Legacy horizontal directories do not own workflows and no v1/v2 state is double-written | Proven in source                                    | Empty `architecture/legacy-business-files.txt`; `lint:boundaries`; no production files under `hooks/`, `services/`, `store/`, or `views/`; capability public contracts and one application composition root                                                                                          |
+| Anonymous state cannot start protected runtime                                          | Proven deterministically                            | `App.integration.test.tsx` constructs no Practice/MIDI/Guidance ports while anonymous, constructs them only after authentication, and proves logout disposes MIDI and microphone once; `AuthGate.integration.test.tsx` rejects protected children before authorization                               |
+| Random, song, and AI exercises share Practice                                           | Proven deterministically and at browser boundary    | All three compile to `ExercisePlan`; Guidance-to-Practice assembly proof; random/song WebMIDI and real Web Audio paths drive the same Practice runtime                                                                                                                                               |
+| Identity invariants are transactional                                                   | Proven in workerd/D1; cloud lifecycle still pending | 19 D1 tests include one-time bootstrap, concurrent invite use, rollback, replay exclusion, monotonic counters, final-credential protection, rate limits, and import idempotency; production migration remains Phase 2's operational gate                                                             |
+| CI mechanically rejects architectural regressions                                       | Proven by positive and negative fixtures            | Package roles/exports, capability-to-adapter and composition-root rules, dependency-cruiser, no-DOM model compile, unknown-JSON admission and non-escape, executable runtime teardown, cancellable resource ports, single Cloudflare catch-all, legacy baseline, dead-code, and size gates run in CI |
 
 ## Decisions and open risks
 
@@ -115,6 +115,13 @@ production release remains a separate explicitly authorized operation.
   create independently deployed services.
 
 ## Progress log
+
+- 2026-08-14: Re-audited the rebuild against its completion contract instead of treating green leaf PRs
+  as delivery. Strengthened the architecture fitness gate so capability packages cannot import adapters,
+  UI/application modules cannot construct browser adapters outside `App.tsx`, raw `unknown` JSON cannot
+  escape ingress before validation, and a managed runtime cannot satisfy lifecycle policy with an empty
+  `dispose()`. Negative fixtures prove every rejection. The assembled App test now also proves a completed
+  logout unmounts the authenticated subtree and disposes MIDI and microphone exactly once.
 
 - 2026-08-14: A Codex session-log and live Cloudflare inventory audit found that the fixed
   `develop.sightplay.xclz.org` PPE topology was an unnecessary detour: it duplicated Pages-native Preview,

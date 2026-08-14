@@ -81,14 +81,15 @@ export function checkPackageDependencies(projectRoot, packages, violations) {
         const target = packages.get(targetName);
         if (!target) continue;
         const forbidden =
-          (sourcePackage.role === 'capability' && target.role === 'capability') ||
+          (sourcePackage.role === 'capability' &&
+            (target.role === 'capability' || target.role === 'adapters')) ||
           ((sourcePackage.role === 'contracts' || sourcePackage.role === 'domain') &&
             target.role !== 'contracts' &&
             target.role !== 'domain');
         if (forbidden) {
           violations.push({
             file: normalize(path.relative(projectRoot, absolute)),
-            message: `${sourcePackage.role} package ${name} cannot import ${target.role} package ${targetName}; map public outputs in an application or adapter boundary.`,
+            message: `${sourcePackage.role} package ${name} cannot import ${target.role} package ${targetName}; map public outputs and inject adapters at an application boundary.`,
           });
         }
       }

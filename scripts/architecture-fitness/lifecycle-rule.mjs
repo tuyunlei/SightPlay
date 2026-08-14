@@ -53,6 +53,16 @@ function implementedInterfaceNames(node) {
   );
 }
 
+function containsCall(node) {
+  let found = false;
+  const visit = (child) => {
+    if (ts.isCallExpression(child)) found = true;
+    if (!found) ts.forEachChild(child, visit);
+  };
+  visit(node);
+  return found;
+}
+
 function managedRuntimeContracts(packageInfo) {
   const contracts = new Set();
   for (const file of sourceFiles(path.join(packageInfo.directory, 'src'))) {
@@ -92,10 +102,16 @@ function checkManagedRuntimes(projectRoot, packages, violations) {
         });
       }
       for (const implementation of implementations) {
-        if (!implementation.members.some((member) => memberName(member) === 'dispose')) {
+        const dispose = implementation.members.find((member) => memberName(member) === 'dispose');
+        if (!dispose) {
           violations.push({
             file: normalize(path.relative(projectRoot, entry)),
             message: `Managed runtime implementation ${implementation.name?.text ?? '<anonymous>'} must implement dispose().`,
+          });
+        } else if (!containsCall(dispose)) {
+          violations.push({
+            file: normalize(path.relative(projectRoot, entry)),
+            message: `Managed runtime implementation ${implementation.name?.text ?? '<anonymous>'} must execute teardown work inside dispose().`,
           });
         }
       }

@@ -163,8 +163,7 @@ export async function handlePostChat(platform: PlatformContext): Promise<Respons
   if (!session.ok)
     return jsonResponse(guidanceFailed('unauthorized', false, requestContext.requestId), 401);
 
-  const rawRequest = await readUnknownJson(platform.request);
-  const request = decodeChatRequest(rawRequest);
+  const request = decodeChatRequest(await readUnknownJson(platform.request));
   if (!request.ok) {
     return jsonResponse(guidanceFailed('invalid_request', false, requestContext.requestId), 400);
   }

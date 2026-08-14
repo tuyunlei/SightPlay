@@ -74,8 +74,9 @@ Provider messages, stack traces, and arbitrary JSON never become product state.
   verification policy.
 - Sessions are opaque, revocable, server-side records delivered through Secure, HttpOnly, SameSite
   cookies. Logout revokes the session before clearing the cookie.
-- Preview Passkey evidence uses an HTTPS custom domain compatible with the configured RP ID. Localhost
-  can prove a separate development RP or a fake client, not production credential compatibility.
+- Preview Passkey evidence uses a generated HTTPS `*.sightplay.pages.dev` origin with parent RP ID
+  `sightplay.pages.dev`; only origins belonging to the SightPlay Pages project are allowed. Localhost can
+  prove a separate development RP or a fake client, not Preview or production credential compatibility.
 
 ## Operational security
 

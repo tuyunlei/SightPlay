@@ -2,6 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { checkCloudflareWrapper } from './architecture-fitness/cloudflare-rule.mjs';
+import { checkApplicationComposition } from './architecture-fitness/composition-rule.mjs';
 import { checkExternalInputBoundaries } from './architecture-fitness/ingress-rule.mjs';
 import { checkRuntimeLifecycle } from './architecture-fitness/lifecycle-rule.mjs';
 import { checkPackageDependencies, loadPackages } from './architecture-fitness/package-rules.mjs';
@@ -12,6 +13,7 @@ export function checkArchitectureFitness(projectRoot) {
   checkPackageDependencies(projectRoot, packages, violations);
   checkExternalInputBoundaries(projectRoot, packages, violations);
   checkRuntimeLifecycle(projectRoot, packages, violations);
+  checkApplicationComposition(projectRoot, violations);
   checkCloudflareWrapper(projectRoot, violations);
   return violations;
 }
