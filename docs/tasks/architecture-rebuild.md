@@ -122,8 +122,9 @@ production release remains a separate explicitly authorized operation.
   runbooks now use generated `*.sightplay.pages.dev` origins with RP ID `sightplay.pages.dev` and the shared
   disposable PPE D1, while production remains `sightplay.xclz.org` with Production D1. Removed the custom
   domain, CNAME, preview bootstrap secret, local Keychain material, generated invitation, bootstrap claim,
-  and rate-limit row; both D1 databases and the Git-owned deployment flow remain. Removing the two known
-  secret-bearing deployments follows the first clean replacement Preview so no active branch alias is lost.
+  rate-limit row, and two known secret-bearing deployments; both D1 databases and the Git-owned deployment
+  flow remain. Preview `2bb2edaa` proved an anonymous session from PPE D1, accepted its generated SightPlay
+  origin, rejected a foreign Pages project, and rejected bootstrap without the removed secret.
   The first replacement exposed that authentication options omitted the parent RP ID even though registration
   supplied it; the API contract and browser adapter now carry `sightplay.pages.dev` through login explicitly.
 
