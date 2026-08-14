@@ -159,6 +159,7 @@ describe('AuthGate integration', () => {
             json: async () =>
               identitySuccess({
                 challenge: 'challenge',
+                rpId: 'sightplay.example',
                 allowCredentials: [{ id: 'cred-1', transports: ['internal'] }],
                 userVerification: 'preferred',
                 timeout: 10000,
@@ -208,6 +209,7 @@ describe('AuthGate integration', () => {
             json: async () =>
               identitySuccess({
                 challenge: 'challenge',
+                rpId: 'sightplay.example',
                 allowCredentials: [{ id: 'cred-1', transports: ['internal'] }],
                 userVerification: 'preferred',
                 timeout: 10000,
@@ -326,6 +328,7 @@ describe('AuthGate integration', () => {
             json: async () =>
               identitySuccess({
                 challenge: 'challenge',
+                rpId: 'sightplay.example',
                 allowCredentials: [{ id: 'cred-1', transports: ['internal'] }],
                 userVerification: 'preferred',
                 timeout: 10000,

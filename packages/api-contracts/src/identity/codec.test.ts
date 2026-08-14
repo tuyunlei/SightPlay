@@ -14,6 +14,7 @@ describe('Identity API boundary codecs', () => {
   it('rejects one malformed credential instead of silently shrinking the login allow-list', () => {
     const decoded = decodeLoginOptions({
       challenge: 'challenge',
+      rpId: 'sightplay.example',
       allowCredentials: [{ id: 'credential-a' }, { transports: ['internal'] }],
     });
 

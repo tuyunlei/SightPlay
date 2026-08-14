@@ -60,6 +60,7 @@ export type UserVerificationDto = 'required' | 'preferred' | 'discouraged';
 
 export interface LoginOptionsDto {
   readonly challenge: string;
+  readonly rpId: string;
   readonly allowCredentials: readonly {
     readonly id: string;
     readonly transports: readonly PasskeyTransportDto[];

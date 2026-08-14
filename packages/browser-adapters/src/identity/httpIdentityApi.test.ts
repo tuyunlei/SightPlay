@@ -35,6 +35,7 @@ describe('HTTP Identity adapter contract', () => {
               requestId: 'request-2',
               data: {
                 challenge: 'challenge',
+                rpId: 'sightplay.example',
                 allowCredentials: [
                   { id: 'valid', transports: ['internal', 42] },
                   { transports: ['usb'] },

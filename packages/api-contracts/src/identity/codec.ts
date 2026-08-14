@@ -127,8 +127,13 @@ const parseTransport = (value: unknown): value is PasskeyTransportDto =>
   value === 'usb';
 
 export function decodeLoginOptions(value: unknown): DecodeResult<LoginOptionsDto> {
-  if (!isRecord(value) || typeof value.challenge !== 'string') {
-    return rejected('Login options require a challenge');
+  if (
+    !isRecord(value) ||
+    typeof value.challenge !== 'string' ||
+    typeof value.rpId !== 'string' ||
+    value.rpId.length === 0
+  ) {
+    return rejected('Login options require a challenge and RP ID');
   }
   if (!Array.isArray(value.allowCredentials)) {
     return rejected('Login options require an allowCredentials array');
@@ -153,6 +158,7 @@ export function decodeLoginOptions(value: unknown): DecodeResult<LoginOptionsDto
   }
   return decoded({
     challenge: value.challenge,
+    rpId: value.rpId,
     allowCredentials,
     ...(userVerification ? { userVerification } : {}),
     ...(typeof value.timeout === 'number' ? { timeout: value.timeout } : {}),

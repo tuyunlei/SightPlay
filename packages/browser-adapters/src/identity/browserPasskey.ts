@@ -116,6 +116,7 @@ async function authenticate(
   try {
     const value = await provider.authenticate({
       challenge: options.challenge,
+      domain: options.rpId,
       allowCredentials: options.allowCredentials.map((credential) => ({
         id: credential.id,
         transports: [...credential.transports],

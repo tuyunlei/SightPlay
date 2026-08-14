@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { passkeyAdapterContract } from './browserPasskey';
+import { createBrowserPasskeyPort, passkeyAdapterContract } from './browserPasskey';
 
 describe('browser Passkey failure contract', () => {
   it.each([
@@ -12,6 +12,25 @@ describe('browser Passkey failure contract', () => {
     error.name = name;
 
     expect(passkeyAdapterContract.classifyPasskeyFailure(error)).toEqual({ code, retryable });
+  });
+
+  it('passes the server-owned RP ID to the WebAuthn authentication provider', async () => {
+    const cancellation = new Error('cancelled');
+    cancellation.name = 'NotAllowedError';
+    const provider = {
+      authenticate: vi.fn().mockRejectedValue(cancellation),
+      register: vi.fn(),
+    };
+
+    await createBrowserPasskeyPort(provider).authenticate({
+      challenge: 'challenge',
+      rpId: 'sightplay.pages.dev',
+      allowCredentials: [],
+    });
+
+    expect(provider.authenticate).toHaveBeenCalledWith(
+      expect.objectContaining({ domain: 'sightplay.pages.dev' })
+    );
   });
 
   it('canonicalizes a provider registration before it crosses the Identity port', () => {

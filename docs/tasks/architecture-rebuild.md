@@ -124,6 +124,8 @@ production release remains a separate explicitly authorized operation.
   domain, CNAME, preview bootstrap secret, local Keychain material, generated invitation, bootstrap claim,
   and rate-limit row; both D1 databases and the Git-owned deployment flow remain. Removing the two known
   secret-bearing deployments follows the first clean replacement Preview so no active branch alias is lost.
+  The first replacement exposed that authentication options omitted the parent RP ID even though registration
+  supplied it; the API contract and browser adapter now carry `sightplay.pages.dev` through login explicitly.
 
 - 2026-08-13: Replaced the permanent broad-secret invitation administrator route with an explicit
   empty-store bootstrap capability. `IDENTITY_BOOTSTRAP_SECRET` is configuration-gated; a singleton D1

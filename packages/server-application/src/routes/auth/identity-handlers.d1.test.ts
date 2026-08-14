@@ -2,6 +2,7 @@ import {
   decodeApiResult,
   decodeCredentialSummaries,
   decodeInvitationCodes,
+  decodeLoginOptions,
   decodeOperationCompleted,
   decodeSessionSnapshot,
 } from '@sightplay/api-contracts';
@@ -17,6 +18,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { PlatformContext } from '../../platform';
 
 import { handlePostInviteBootstrap } from './invite';
+import { handlePostLoginOptions } from './login-options';
 import { handleDeletePasskey, handleGetPasskeys } from './passkeys';
 import { handlePostRegisterOptions } from './register-options';
 import { handleGetSession } from './session';
@@ -189,6 +191,7 @@ describe('Identity HTTP assembly over D1', () => {
   });
 
   it('admits only generated Preview origins owned by the SightPlay Pages project', async () => {
+    await seedAuthenticatedAccount();
     const previewConfiguration = {
       ...configuration,
       WEBAUTHN_RP_ID: 'sightplay.pages.dev',
@@ -205,6 +208,19 @@ describe('Identity HTTP assembly over D1', () => {
         },
         previewConfiguration
       );
+
+    const login = await handlePostLoginOptions(
+      platform(
+        '/api/auth/login-options',
+        { method: 'POST', headers: { Origin: 'https://80827304.sightplay.pages.dev' } },
+        previewConfiguration
+      )
+    );
+    const loginResult = decodeApiResult(await login.json(), decodeLoginOptions);
+    expect(loginResult).toMatchObject({
+      ok: true,
+      value: { ok: true, data: { rpId: 'sightplay.pages.dev' } },
+    });
 
     const admitted = await handlePostRegisterOptions(
       request('https://80827304.sightplay.pages.dev')

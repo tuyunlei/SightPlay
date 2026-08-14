@@ -52,6 +52,7 @@ async function mockBypassAuth(page: Page, scenario: 'register' | 'login') {
         contentType: 'application/json',
         body: identitySuccess({
           challenge: btoa('mock-challenge'),
+          rpId: '127.0.0.1',
           allowCredentials: [
             {
               id: btoa('credential-123'),

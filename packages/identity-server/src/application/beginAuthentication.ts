@@ -31,6 +31,7 @@ export async function beginAuthentication(
   if (!credentials.ok) return credentials;
   return accepted({
     challenge,
+    rpId: dependencies.policy.rpId,
     allowCredentials: credentials.value.map((credential) => ({
       id: credential.id,
       transports: credential.transports,
