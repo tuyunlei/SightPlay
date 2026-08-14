@@ -20,6 +20,8 @@ can mechanically prove; runtime correctness remains the responsibility of behavi
 - [x] Keep full Playwright in CI but remove it from the local pre-push hook.
 - [x] Remove Sentry credentials from ordinary CI builds so verification has no external release write.
 - [x] Remove file-total-line and default-export policy gates that do not prove product correctness.
+- [x] Disable Vite's generic raw-chunk advisory; add a measured user-facing performance budget only when
+      the product has a concrete loading requirement.
 - [x] Remove dependency-cruiser rules for deleted legacy source roots; retain the one-way legacy-root gate.
 - [x] Clear persistent Knip configuration hints without dropping Pages or local-runtime entrypoints.
 - [x] Use Node's bundled Corepack, the current artifact action, and an explicit workerd install-script
@@ -68,3 +70,8 @@ can mechanically prove; runtime correctness remains the responsibility of behavi
   switching versions. The final configuration removes the setup action entirely: Node 24's bundled
   Corepack activates the exact pnpm version already declared in `package.json`, without a second version
   source or warning suppression.
+- 2026-08-14: The Corepack workflow passed remotely with build in 24 seconds, quality in 1 minute 13
+  seconds, E2E in 3 minutes 34 seconds, and current artifact uploads. The final log scan found no pnpm,
+  workerd, artifact, Knip, or file-size warnings; the only remaining output was Vite's generic 500 kB raw
+  chunk advisory for a 196.6 kB gzip artifact. Because no product loading budget justifies that default,
+  the build now disables the advisory instead of replacing it with another arbitrary threshold.
