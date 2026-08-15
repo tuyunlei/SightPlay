@@ -2,11 +2,11 @@
 
 Status: in progress
 
-Current follow-up branch: `codex/ci-signal-hardening`
+Current follow-up branch: `codex/fix-register-layout`
 
-Current base: `origin/develop` at `477a5c1`. PR #16 squash-merged the complete formerly stacked Identity,
-Practice, Guidance, and architecture-fitness rebuild; PRs #13–#15 are superseded delivery slices. CI
-signal hardening is tracked separately in `docs/tasks/ci-signal-hardening.md`.
+Current base: `origin/develop` at `cadcbcf`. PR #16 squash-merged the complete formerly stacked Identity,
+Practice, Guidance, and architecture-fitness rebuild; PR #17 delivered the CI signal-hardening follow-up.
+PRs #13–#15 are superseded delivery slices.
 
 ## Goal
 
@@ -95,13 +95,13 @@ production release remains a separate explicitly authorized operation.
 
 ## Current completion audit
 
-| Completion condition                                                                    | Status                                              | Authoritative evidence                                                                                                                                                                                                                                                                             |
-| --------------------------------------------------------------------------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Legacy horizontal directories do not own workflows and no v1/v2 state is double-written | Proven in source                                    | Empty `architecture/legacy-business-files.txt`; `lint:boundaries`; no production files under `hooks/`, `services/`, `store/`, or `views/`; capability public contracts and one application composition root                                                                                        |
-| Anonymous state cannot start protected runtime                                          | Proven deterministically                            | `App.integration.test.tsx` constructs no Practice/MIDI/Guidance ports while anonymous, constructs them only after authentication, and proves logout disposes MIDI and microphone once; `AuthGate.integration.test.tsx` rejects protected children before authorization                             |
-| Random, song, and AI exercises share Practice                                           | Proven deterministically and at browser boundary    | All three compile to `ExercisePlan`; Guidance-to-Practice assembly proof; random/song WebMIDI and real Web Audio paths drive the same Practice runtime                                                                                                                                             |
-| Identity invariants are transactional                                                   | Proven in workerd/D1; cloud lifecycle still pending | 19 D1 tests include one-time bootstrap, concurrent invite use, rollback, replay exclusion, monotonic counters, final-credential protection, rate limits, and import idempotency; production migration remains Phase 2's operational gate                                                           |
-| CI rejects structural violations and behavior suites prove runtime contracts            | Proven locally; follow-up CI run pending            | Package roles/exports, capability-to-adapter and composition-root rules, dependency-cruiser, no-DOM model compile, unknown-JSON admission/non-escape, declared runtime behavior suites, cancellable resource ports, single Cloudflare catch-all, legacy baseline, and dead-code analysis run in CI |
+| Completion condition                                                                    | Status                                              | Authoritative evidence                                                                                                                                                                                                                                                                                                                                          |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Legacy horizontal directories do not own workflows and no v1/v2 state is double-written | Proven in source                                    | Empty `architecture/legacy-business-files.txt`; `lint:boundaries`; no production files under `hooks/`, `services/`, `store/`, or `views/`; capability public contracts and one application composition root                                                                                                                                                     |
+| Anonymous state cannot start protected runtime                                          | Proven deterministically                            | `App.integration.test.tsx` constructs no Practice/MIDI/Guidance ports while anonymous, constructs them only after authentication, and proves logout disposes MIDI and microphone once; `AuthGate.integration.test.tsx` rejects protected children before authorization                                                                                          |
+| Random, song, and AI exercises share Practice                                           | Proven deterministically and at browser boundary    | All three compile to `ExercisePlan`; Guidance-to-Practice assembly proof; random/song WebMIDI and real Web Audio paths drive the same Practice runtime                                                                                                                                                                                                          |
+| Identity invariants are transactional                                                   | Proven in workerd/D1; cloud lifecycle still pending | 19 D1 tests include one-time bootstrap, concurrent invite use, rollback, replay exclusion, monotonic counters, final-credential protection, rate limits, and import idempotency; production migration remains Phase 2's operational gate                                                                                                                        |
+| CI rejects structural violations and behavior suites prove runtime contracts            | Proven locally and on `develop`                     | Package roles/exports, capability-to-adapter and composition-root rules, dependency-cruiser, no-DOM model compile, unknown-JSON admission/non-escape, declared runtime behavior suites, cancellable resource ports, single Cloudflare catch-all, legacy baseline, and dead-code analysis run in CI; post-merge run `31801581653` passed quality, build, and E2E |
 
 ## Decisions and open risks
 
@@ -116,6 +116,13 @@ production release remains a separate explicitly authorized operation.
   create independently deployed services.
 
 ## Progress log
+
+- 2026-08-16: Traced the desktop invite-registration width regression to a missing layout contract:
+  `RegisterCard` filled its container, the embedded login path supplied `max-w-md`, and the independent
+  `/register` route did not. Login and registration now share one authentication screen layout that owns
+  the bounded desktop width and mobile page insets. A Chromium regression observes rendered geometry at
+  1440 px and 390 px rather than Tailwind classes or static DOM shape; AuthGate integration, the complete
+  auth browser flow, full quality suite, independent build, and a rendered desktop capture pass locally.
 
 - 2026-08-14: Started the post-merge CI signal hardening slice from `origin/develop` `477a5c1`. The
   change removes the file-length and default-export policy gates, deletes dead legacy dependency rules,

@@ -5,16 +5,12 @@ import { useIdentity } from '@sightplay/identity-client';
 import { useLanguage } from '../../app/presentation/useLanguage';
 import { translations } from '../../i18n';
 
+import { AuthScreenLayout } from './AuthScreenLayout';
 import { identityFailureMessage } from './identityFailureMessage';
 
 interface LoginScreenProps {
   onRegister: () => void;
 }
-
-const authBackgroundStyle = {
-  backgroundImage:
-    'linear-gradient(to bottom right, var(--color-bg-auth-from), var(--color-bg-auth-to))',
-};
 
 interface LoginCardProps {
   t: (typeof translations)['en'];
@@ -78,20 +74,14 @@ export function LoginScreen({ onRegister }: LoginScreenProps) {
     : null;
 
   return (
-    <div
-      data-testid="login-screen"
-      className="flex min-h-screen items-center justify-center px-4 py-10"
-      style={authBackgroundStyle}
-    >
-      <div className="w-full max-w-md">
-        <LoginCard
-          t={t}
-          isLoading={isLoading}
-          error={error}
-          onLogin={identity.login}
-          onRegister={onRegister}
-        />
-      </div>
-    </div>
+    <AuthScreenLayout dataTestId="login-screen">
+      <LoginCard
+        t={t}
+        isLoading={isLoading}
+        error={error}
+        onLogin={identity.login}
+        onRegister={onRegister}
+      />
+    </AuthScreenLayout>
   );
 }
