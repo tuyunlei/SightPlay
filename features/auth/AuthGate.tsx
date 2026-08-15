@@ -37,8 +37,14 @@ function AuthGateInner({ children, route, navigate }: AuthGateInnerProps) {
   const identity = useIdentity();
   const scene = useMemo(
     () =>
-      selectAppScene(identity.view.status === 'booting' ? 'loading' : identity.view.status, route),
-    [identity.view.status, route]
+      selectAppScene(
+        {
+          status: identity.view.status === 'booting' ? 'loading' : identity.view.status,
+          hasPasskeys: identity.view.hasPasskeys,
+        },
+        route
+      ),
+    [identity.view.hasPasskeys, identity.view.status, route]
   );
 
   useEffect(() => {
@@ -52,10 +58,14 @@ function AuthGateInner({ children, route, navigate }: AuthGateInnerProps) {
       return (
         <RegisterScreen
           initialInviteCode={scene.route.inviteCode}
-          onReturnToLogin={() => {
-            identity.clearFailure();
-            navigate({ kind: 'login' });
-          }}
+          onReturnToLogin={
+            identity.view.hasPasskeys
+              ? () => {
+                  identity.clearFailure();
+                  navigate({ kind: 'login' });
+                }
+              : undefined
+          }
         />
       );
     }

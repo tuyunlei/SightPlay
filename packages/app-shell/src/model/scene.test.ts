@@ -1,25 +1,47 @@
 import { describe, expect, it } from 'vitest';
 
 import type { AppRoute } from './route';
-import { selectAppScene, type IdentitySessionStatus } from './scene';
+import { selectAppScene, type IdentitySessionView } from './scene';
 
 describe('App scene selection', () => {
-  it.each<[IdentitySessionStatus, AppRoute, ReturnType<typeof selectAppScene>]>([
-    ['loading', { kind: 'library' }, { kind: 'booting' }],
-    ['anonymous', { kind: 'login' }, { kind: 'anonymous', route: { kind: 'login' } }],
+  it.each<[IdentitySessionView, AppRoute, ReturnType<typeof selectAppScene>]>([
+    [{ status: 'loading', hasPasskeys: false }, { kind: 'library' }, { kind: 'booting' }],
     [
-      'anonymous',
+      { status: 'anonymous', hasPasskeys: true },
+      { kind: 'login' },
+      { kind: 'anonymous', route: { kind: 'login' } },
+    ],
+    [
+      { status: 'anonymous', hasPasskeys: false },
+      { kind: 'login' },
+      { kind: 'redirect', route: { kind: 'register' } },
+    ],
+    [
+      { status: 'anonymous', hasPasskeys: false },
       { kind: 'register', inviteCode: 'ABCD-EFGH' },
       { kind: 'anonymous', route: { kind: 'register', inviteCode: 'ABCD-EFGH' } },
     ],
-    ['anonymous', { kind: 'passkeys' }, { kind: 'redirect', route: { kind: 'login' } }],
-    ['authenticated', { kind: 'login' }, { kind: 'redirect', route: { kind: 'randomPractice' } }],
     [
-      'authenticated',
+      { status: 'anonymous', hasPasskeys: true },
+      { kind: 'passkeys' },
+      { kind: 'redirect', route: { kind: 'login' } },
+    ],
+    [
+      { status: 'anonymous', hasPasskeys: false },
+      { kind: 'passkeys' },
+      { kind: 'redirect', route: { kind: 'register' } },
+    ],
+    [
+      { status: 'authenticated', hasPasskeys: true },
+      { kind: 'login' },
+      { kind: 'redirect', route: { kind: 'randomPractice' } },
+    ],
+    [
+      { status: 'authenticated', hasPasskeys: true },
       { kind: 'library', difficulty: 'intermediate' },
       { kind: 'authenticated', route: { kind: 'library', difficulty: 'intermediate' } },
     ],
-  ])('selects %s + %o', (status, route, expected) => {
-    expect(selectAppScene(status, route)).toEqual(expected);
+  ])('selects $0 + $1', (identity, route, expected) => {
+    expect(selectAppScene(identity, route)).toEqual(expected);
   });
 });

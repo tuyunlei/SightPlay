@@ -3,7 +3,7 @@ import { RegisterCard } from './RegisterCard';
 
 interface RegisterScreenProps {
   initialInviteCode?: string;
-  onReturnToLogin: () => void;
+  onReturnToLogin?: () => void;
 }
 
 export function RegisterScreen({ initialInviteCode, onReturnToLogin }: RegisterScreenProps) {

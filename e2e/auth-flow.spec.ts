@@ -122,9 +122,8 @@ test.describe('Authentication Flow E2E', () => {
       await mockBypassAuth(page, 'register');
       await page.goto('/');
 
-      await expect(page.getByTestId('login-screen')).toBeVisible();
-      await page.getByRole('button', { name: /register with invite code|使用邀请码注册/i }).click();
       await expect(page.getByTestId('register-screen')).toBeVisible();
+      await expect(page.getByRole('button', { name: /return to login|返回登录/i })).toHaveCount(0);
 
       await page.locator('#invite-code').fill('ABCD-EFGH');
       const registerButton = page.getByRole('button', { name: /passkey/i });
