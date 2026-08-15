@@ -2,10 +2,7 @@ import { expect, identitySuccess, mockAuthenticatedSession, test } from './fixtu
 
 test.describe('Practice Flow', () => {
   test.describe('Unauthenticated State', () => {
-    test('should show login screen with register entry when no passkeys exist', async ({
-      page,
-    }) => {
-      // Mock the session API to indicate no authentication and no passkeys
+    test('routes an empty identity store to an actionable registration flow', async ({ page }) => {
       await page.route('**/api/auth/session', (route) => {
         route.fulfill({
           status: 200,
@@ -16,12 +13,10 @@ test.describe('Practice Flow', () => {
 
       await page.goto('/');
 
-      // Should show the login screen with register link
-      await expect(page.getByTestId('login-screen')).toBeVisible();
-      await expect(page.getByRole('heading', { name: /Welcome Back|欢迎回来/i })).toBeVisible();
-      await expect(
-        page.getByRole('button', { name: /register with invite code|使用邀请码注册/i })
-      ).toBeVisible();
+      await expect(page).toHaveURL(/\/register$/);
+      const inviteCode = page.locator('#invite-code');
+      await inviteCode.fill('ABCD-EFGH');
+      await expect(page.getByRole('button', { name: /passkey/i })).toBeEnabled();
     });
 
     test('should show login screen when passkeys exist but not authenticated', async ({ page }) => {

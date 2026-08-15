@@ -1,24 +1,19 @@
+import { AuthScreenLayout } from './AuthScreenLayout';
 import { RegisterCard } from './RegisterCard';
 
 interface RegisterScreenProps {
   initialInviteCode?: string;
-  onReturnToLogin: () => void;
+  onReturnToLogin?: () => void;
 }
 
 export function RegisterScreen({ initialInviteCode, onReturnToLogin }: RegisterScreenProps) {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center px-4"
-      style={{
-        backgroundImage:
-          'linear-gradient(to bottom right, var(--color-bg-auth-from), var(--color-bg-auth-to))',
-      }}
-    >
+    <AuthScreenLayout>
       <RegisterCard
         dataTestId="register-screen"
         initialInviteCode={initialInviteCode}
         onReturnToLogin={onReturnToLogin}
       />
-    </div>
+    </AuthScreenLayout>
   );
 }

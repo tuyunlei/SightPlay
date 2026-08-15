@@ -288,10 +288,11 @@ describe('AuthGate integration', () => {
 
     render(<AuthGateHarness />);
 
-    await screen.findByTestId('login-screen');
-    await user.click(
-      screen.getByRole('button', { name: translations.zh.authNoAccountRegisterLink })
-    );
+    await screen.findByTestId('register-screen');
+    expect(screen.queryByRole('button', { name: translations.zh.authLoginButton })).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: translations.zh.authHaveAccountLoginLink })
+    ).toBeNull();
 
     const inviteInput = screen.getByLabelText(translations.zh.authInviteCodeLabel);
     fireEvent.change(inviteInput, { target: { value: 'A2CD2345' } });

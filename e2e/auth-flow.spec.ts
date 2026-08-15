@@ -122,9 +122,8 @@ test.describe('Authentication Flow E2E', () => {
       await mockBypassAuth(page, 'register');
       await page.goto('/');
 
-      await expect(page.getByTestId('login-screen')).toBeVisible();
-      await page.getByRole('button', { name: /register with invite code|使用邀请码注册/i }).click();
       await expect(page.getByTestId('register-screen')).toBeVisible();
+      await expect(page.getByRole('button', { name: /return to login|返回登录/i })).toHaveCount(0);
 
       await page.locator('#invite-code').fill('ABCD-EFGH');
       const registerButton = page.getByRole('button', { name: /passkey/i });
@@ -151,6 +150,34 @@ test.describe('Authentication Flow E2E', () => {
 
       await expect(page.getByTestId('register-screen')).toBeVisible();
       await expect(page.locator('#invite-code')).toHaveValue('ABCD-EFGH');
+    });
+
+    test('keeps invite registration focused at desktop width and usable on mobile', async ({
+      page,
+    }) => {
+      await page.route('**/api/auth/session', (route) => {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: identitySuccess({ authenticated: false, hasPasskeys: false }),
+        });
+      });
+
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.goto('/register');
+
+      const desktopCard = await page.getByTestId('register-screen').boundingBox();
+      expect(desktopCard).not.toBeNull();
+      if (!desktopCard) throw new Error('Expected the desktop registration card to be visible');
+      expect(desktopCard.width).toBeLessThan(1440 / 2);
+
+      await page.setViewportSize({ width: 390, height: 844 });
+      const mobileCard = await page.getByTestId('register-screen').boundingBox();
+      expect(mobileCard).not.toBeNull();
+      if (!mobileCard) throw new Error('Expected the mobile registration card to be visible');
+      expect(mobileCard.width).toBeGreaterThan(390 * 0.85);
+      expect(mobileCard.x).toBeGreaterThanOrEqual(0);
+      expect(mobileCard.x + mobileCard.width).toBeLessThanOrEqual(390);
     });
   });
 

@@ -1,6 +1,6 @@
 # CI Signal Hardening
 
-Status: ready for review
+Status: delivered
 
 Branch: `codex/ci-signal-hardening`
 
@@ -46,6 +46,9 @@ can mechanically prove; runtime correctness remains the responsibility of behavi
 
 ## Progress
 
+- 2026-08-14: PR #17 squash-merged to `develop` as `cadcbcf`. Post-merge run `31801581653`
+  independently passed build in 22 seconds, quality in 1 minute 16 seconds, and E2E in 3 minutes 23
+  seconds. Branch protection remains the separate unchecked repository-setting decision above.
 - 2026-08-14: Audited `origin/develop` and confirmed six repeated installs, build serialized behind E2E,
   complete local/remote test duplication, permanent file-size/Knip warnings, semantic false assurance in
   lifecycle/ingress AST checks, CI-time Sentry upload credentials, and no branch protection or rulesets.

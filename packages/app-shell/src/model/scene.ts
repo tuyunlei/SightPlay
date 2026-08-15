@@ -7,16 +7,24 @@ import {
 
 export type IdentitySessionStatus = 'loading' | 'anonymous' | 'authenticated';
 
+export interface IdentitySessionView {
+  status: IdentitySessionStatus;
+  hasPasskeys: boolean;
+}
+
 export type AppScene =
   | { kind: 'booting' }
   | { kind: 'anonymous'; route: PublicAppRoute }
   | { kind: 'authenticated'; route: ProtectedAppRoute }
   | { kind: 'redirect'; route: AppRoute };
 
-export function selectAppScene(status: IdentitySessionStatus, route: AppRoute): AppScene {
-  if (status === 'loading') return { kind: 'booting' };
+export function selectAppScene(identity: IdentitySessionView, route: AppRoute): AppScene {
+  if (identity.status === 'loading') return { kind: 'booting' };
 
-  if (status === 'anonymous') {
+  if (identity.status === 'anonymous') {
+    if (!identity.hasPasskeys && route.kind !== 'register') {
+      return { kind: 'redirect', route: { kind: 'register' } };
+    }
     return isPublicAppRoute(route)
       ? { kind: 'anonymous', route }
       : { kind: 'redirect', route: { kind: 'login' } };
