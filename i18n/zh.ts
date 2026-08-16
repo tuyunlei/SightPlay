@@ -93,6 +93,7 @@ export const zh = {
   recKeepPracticingDesc: '多练习几首曲目，或者试试随机识谱。',
   recApply: '试试看',
   authLoading: '加载中...',
+  authRetryButton: '重试',
   authLoginTitle: '欢迎回来',
   authLoginSubtitle: '使用 Passkey 登录以继续',
   authLoginButton: '登录',

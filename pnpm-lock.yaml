@@ -39,6 +39,9 @@ importers:
       '@sightplay/identity-server':
         specifier: workspace:*
         version: link:packages/identity-server
+      '@sightplay/music-domain':
+        specifier: workspace:*
+        version: link:packages/music-domain
       '@sightplay/practice':
         specifier: workspace:*
         version: link:packages/practice
@@ -225,8 +228,13 @@ importers:
         specifier: ^13.3.2
         version: 13.3.2
 
+  packages/music-domain: {}
+
   packages/practice:
     dependencies:
+      '@sightplay/music-domain':
+        specifier: workspace:*
+        version: link:../music-domain
       react:
         specifier: ^19.2.4
         version: 19.2.4

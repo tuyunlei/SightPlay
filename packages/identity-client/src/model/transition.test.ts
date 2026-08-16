@@ -17,6 +17,23 @@ function anonymousState(): IdentityState {
 }
 
 describe('Identity transition', () => {
+  it('keeps an unproven session indeterminate and allows an explicit retry', () => {
+    let state = reduce(transitionIdentity(initialIdentityState, { kind: 'started' }).state, {
+      kind: 'operationFailed',
+      operationId: 1,
+      failure: { code: 'sessionUnavailable', retryable: true },
+    });
+
+    expect(state.session).toEqual({ kind: 'checking' });
+    expect(state.operation).toBeNull();
+    expect(state.failure).toEqual({ code: 'sessionUnavailable', retryable: true });
+
+    state = reduce(state, { kind: 'sessionRefreshRequested' });
+    expect(state.session).toEqual({ kind: 'checking' });
+    expect(state.operation).toMatchObject({ id: 2, kind: 'sessionRefresh', phase: 'loading' });
+    expect(state.failure).toBeNull();
+  });
+
   it('moves through login phases and authenticates only after the session proves it', () => {
     let state = reduce(anonymousState(), { kind: 'loginRequested' });
     expect(state.operation).toMatchObject({ id: 2, kind: 'login', phase: 'checkingSupport' });

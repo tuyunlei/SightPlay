@@ -49,6 +49,7 @@
     "@sightplay/guidance": "workspace:*",
     "@sightplay/identity-client": "workspace:*",
     "@sightplay/identity-server": "workspace:*",
+    "@sightplay/music-domain": "workspace:*",
     "@sightplay/practice": "workspace:*",
     "@sightplay/preferences": "workspace:*",
     "@sightplay/server-application": "workspace:*",

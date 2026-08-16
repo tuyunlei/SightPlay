@@ -1,0 +1,12 @@
+{
+  "name": "@sightplay/music-domain",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "sightplayArchitecture": {
+    "role": "domain"
+  },
+  "exports": {
+    ".": "./src/public.ts"
+  }
+}

@@ -101,6 +101,36 @@ describe('AuthGate integration', () => {
     expect(screen.queryByTestId('main-app')).not.toBeTruthy();
   });
 
+  it('keeps session state indeterminate after a failed check and retries without misrouting', async () => {
+    const user = userEvent.setup();
+    let sessionChecks = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string) => {
+        if (input !== '/api/auth/session') {
+          return { ok: true, json: async () => ({}) } as Response;
+        }
+        sessionChecks += 1;
+        if (sessionChecks === 1) throw new TypeError('network unavailable');
+        return {
+          ok: true,
+          json: async () => identitySuccess({ authenticated: false, hasPasskeys: true }),
+        } as Response;
+      })
+    );
+
+    render(<AuthGateHarness initialRoute={{ kind: 'register' }} />);
+
+    await user.click(await screen.findByRole('button', { name: translations.zh.authRetryButton }));
+    expect(await screen.findByTestId('register-screen')).toBeTruthy();
+    await user.click(
+      screen.getByRole('button', { name: translations.zh.authHaveAccountLoginLink })
+    );
+    expect(await screen.findByTestId('login-screen')).toBeTruthy();
+    expect(screen.getByTestId('current-route').textContent).toBe(JSON.stringify({ kind: 'login' }));
+    expect(screen.queryByTestId('register-screen')).toBeNull();
+  });
+
   it('redirects an anonymous protected route before constructing protected children', async () => {
     vi.stubGlobal(
       'fetch',

@@ -93,6 +93,7 @@ export const en = {
   recKeepPracticingDesc: 'Practice more songs or try random note reading.',
   recApply: 'Try it',
   authLoading: 'Loading...',
+  authRetryButton: 'Try Again',
   authLoginTitle: 'Welcome Back',
   authLoginSubtitle: 'Sign in with your passkey to continue',
   authLoginButton: 'Sign In',

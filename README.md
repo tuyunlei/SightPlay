@@ -27,7 +27,8 @@ A piano sight-reading practice app that helps you improve your ability to read s
    pnpm install --frozen-lockfile
    ```
 
-2. Set the `GEMINI_API_KEY` in `.env.local` to your Gemini API key
+2. Set the `GEMINI_API_KEY` in `.env.local` to your Gemini API key. A fresh local Identity store
+   accepts the one-time development invitation `DEV2-READ`; it resets when the dev server restarts.
 
 3. Run the app:
 
