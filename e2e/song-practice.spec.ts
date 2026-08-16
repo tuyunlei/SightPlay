@@ -31,9 +31,8 @@ async function playAcceptedSongNote(page: Page, midi: number): Promise<void> {
   await expect
     .poll(
       async () => {
-        await page.evaluate(async (note) => {
+        await page.evaluate((note) => {
           window.__simulateMidiNoteOn(note);
-          await new Promise((resolve) => setTimeout(resolve, 100));
           window.__simulateMidiNoteOff(note);
         }, midi);
         if (await page.getByRole('heading', { name: /song complete|完成曲目/i }).isVisible()) {
