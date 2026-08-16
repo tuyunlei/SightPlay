@@ -65,12 +65,14 @@ function AuthenticatedApp({
     identity.refreshSession();
   }, [identity]);
 
-  return route.kind === 'passkeys' ? (
-    <AccountAccessProvider ports={accountAccessPorts} onOutput={handleAccountAccessOutput}>
+  return (
+    <AccountAccessProvider
+      active={route.kind === 'passkeys'}
+      ports={accountAccessPorts}
+      onOutput={handleAccountAccessOutput}
+    >
       {content}
     </AccountAccessProvider>
-  ) : (
-    content
   );
 }
 
