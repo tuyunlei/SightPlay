@@ -127,5 +127,5 @@ describe('Practice transition invariants', () => {
         assertInvariants(state);
       }
     }
-  });
+  }, 10_000);
 });

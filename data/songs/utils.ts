@@ -1,18 +1,16 @@
-import { Duration, Note } from '../../types';
+import { createNoteFromMidi } from '@sightplay/music-domain';
 
-const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const;
+import { Duration, Note } from '../../types';
 
 export const createSongNote = (
   midi: number,
   globalIndex: number,
   duration: Duration = 'quarter'
 ): Note => {
+  const note = createNoteFromMidi(midi);
   return {
     id: `song-note:${globalIndex}:${midi}`,
-    name: NOTE_NAMES[midi % 12],
-    octave: Math.floor(midi / 12) - 1,
-    frequency: 440 * 2 ** ((midi - 69) / 12),
-    midi,
+    ...note,
     globalIndex,
     duration,
   };

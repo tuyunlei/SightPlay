@@ -34,12 +34,8 @@ function fail(
   operation: IdentityOperation,
   failure: IdentityFailure
 ): IdentityTransition {
-  const session =
-    state.session.kind === 'checking'
-      ? { kind: 'anonymous' as const, hasPasskeys: false }
-      : state.session;
   return {
-    state: { ...state, session, operation: null, failure },
+    state: { ...state, operation: null, failure },
     effects: [
       {
         kind: 'reportFailure',

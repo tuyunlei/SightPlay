@@ -1,3 +1,5 @@
+export type { NoteName } from '@sightplay/music-domain';
+
 type Brand<Value, Name extends string> = Value & { readonly __brand: Name };
 
 export type MidiPitch = Brand<number, 'MidiPitch'>;
@@ -9,8 +11,6 @@ export type Clef = 'treble' | 'bass';
 export type PracticeRange = 'central' | 'upper' | 'combined';
 export type HandMode = 'right-hand' | 'left-hand' | 'both-hands';
 export type NoteDuration = 'whole' | 'half' | 'quarter' | 'eighth' | 'sixteenth';
-export type NoteName = 'C' | 'C#' | 'D' | 'D#' | 'E' | 'F' | 'F#' | 'G' | 'G#' | 'A' | 'A#' | 'B';
-
 export type NonEmptyReadonlyArray<Value> = readonly [Value, ...Value[]];
 
 export interface ScoreFrame {

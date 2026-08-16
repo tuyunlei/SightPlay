@@ -1,3 +1,5 @@
+import { createNoteFromMidi } from '@sightplay/music-domain';
+
 import { frameAt } from './exercise';
 import { computeAccuracy } from './scoring';
 import type {
@@ -15,21 +17,6 @@ import type {
 } from './types';
 
 const VISIBLE_FRAME_COUNT = 20;
-const NOTE_NAMES: readonly NoteName[] = [
-  'C',
-  'C#',
-  'D',
-  'D#',
-  'E',
-  'F',
-  'F#',
-  'G',
-  'G#',
-  'A',
-  'A#',
-  'B',
-];
-
 export interface PracticeNoteView {
   readonly id: string;
   readonly name: NoteName;
@@ -134,12 +121,10 @@ function noteView(
   duration?: NoteDuration
 ): PracticeNoteView {
   const midi = Number(pitch);
+  const note = createNoteFromMidi(midi);
   return {
     id,
-    name: NOTE_NAMES[midi % 12],
-    octave: Math.floor(midi / 12) - 1,
-    frequency: 440 * 2 ** ((midi - 69) / 12),
-    midi,
+    ...note,
     globalIndex,
     ...(duration ? { duration } : {}),
   };

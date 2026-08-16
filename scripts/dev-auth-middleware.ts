@@ -1,11 +1,18 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
-import { MemoryIdentityRateLimits } from '@sightplay/identity-server';
+import {
+  asTimestamp,
+  createSystemIdentityPorts,
+  MemoryIdentityRateLimits,
+} from '@sightplay/identity-server';
 import { handleServerRequest, type PlatformContext } from '@sightplay/server-application';
 import type { Connect } from 'vite';
 
 import { E2EHarness } from './e2e-harness.ts';
 import { MemoryIdentityStore } from './memory-identity-store.ts';
+
+const LOCAL_DEV_INVITE_CODE = 'DEV2-READ';
+const LOCAL_DEV_INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 async function toWebRequest(req: IncomingMessage): Promise<Request> {
   const host = req.headers.host || '127.0.0.1';
@@ -42,6 +49,12 @@ async function fromWebResponse(res: ServerResponse, response: Response): Promise
 export function devAuthMiddleware(): Connect.NextHandleFunction {
   const localIdentityStore = new MemoryIdentityStore();
   const localIdentityRateLimits = new MemoryIdentityRateLimits();
+  const localIdentitySystem = createSystemIdentityPorts();
+  const localIdentityReady = localIdentityStore.seedInvitation(
+    LOCAL_DEV_INVITE_CODE,
+    asTimestamp(Date.now() + LOCAL_DEV_INVITE_TTL_MS),
+    localIdentitySystem.secrets
+  );
   const geminiApiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
   const e2eHarness =
     process.env.SIGHTPLAY_E2E_MODE === '1'
@@ -63,6 +76,7 @@ export function devAuthMiddleware(): Connect.NextHandleFunction {
     if (!new URL(rawUrl, 'http://127.0.0.1').pathname.startsWith('/api/')) return next();
 
     try {
+      await localIdentityReady;
       const request = await toWebRequest(req);
       const values: Readonly<Record<string, string>> = {
         GEMINI_API_KEY: geminiApiKey,
