@@ -31,9 +31,8 @@ async function visibleScore(page: Page): Promise<number> {
 }
 
 async function sendFrame(page: Page, pitches: readonly number[]): Promise<void> {
-  await page.evaluate(async (notes) => {
+  await page.evaluate((notes) => {
     notes.forEach((note) => window.__simulateMidiNoteOn(note));
-    await new Promise((resolve) => setTimeout(resolve, 100));
     notes.forEach((note) => window.__simulateMidiNoteOff(note));
   }, pitches);
 }
