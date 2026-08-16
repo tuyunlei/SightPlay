@@ -1,11 +1,13 @@
 import { Fingerprint } from 'lucide-react';
 import { useState } from 'react';
 
+import { useIdentity } from '@sightplay/identity-client';
+
+import { useLanguage } from '../../app/presentation/useLanguage';
 import { translations } from '../../i18n';
-import { useUiStore } from '../../store/uiStore';
 import { normalizeInviteCode, toDisplayInviteCode } from '../../utils/inviteCode';
 
-import { useAuthContext } from './useAuthContext';
+import { identityFailureMessage } from './identityFailureMessage';
 
 const MAX_INVITE_LENGTH = 8;
 
@@ -18,6 +20,7 @@ interface RegisterCardProps {
   initialInviteCode?: string;
   highlighted?: boolean;
   dataTestId?: string;
+  onReturnToLogin?: () => void;
 }
 
 interface RegisterCardViewProps {
@@ -28,6 +31,7 @@ interface RegisterCardViewProps {
   error: string | null;
   dataTestId?: string;
   highlighted: boolean;
+  onReturnToLogin?: () => void;
   onInviteCodeChange: (value: string) => void;
   onRegister: () => void;
 }
@@ -40,6 +44,7 @@ function RegisterCardView({
   error,
   dataTestId,
   highlighted,
+  onReturnToLogin,
   onInviteCodeChange,
   onRegister,
 }: RegisterCardViewProps) {
@@ -103,6 +108,16 @@ function RegisterCardView({
           t.authRegisterButton
         )}
       </button>
+
+      {onReturnToLogin && (
+        <button
+          type="button"
+          onClick={onReturnToLogin}
+          className="mt-4 w-full text-center text-sm text-indigo-600 underline decoration-indigo-400/60 underline-offset-4 transition hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200"
+        >
+          {t.authHaveAccountLoginLink}
+        </button>
+      )}
     </div>
   );
 }
@@ -111,28 +126,19 @@ export function RegisterCard({
   initialInviteCode,
   highlighted = false,
   dataTestId,
+  onReturnToLogin,
 }: RegisterCardProps) {
-  const { register } = useAuthContext();
-  const lang = useUiStore((state) => state.lang);
-  const t = translations[lang];
+  const identity = useIdentity();
+  const { t } = useLanguage();
 
   const [inviteCode, setInviteCode] = useState(() =>
     initialInviteCode ? formatInviteInput(initialInviteCode) : ''
   );
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   const isInviteCodeComplete = normalizeInviteCode(inviteCode).length === 8;
-
-  const handleRegister = async () => {
-    setIsLoading(true);
-    setError(null);
-    const result = await register(undefined, inviteCode);
-    if (result !== true) {
-      setError(result);
-      setIsLoading(false);
-    }
-  };
+  const isLoading = identity.view.operation === 'registration';
+  const error = identity.view.failure
+    ? identityFailureMessage(t, identity.view.failure.code)
+    : null;
 
   return (
     <RegisterCardView
@@ -143,8 +149,9 @@ export function RegisterCard({
       error={error}
       dataTestId={dataTestId}
       highlighted={highlighted}
+      onReturnToLogin={onReturnToLogin}
       onInviteCodeChange={(value) => setInviteCode(formatInviteInput(value))}
-      onRegister={handleRegister}
+      onRegister={() => identity.register({ inviteCode })}
     />
   );
 }

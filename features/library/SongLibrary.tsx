@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 
+import { useLanguage } from '../../app/presentation/useLanguage';
 import { SONG_LIBRARY, SongDifficulty, SongMetadata } from '../../data/songs';
-import { useLanguage } from '../../hooks/useLanguage';
 
 import { SongCard } from './SongCard';
 
 interface SongLibraryProps {
+  difficulty?: SongDifficulty;
+  onDifficultyChange: (difficulty?: SongDifficulty) => void;
   onSongSelect: (songId: string) => void;
 }
 
@@ -25,9 +27,13 @@ const convertToMetadata = (song: (typeof SONG_LIBRARY)[number]): SongMetadata & 
   estimatedDuration: estimateDuration(song.notes.length),
 });
 
-export const SongLibrary: React.FC<SongLibraryProps> = ({ onSongSelect }) => {
+export const SongLibrary: React.FC<SongLibraryProps> = ({
+  difficulty,
+  onDifficultyChange,
+  onSongSelect,
+}) => {
   const { t } = useLanguage();
-  const [difficultyFilter, setDifficultyFilter] = useState<SongDifficulty | 'all'>('all');
+  const difficultyFilter: SongDifficulty | 'all' = difficulty ?? 'all';
 
   const songs = SONG_LIBRARY.map(convertToMetadata);
 
@@ -62,7 +68,7 @@ export const SongLibrary: React.FC<SongLibraryProps> = ({ onSongSelect }) => {
           return (
             <button
               key={diff}
-              onClick={() => setDifficultyFilter(diff)}
+              onClick={() => onDifficultyChange(diff === 'all' ? undefined : diff)}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 difficultyFilter === diff
                   ? 'bg-blue-500 text-white'

@@ -1,16 +1,12 @@
-import { test, expect, Page } from '@playwright/test';
+import {
+  expect,
+  identitySuccess,
+  mockAuthenticatedSession,
+  test,
+  type Page,
+} from './fixtures/app-test';
 
 type Passkey = { id: string; name: string; createdAt: number };
-
-async function mockAuthenticatedSession(page: Page) {
-  await page.route('**/api/auth/session', (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ authenticated: true, hasPasskeys: true }),
-    });
-  });
-}
 
 async function openPasskeyManagement(page: Page) {
   await page.goto('/');
@@ -24,6 +20,43 @@ async function openPasskeyManagement(page: Page) {
 }
 
 test.describe('Account Management E2E', () => {
+  test('closing management restores its source route without reopening on Back', async ({
+    page,
+  }) => {
+    await mockAuthenticatedSession(page);
+    await page.route('**/api/auth/passkeys', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: identitySuccess([
+          { id: 'pk-1', name: 'MacBook Pro', createdAt: 1700000000000 },
+          { id: 'pk-2', name: 'iPhone 15', createdAt: 1701000000000 },
+        ]),
+      });
+    });
+
+    await page.goto('/practice');
+    await page.getByRole('button', { name: /song library|曲库/i }).click();
+    await page.getByRole('button', { name: /intermediate|中级/i }).click();
+    await expect(page.getByRole('heading', { name: /song library|曲库/i })).toBeVisible();
+
+    await page.getByTitle(/manage passkeys|管理 passkey/i).click();
+    await expect(page).toHaveURL(/\/passkeys\?from=library&difficulty=intermediate$/);
+
+    await page
+      .getByRole('button', { name: /close|关闭/i })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/library\?difficulty=intermediate$/);
+
+    await page.goBack();
+    await expect(page).toHaveURL(/\/library$/);
+    await expect(page.getByRole('heading', { name: /manage passkeys|管理 passkey/i })).toBeHidden();
+
+    await page.goBack();
+    await expect(page).toHaveURL(/\/practice$/);
+  });
+
   test('1.5.1 should show passkey list after opening passkey management', async ({ page }) => {
     const passkeys: Passkey[] = [
       { id: 'pk-1', name: 'MacBook Pro', createdAt: 1700000000000 },
@@ -35,7 +68,7 @@ test.describe('Account Management E2E', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(passkeys),
+        body: identitySuccess(passkeys),
       });
     });
 
@@ -58,7 +91,7 @@ test.describe('Account Management E2E', () => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify(currentPasskeys),
+          body: identitySuccess(currentPasskeys),
         });
         return;
       }
@@ -72,7 +105,7 @@ test.describe('Account Management E2E', () => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ ok: true }),
+          body: identitySuccess({ completed: true }),
         });
         return;
       }
@@ -99,7 +132,7 @@ test.describe('Account Management E2E', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([{ id: 'pk-only', name: 'Only Device', createdAt: 1700000000000 }]),
+        body: identitySuccess([{ id: 'pk-only', name: 'Only Device', createdAt: 1700000000000 }]),
       });
     });
 
@@ -109,7 +142,7 @@ test.describe('Account Management E2E', () => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ ok: true }),
+          body: identitySuccess({ completed: true }),
         });
         return;
       }
@@ -136,7 +169,7 @@ test.describe('Account Management E2E', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([{ id: 'pk-1', name: 'MacBook Pro', createdAt: 1700000000000 }]),
+        body: identitySuccess([{ id: 'pk-1', name: 'MacBook Pro', createdAt: 1700000000000 }]),
       });
     });
 
@@ -145,7 +178,7 @@ test.describe('Account Management E2E', () => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ codes: ['ABCD-1234'] }),
+          body: identitySuccess({ codes: ['ABCD-1234'] }),
         });
         return;
       }

@@ -1,0 +1,85 @@
+# CI Signal Hardening
+
+Status: delivered
+
+Branch: `codex/ci-signal-hardening`
+
+Base: `origin/develop` at `477a5c1`
+
+## Goal
+
+Make CI a small set of independent, low-noise proofs: fast deterministic quality checks, real browser
+boundary tests, and side-effect-free production builds. Static gates must describe only structure they
+can mechanically prove; runtime correctness remains the responsibility of behavior and contract tests.
+
+## Scope
+
+- [x] Consolidate format, lint, typecheck, architecture, and deterministic tests into one `quality` job.
+- [x] Run `quality`, Playwright E2E, and production build in parallel.
+- [x] Cancel superseded runs for the same branch or pull request.
+- [x] Keep full Playwright in CI but remove it from the local pre-push hook.
+- [x] Remove Sentry credentials from ordinary CI builds so verification has no external release write.
+- [x] Remove file-total-line and default-export policy gates that do not prove product correctness.
+- [x] Disable Vite's generic raw-chunk advisory; add a measured user-facing performance budget only when
+      the product has a concrete loading requirement.
+- [x] Remove dependency-cruiser rules for deleted legacy source roots; retain the one-way legacy-root gate.
+- [x] Clear persistent Knip configuration hints without dropping Pages or local-runtime entrypoints.
+- [x] Use Node's bundled Corepack, the current artifact action, and an explicit workerd install-script
+      allowance instead of accepting permanent action/dependency warnings.
+- [x] Replace lifecycle and ingress AST claims that admitted no-op implementations or rejected unrelated
+      typed code; retain structural boundaries and rely on existing runtime/adapter behavior suites.
+- [x] Pass the complete local deterministic gate without warnings.
+- [x] Pass the full local Playwright and side-effect-free build evidence.
+- [x] Pass the new GitHub Actions workflow without persistent configuration warnings.
+- [ ] After the new check names exist on `develop`, configure branch protection for `develop` and `main`
+      as a separately reviewed repository operation.
+
+## Proof ownership
+
+| Proof                                                    | Owner                   | Failure means                                                       |
+| -------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------- |
+| Formatting, lint, typecheck, package boundaries, unit/D1 | `quality`               | deterministic source or contract regression                         |
+| Browser assembly, WebAuthn, WebMIDI, Web Audio, handlers | `e2e`                   | browser or system-boundary regression                               |
+| Web and Pages Functions artifacts                        | `build`                 | the production artifacts cannot be constructed                      |
+| Runtime cancellation and late-result rejection           | feature runtime tests   | behavior contract failed; static lifecycle metadata is not evidence |
+| External payload acceptance/rejection                    | codec and adapter tests | trust-boundary behavior failed; AST admission shape is not evidence |
+
+## Progress
+
+- 2026-08-14: PR #17 squash-merged to `develop` as `cadcbcf`. Post-merge run `31801581653`
+  independently passed build in 22 seconds, quality in 1 minute 16 seconds, and E2E in 3 minutes 23
+  seconds. Branch protection remains the separate unchecked repository-setting decision above.
+- 2026-08-14: Audited `origin/develop` and confirmed six repeated installs, build serialized behind E2E,
+  complete local/remote test duplication, permanent file-size/Knip warnings, semantic false assurance in
+  lifecycle/ingress AST checks, CI-time Sentry upload credentials, and no branch protection or rulesets.
+- 2026-08-14: Implemented the source/config cleanup. Focused `lint:fitness` passes both fixtures and the
+  live repository; `lint:dead` now passes with no configuration hints while retaining root runtime
+  entrypoints. The shared `verify:fast` entry then passed format, zero-warning lint, three TypeScript
+  projects, 282-module dependency analysis, structural fitness fixtures, Knip, 276 regular tests, and 19
+  workerd/D1 tests in 19.2 seconds. Slow-boundary and remote workflow evidence remained pending at this
+  checkpoint.
+- 2026-08-14: The two slow proofs ran in parallel: production web/Pages Functions build passed without
+  Sentry credentials, and Playwright passed 51 scenarios with the documented WebKit virtual-WebAuthn case
+  skipped. Local output still contains the host's `NO_COLOR`/Playwright color conflict and Vite's generic
+  raw-chunk advisory; neither is being relabeled as product correctness evidence. Remote workflow evidence
+  remains pending.
+- 2026-08-14: PR #17's first workflow proved the new topology: build finished in 25 seconds, quality in 1
+  minute 26 seconds, and E2E in 3 minutes 5 seconds, all in parallel. Log review found no project
+  file-size or Knip warnings, then identified three toolchain leftovers: pnpm action v6 bootstrapping pnpm
+  11 before switching to pinned pnpm 10, an intentionally skipped workerd postinstall, and obsolete
+  `upload-artifact@v4` runtime warnings. The follow-up explicitly allows workerd's required binary
+  postinstall and upgrades artifact upload to v7. A pnpm v5 trial removed the layout warning but exposed
+  that action's own Node 24 `url.parse()` deprecation; v6 standalone still bootstrapped pnpm 11 before
+  switching versions. The final configuration removes the setup action entirely: Node 24's bundled
+  Corepack activates the exact pnpm version already declared in `package.json`, without a second version
+  source or warning suppression.
+- 2026-08-14: The Corepack workflow passed remotely with build in 24 seconds, quality in 1 minute 13
+  seconds, E2E in 3 minutes 34 seconds, and current artifact uploads. The final log scan found no pnpm,
+  workerd, artifact, Knip, or file-size warnings; the only remaining output was Vite's generic 500 kB raw
+  chunk advisory for a 196.6 kB gzip artifact. Because no product loading budget justifies that default,
+  the build now disables the advisory instead of replacing it with another arbitrary threshold.
+- 2026-08-14: Final PR #17 head `eb9b980` passed `quality` in 1 minute 11 seconds, side-effect-free
+  `build` in 24 seconds, E2E in 3 minutes 4 seconds, and Cloudflare Pages. The complete run
+  `31799028676` contains no project, pnpm, workerd, artifact, Knip, file-size, deprecation, or bundle
+  advisory warnings. Source delivery is ready for review; branch protection remains the separate
+  repository-setting decision recorded above.

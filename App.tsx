@@ -1,51 +1,117 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
+import { AccountAccessProvider } from '@sightplay/account-access-client';
+import type { AppRoute, ProtectedAppRoute } from '@sightplay/app-shell';
+import {
+  createBrowserAccountAccessPorts,
+  createBrowserGuidancePorts,
+  createBrowserIdentityPorts,
+  createBrowserPracticePorts,
+} from '@sightplay/browser-adapters';
+import { GuidanceProvider } from '@sightplay/guidance';
+import { IdentityProvider, useIdentity } from '@sightplay/identity-client';
+import { PracticeProvider, usePractice } from '@sightplay/practice';
+import { PreferencesProvider, usePreferences } from '@sightplay/preferences';
+
+import { GuidancePracticeBridge } from './app/guidance/GuidancePracticeBridge';
+import { useBrowserRoute } from './app/navigation/useBrowserRoute';
+import { createInitialRandomExercise } from './app/practice/createExercisePlan';
+import { usePracticeRoute } from './app/practice/usePracticeRoute';
+import { MainAppContent } from './app/presentation/MainAppContent';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { ViewMode } from './components/navigation/NavigationTabs';
 import { AuthGate } from './features/auth/AuthGate';
-import { useAiCoach } from './hooks/useAiCoach';
-import { usePracticeSession } from './hooks/usePracticeSession';
-import { useTestAPI } from './hooks/useTestAPI';
 import { translations } from './i18n';
-import { useUiStore } from './store/uiStore';
-import { MainAppContent } from './views/MainAppContent';
 
-const App = () => {
-  const lang = useUiStore((state) => state.lang);
-  const toggleLang = useUiStore((state) => state.toggleLang);
+type Navigate = (route: AppRoute, replace?: boolean) => void;
+type DismissEntry = (fallbackRoute: AppRoute) => void;
+
+function AuthenticatedApp({
+  route,
+  navigate,
+  dismissEntry,
+}: {
+  route: ProtectedAppRoute;
+  navigate: Navigate;
+  dismissEntry: DismissEntry;
+}) {
+  const identity = useIdentity();
+  const [accountAccessPorts] = useState(createBrowserAccountAccessPorts);
+  const [guidancePorts] = useState(createBrowserGuidancePorts);
+  const [practicePorts] = useState(createBrowserPracticePorts);
+  const [initialPlan] = useState(() => createInitialRandomExercise(practicePorts.seed.nextSeed()));
+  const preferences = usePreferences();
+  const lang = preferences.language;
+  const toggleLang = preferences.toggleLanguage;
   const t = translations[lang];
-  const [showPasskeyManagement, setShowPasskeyManagement] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('random');
-  const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
-  const [showSongComplete, setShowSongComplete] = useState(false);
-  const challengeCompleteRef = useRef<() => void>(() => {});
-
-  const pathname = window.location.pathname;
-  const urlParams = new URLSearchParams(window.location.search);
-  const initialAuthView = pathname === '/register' ? 'register' : 'login';
-  const inviteCodeFromUrl = urlParams.get('code') ?? undefined;
-
-  const practiceSession = usePracticeSession({
-    onMicError: () => alert(t.micError),
-    onChallengeComplete: () => challengeCompleteRef.current(),
-  });
-
-  const { state, derived, actions, pressedKeys } = practiceSession;
-  useTestAPI(practiceSession);
-
-  const { chatInput, setChatInput, chatHistory, isLoadingAi, sendMessage, chatEndRef } = useAiCoach(
-    {
-      clef: state.clef,
-      lang,
-      onLoadChallenge: actions.loadChallenge,
-    }
+  const content = (
+    <GuidanceProvider
+      ports={guidancePorts}
+      initialContext={{ clef: initialPlan.config.clef, language: lang }}
+    >
+      <PracticeProvider ports={practicePorts} initialPlan={initialPlan}>
+        <PracticeApplication
+          route={route}
+          navigate={navigate}
+          dismissEntry={dismissEntry}
+          t={t}
+          lang={lang}
+          toggleLang={toggleLang}
+        />
+      </PracticeProvider>
+    </GuidanceProvider>
   );
 
-  useEffect(() => {
-    challengeCompleteRef.current = () => {
-      sendMessage(t.aiChallengeCompletedUserMessage);
-    };
-  }, [sendMessage, t.aiChallengeCompletedUserMessage]);
+  const handleAccountAccessOutput = useCallback(() => {
+    identity.refreshSession();
+  }, [identity]);
+
+  return route.kind === 'passkeys' ? (
+    <AccountAccessProvider ports={accountAccessPorts} onOutput={handleAccountAccessOutput}>
+      {content}
+    </AccountAccessProvider>
+  ) : (
+    content
+  );
+}
+
+function PracticeApplication({
+  route,
+  navigate,
+  dismissEntry,
+  t,
+  lang,
+  toggleLang,
+}: {
+  route: ProtectedAppRoute;
+  navigate: Navigate;
+  dismissEntry: DismissEntry;
+  t: (typeof translations)['en'];
+  lang: ReturnType<typeof usePreferences>['language'];
+  toggleLang: () => void;
+}) {
+  const practice = usePractice();
+  usePracticeRoute(route, practice);
+
+  return (
+    <div
+      className="bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] flex flex-col font-sans"
+      style={{ minHeight: '100dvh' }}
+    >
+      <GuidancePracticeBridge language={lang} navigate={navigate} t={t} />
+      <MainAppContent
+        t={t}
+        toggleLang={toggleLang}
+        route={route}
+        navigate={navigate}
+        dismissEntry={dismissEntry}
+      />
+    </div>
+  );
+}
+
+function AppRuntime() {
+  const { route, navigate, dismissEntry } = useBrowserRoute();
+  const [identityPorts] = useState(createBrowserIdentityPorts);
 
   if (
     (import.meta.env.MODE === 'test' || import.meta.env.DEV) &&
@@ -55,39 +121,35 @@ const App = () => {
   }
 
   return (
-    <ErrorBoundary t={t}>
-      <AuthGate initialAuthView={initialAuthView} initialInviteCode={inviteCodeFromUrl}>
-        <div
-          className="bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] flex flex-col font-sans"
-          style={{ minHeight: '100dvh' }}
-        >
-          <MainAppContent
-            state={state}
-            derived={derived}
-            actions={actions}
-            pressedKeys={pressedKeys}
-            t={t}
-            toggleLang={toggleLang}
-            chatInput={chatInput}
-            setChatInput={setChatInput}
-            chatHistory={chatHistory}
-            isLoadingAi={isLoadingAi}
-            sendMessage={sendMessage}
-            chatEndRef={chatEndRef}
-            lang={lang}
-            showPasskeyManagement={showPasskeyManagement}
-            setShowPasskeyManagement={setShowPasskeyManagement}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            selectedSongId={selectedSongId}
-            setSelectedSongId={setSelectedSongId}
-            showSongComplete={showSongComplete}
-            setShowSongComplete={setShowSongComplete}
+    <IdentityProvider ports={identityPorts}>
+      <AuthGate route={route} navigate={navigate}>
+        {(protectedRoute) => (
+          <AuthenticatedApp
+            route={protectedRoute}
+            navigate={navigate}
+            dismissEntry={dismissEntry}
           />
-        </div>
+        )}
       </AuthGate>
+    </IdentityProvider>
+  );
+}
+
+function LocalizedApp() {
+  const { language } = usePreferences();
+  const t = translations[language];
+
+  return (
+    <ErrorBoundary t={t}>
+      <AppRuntime />
     </ErrorBoundary>
   );
-};
+}
+
+const App = () => (
+  <PreferencesProvider>
+    <LocalizedApp />
+  </PreferencesProvider>
+);
 
 export default App;

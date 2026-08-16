@@ -1,12 +1,14 @@
-import type { KVStore, PlatformContext } from './types';
+import {
+  createD1IdentityRateLimits,
+  createD1IdentityStore,
+  type D1DatabasePort,
+} from '@sightplay/identity-server';
+import type { PlatformContext } from '@sightplay/server-application';
 
 export interface CFPagesContext {
   request: Request;
   env: {
-    // Cloudflare's KVNamespace is structurally compatible with our KVStore.
-    // Keep this typed to KVStore to avoid adding @cloudflare/workers-types.
-    AUTH_STORE: KVStore;
-    JWT_SECRET: string;
+    IDENTITY_DB: D1DatabasePort;
     GEMINI_API_KEY: string;
     [key: string]: unknown;
   };
@@ -16,7 +18,10 @@ export interface CFPagesContext {
 export function createCloudflareContext(context: CFPagesContext): PlatformContext {
   return {
     request: context.request,
-    kv: context.env.AUTH_STORE,
+    identityStore: createD1IdentityStore(context.env.IDENTITY_DB),
+    identityRateLimits: createD1IdentityRateLimits(context.env.IDENTITY_DB),
+    clientAddress: context.request.headers.get('CF-Connecting-IP') ?? undefined,
+    fetch: globalThis.fetch.bind(globalThis),
     env(key: string): string | undefined {
       const value = context.env[key];
       return typeof value === 'string' ? value : undefined;

@@ -1,96 +1,40 @@
-# AGENTS.md
+# AGENTS.md — SightPlay
 
-This file provides guidance to AI coding agents when working with code in this repository.
+## Instruction governance
 
-## Project Overview
-
-SightPlay (视弹) is a piano sight-reading practice app built with React + TypeScript + Vite. It helps users improve their ability to read sheet music and play the correct notes on the piano.
-
-**Core Features:**
-
-- **Staff display** — Shows target notes on treble or bass clef
-- **MIDI keyboard input** — Detects notes played via Web MIDI API
-- **Microphone input** — For acoustic pianos without MIDI output, uses pitch detection to identify played notes
-- **AI Coach** — Gemini AI generates personalized practice challenges (e.g., melodies, scales)
-- **Real-time feedback** — Score tracking, streak counter, "too high/too low" hints
-
-## Common Commands
-
-```bash
-npm install        # Install dependencies
-npm run dev        # Start dev server (port 3000)
-npm run build      # Production build
-npm run preview    # Preview production build
-npm run lint       # ESLint rules check
-npm run format     # Prettier formatting
-npm run typecheck  # TypeScript strict type checking
-npm run test:ci    # Vitest coverage gate
-npm run lint:arch  # Architecture/dead code/file size checks
-```
-
-## Environment Configuration
-
-Set `GEMINI_API_KEY` in `.env.local`. Vite injects it into the frontend via `process.env.API_KEY`.
+Keep instructions limited to stable constraints that a capable cold agent would otherwise miss and
+whose violation is costly. Put mechanically enforceable boundaries in types, dependency rules, lint,
+or CI; put procedures in guides and historical reasoning in decisions. Update an affected instruction
+in the same change as the constraint, and delete stale or duplicated rules. Follow
+`docs/guides/agents-md-governance.md` when editing any `AGENTS.md`.
 
 ## Architecture
 
-### Directory Structure
+- Dependency direction is enforced by `.dependency-cruiser.cjs`. Do not weaken a rule to make a new
+  import pass; change the ownership or introduce an explicit boundary.
+- Keep product decisions independent of React and browser APIs. React hooks adapt state and effects to
+  the UI; services adapt Web MIDI, Web Audio, network, storage, clocks, and schedulers.
+- A feature consumes external capabilities through narrow interfaces and receives implementations at
+  its composition boundary. Do not construct a concrete service inside business orchestration when a
+  test or alternate runtime must replace it.
+- Use MIDI numbers as note identity. Create notes through `createNoteFromMidi()` rather than duplicating
+  pitch/name/frequency conversion.
+- User-visible copy goes through `i18n/`; do not hard-code it in components, hooks, or services.
 
-- `App.tsx` - Main app component containing all state and business logic
-- `components/` - Visual components (StaffDisplay staff, PianoDisplay keyboard)
-- `services/` - Core service layer
-- `types.ts` - TypeScript type definitions
-- `constants.ts` - Music constants (notes, frequencies, MIDI mapping)
-- `i18n.ts` - Bilingual i18n (Chinese/English)
-- `config/` - Runtime configuration layer (depends only on shared)
-- `domain/` - Domain layer (no UI dependency)
-- `hooks/` - Business hooks
-- `features/` - Feature modules
-- `store/` - Global state management
+## Tests
 
-### i18n Development Guideline
+Tests protect observable behavior, domain decisions, boundary contracts, or known regressions. CI does
+not collect or gate line coverage. Do not add tests for static text/prompt containment, simple registry
+presence, return-object shape, setter forwarding, mocks themselves, or implementation-only wiring.
 
-All user-facing copy must go through i18n (see `i18n.ts`). Do not hard-code strings directly in components or services.
+Prefer pure decision tests, adapter contract tests, assembled React tests, and Playwright user paths at
+the boundary each can actually prove. A fake skips a real path: name that gap and cover important real
+adapter behavior separately. Follow `docs/guides/testing-strategy.md` when adding or removing tests.
 
-### Service Layer
+## Safety and workflow
 
-| File               | Responsibility                                                       |
-| ------------------ | -------------------------------------------------------------------- |
-| `audioService.ts`  | Microphone pitch detection for acoustic pianos (autocorrelation)     |
-| `midiService.ts`   | Web MIDI API wrapper with hot-plug support                           |
-| `geminiService.ts` | Gemini AI interaction returning structured JSON (dialog + exercises) |
-
-### Core Data Flow
-
-1. User sees target note on staff
-2. User plays the note on piano (MIDI keyboard or acoustic piano via microphone)
-3. System detects the played note → `detectedNote`
-4. `noteQueue` stores the current queue of target notes (max 20)
-5. When the detected pitch matches the head note for 80ms → trigger `handleCorrectNote`
-6. On success, the head moves to `exitingNotes` (exit animation), and the queue is replenished
-
-### Note System
-
-- Use MIDI numbers as the core identifier (C4 = 60)
-- `createNoteFromMidi()` consistently generates Note objects
-- Treble clef range: MIDI 60-79; bass clef range: MIDI 40-60
-
-### AI Challenge Mode
-
-Gemini returns `challengeData` containing a note sequence (scientific pitch notation like "C4"). `loadChallenge()` converts it into a Note array and replaces `noteQueue`.
-
-## Quality Gates
-
-### Local Gates
-
-- ESLint + Prettier: `eslint.config.js`, `.prettierrc`, `.prettierignore`
-- TypeScript strict: `tsconfig.json`
-- Tests and coverage: `vitest.config.ts`
-- Architecture constraints: `.dependency-cruiser.cjs`
-- Dead code: `knip.json`
-- File size gate: `scripts/check-file-size.js`
-- Git hooks: `.husky/` + `lint-staged`
-
-### CI/CD
-
-- GitHub Actions: `.github/workflows/ci.yml`
+- Work on a feature branch from `develop`; changes enter `develop` through a reviewed PR. Never deploy
+  or merge `develop` to `main` unless the user explicitly requests production release.
+- Never commit `.env*`, credentials, production data, or copied platform secrets.
+- Real MIDI hardware, microphone quality, passkeys, and production services require explicit runtime
+  evidence. Mock, jsdom, and Playwright simulation do not prove those boundaries.

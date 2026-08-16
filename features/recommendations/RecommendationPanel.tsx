@@ -1,6 +1,7 @@
 import React from 'react';
 
-import type { Recommendation } from '../../domain/recommendations';
+import type { GuidanceRecommendation } from '@sightplay/guidance';
+
 import { translations } from '../../i18n';
 
 import { RecommendationCard } from './RecommendationCard';
@@ -8,9 +9,9 @@ import { RecommendationCard } from './RecommendationCard';
 type TranslationMap = typeof translations.en;
 
 interface RecommendationPanelProps {
-  recommendations: Recommendation[];
+  recommendations: readonly GuidanceRecommendation[];
   t: TranslationMap;
-  onApply: (rec: Recommendation) => void;
+  onApply: (id: string) => void;
   onDismiss: (id: string) => void;
 }
 

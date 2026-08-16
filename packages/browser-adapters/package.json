@@ -1,0 +1,21 @@
+{
+  "name": "@sightplay/browser-adapters",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "sightplayArchitecture": {
+    "role": "adapters"
+  },
+  "exports": {
+    ".": "./src/public.ts"
+  },
+  "dependencies": {
+    "@passwordless-id/webauthn": "^2.3.1",
+    "@sentry/react": "^10.38.0",
+    "@sightplay/api-contracts": "workspace:*",
+    "@sightplay/account-access-client": "workspace:*",
+    "@sightplay/guidance": "workspace:*",
+    "@sightplay/identity-client": "workspace:*",
+    "@sightplay/practice": "workspace:*"
+  }
+}

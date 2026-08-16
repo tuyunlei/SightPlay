@@ -30,9 +30,6 @@ export const FLAT_NOTE_NAMES: NoteName[] = [
   'B',
 ];
 
-export const TREBLE_RANGE = { min: 60, max: 79 }; // C4 to G5
-export const BASS_RANGE = { min: 40, max: 60 }; // E2 to C4
-
 export const DURATION_BEATS: Record<Duration, number> = {
   whole: 4,
   half: 2,

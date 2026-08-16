@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/app-test';
 
 test.describe('Phone Portrait', () => {
   test('homepage renders correctly on phone portrait', async ({ page }) => {
@@ -23,7 +23,6 @@ test.describe('Phone Portrait', () => {
   test('no horizontal overflow on phone portrait', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
 
     // Check that document width doesn't exceed viewport
     const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
@@ -34,7 +33,6 @@ test.describe('Phone Portrait', () => {
   test('content is accessible within viewport on phone portrait', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
 
     // Check that main content exists and is within viewport bounds
     const mainContent = page.locator('body > div').first();
@@ -72,7 +70,6 @@ test.describe('iPad Landscape', () => {
   test('no horizontal overflow on iPad landscape', async ({ page }) => {
     await page.setViewportSize({ width: 1080, height: 810 });
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
 
     // Check that document width doesn't exceed viewport
     const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
@@ -83,7 +80,6 @@ test.describe('iPad Landscape', () => {
   test('content is accessible within viewport on iPad landscape', async ({ page }) => {
     await page.setViewportSize({ width: 1080, height: 810 });
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
 
     // Check that main content exists and is within viewport bounds
     const mainContent = page.locator('body > div').first();
@@ -100,7 +96,6 @@ test.describe('iPad Landscape', () => {
   test('layout has appropriate spacing on larger screens', async ({ page }) => {
     await page.setViewportSize({ width: 1080, height: 810 });
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
 
     // On larger screens, content should utilize available space
     const mainContent = page.locator('body > div').first();
@@ -120,7 +115,6 @@ test.describe('Responsive Behavior', () => {
   test('no horizontal scrollbar on phone', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 }); // iPhone SE
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
 
     // Check that document width doesn't exceed viewport
     const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
@@ -131,7 +125,6 @@ test.describe('Responsive Behavior', () => {
   test('safe area insets are respected', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 }); // iPhone 13
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
 
     // Check that CSS safe-area variables are defined
     const hasSafeArea = await page.evaluate(() => {

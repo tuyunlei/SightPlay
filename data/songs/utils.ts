@@ -1,4 +1,5 @@
-import { createNoteFromMidi } from '../../domain/note';
+import { createNoteFromMidi } from '@sightplay/music-domain';
+
 import { Duration, Note } from '../../types';
 
 export const createSongNote = (
@@ -6,6 +7,11 @@ export const createSongNote = (
   globalIndex: number,
   duration: Duration = 'quarter'
 ): Note => {
-  const note = createNoteFromMidi(midi, globalIndex, duration);
-  return note;
+  const note = createNoteFromMidi(midi);
+  return {
+    id: `song-note:${globalIndex}:${midi}`,
+    ...note,
+    globalIndex,
+    duration,
+  };
 };

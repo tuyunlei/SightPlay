@@ -1,30 +1,23 @@
-import { test, expect } from '@playwright/test';
+import { expect, identitySuccess, test } from './fixtures/app-test';
 
 test.describe('Logout Flow', () => {
-  test('should logout to login screen and remain logged out after refresh', async ({
-    page,
-    context,
-  }) => {
-    await context.addCookies([
-      {
-        name: 'auth_token',
-        value: 'mock-token',
-        domain: 'localhost',
-        path: '/',
-      },
-    ]);
+  test('should logout to login screen and remain logged out after refresh', async ({ page }) => {
+    let authenticated = true;
 
     await page.route('**/api/auth/session', (route) => {
-      const cookie = route.request().headers()['cookie'] || '';
-      const hasAuthCookie = cookie.includes('auth_token=');
-
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          authenticated: hasAuthCookie,
-          hasPasskeys: true,
-        }),
+        body: identitySuccess({ authenticated, hasPasskeys: true }),
+      });
+    });
+
+    await page.route('**/api/auth/logout', (route) => {
+      authenticated = false;
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: identitySuccess({ completed: true }),
       });
     });
 
@@ -32,7 +25,7 @@ test.describe('Logout Flow', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([
+        body: identitySuccess([
           { id: 'pk-1', name: 'Main Device', createdAt: Date.now() },
           { id: 'pk-2', name: 'Backup Device', createdAt: Date.now() - 86400000 },
         ]),

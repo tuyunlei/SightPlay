@@ -41,20 +41,3 @@ export enum ClefType {
 export type PracticeRangeMode = 'central' | 'upper' | 'combined';
 
 export type HandPracticeMode = 'right-hand' | 'left-hand' | 'both-hands';
-
-export interface GeneratedChallenge {
-  title: string;
-  notes: string[]; // e.g., ["C4", "E4", "G4"]
-  description: string;
-}
-
-export interface AiResponse {
-  replyText: string;
-  challengeData?: GeneratedChallenge | null;
-}
-
-export interface ChatMessage {
-  role: 'user' | 'ai';
-  text: string;
-  hasAction?: boolean;
-}

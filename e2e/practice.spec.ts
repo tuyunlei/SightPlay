@@ -1,37 +1,22 @@
-import { test, expect, Page } from '@playwright/test';
-
-async function mockAuthenticatedSession(page: Page) {
-  await page.route('**/api/auth/session', (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ authenticated: true, hasPasskeys: true }),
-    });
-  });
-}
+import { expect, identitySuccess, mockAuthenticatedSession, test } from './fixtures/app-test';
 
 test.describe('Practice Flow', () => {
   test.describe('Unauthenticated State', () => {
-    test('should show login screen with register entry when no passkeys exist', async ({
-      page,
-    }) => {
-      // Mock the session API to indicate no authentication and no passkeys
+    test('routes an empty identity store to an actionable registration flow', async ({ page }) => {
       await page.route('**/api/auth/session', (route) => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ authenticated: false, hasPasskeys: false }),
+          body: identitySuccess({ authenticated: false, hasPasskeys: false }),
         });
       });
 
       await page.goto('/');
 
-      // Should show the login screen with register link
-      await expect(page.getByTestId('login-screen')).toBeVisible();
-      await expect(page.getByRole('heading', { name: /Welcome Back|欢迎回来/i })).toBeVisible();
-      await expect(
-        page.getByRole('button', { name: /register with invite code|使用邀请码注册/i })
-      ).toBeVisible();
+      await expect(page).toHaveURL(/\/register$/);
+      const inviteCode = page.locator('#invite-code');
+      await inviteCode.fill('ABCD-EFGH');
+      await expect(page.getByRole('button', { name: /passkey/i })).toBeEnabled();
     });
 
     test('should show login screen when passkeys exist but not authenticated', async ({ page }) => {
@@ -40,7 +25,7 @@ test.describe('Practice Flow', () => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ authenticated: false, hasPasskeys: true }),
+          body: identitySuccess({ authenticated: false, hasPasskeys: true }),
         });
       });
 

@@ -1,0 +1,16 @@
+{
+  "name": "@sightplay/server-application",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "sightplayArchitecture": {
+    "role": "application"
+  },
+  "exports": {
+    ".": "./src/public.ts"
+  },
+  "dependencies": {
+    "@sightplay/api-contracts": "workspace:*",
+    "@sightplay/identity-server": "workspace:*"
+  }
+}

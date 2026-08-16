@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": [
+      "@cloudflare/workers-types",
+      "@cloudflare/vitest-pool-workers/types",
+      "vitest/globals"
+    ]
+  },
+  "include": [
+    "packages/identity-server/src/**/*.ts",
+    "packages/server-application/src/**/*.ts",
+    "edge-functions/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist", "coverage"]
+}

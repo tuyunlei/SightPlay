@@ -1,39 +1,51 @@
 # Contributing Guide
 
-## 分支模型
+## Branches and pull requests
 
+- `main` is the production branch. Do not update or deploy it without an explicit release decision.
+- `develop` is the integration branch.
+- Create a disposable feature branch from current `develop`. Human branches use
+  `feature/<scope>-<description>`; Codex worktrees use `codex/<description>`.
+- Every change enters `develop` through a reviewed pull request. Do not merge a feature branch into a
+  local `develop` and push it directly.
+- Keep one coherent change in a PR. Split unrelated work, but keep coupled code, contract, documentation,
+  and tests together.
+
+GitHub Issues and PRs are the live work ledger. Do not maintain the same status in ROADMAP, a task
+document, and an issue. ROADMAP records durable project milestones; a task document may retain the
+decisions and verification record of a large cross-cutting migration.
+
+## Local validation
+
+Use the pinned versions in `.node-version` and `package.json`, then run the gates relevant to the change.
+Before requesting merge, run the complete CI-equivalent set:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm run format:check
+pnpm run lint
+pnpm run typecheck
+pnpm run lint:arch
+pnpm run test:ci
+pnpm run test:e2e
+pnpm run build
+pnpm audit
 ```
-main          ← 生产分支，部署到 EdgeOne Pages
-  └─ develop  ← 开发集成分支，CI 通过后合入 main
-       └─ feature/p0-xxx  ← 单个任务的工作分支
-       └─ feature/p1-xxx
-       └─ ...
-```
 
-### 规则
+CI does not collect or gate line coverage. Follow [`docs/guides/testing-strategy.md`](docs/guides/testing-strategy.md):
+tests must protect observable behavior, decisions, contracts, or known regressions.
+The merge-gating E2E command includes stable Chromium, built-preview Chromium/WebKit system journeys,
+and deterministic fake-capture audio. Provider, remote-preview, and physical-hardware evidence remain
+separate trust tiers; see [`docs/guides/autonomous-e2e.md`](docs/guides/autonomous-e2e.md).
 
-- **main**：始终可部署，只接受来自 develop 的 fast-forward 合并
-- **develop**：集成分支，feature 分支完成后合入
-- **feature/\***：从 develop 切出，命名 `feature/<phase>-<简述>`，例如 `feature/p0-e2e-setup`
-- 每个 feature 分支只做**一个小任务**，完成后立即合回 develop
-- develop 稳定后同步到 main 并触发部署
+## Commits
 
-### 工作流（每次任务）
+Use a concise conventional prefix:
 
-1. `git checkout develop && git pull`
-2. `git checkout -b feature/p0-xxx`
-3. 开发、测试、提交
-4. `git checkout develop && git merge feature/p0-xxx --no-edit`
-5. `git push origin develop`
-6. 确认 CI 通过后：`git checkout main && git merge develop --no-edit && git push origin main`
-7. 删除 feature 分支：`git branch -d feature/p0-xxx`
-
-### Commit 规范
-
-- `feat:` 新功能
-- `fix:` 修复
-- `test:` 测试
-- `chore:` 工具链 / 配置
-- `docs:` 文档
-- `refactor:` 重构
-- `style:` 格式化（不改逻辑）
+- `feat:` product capability
+- `fix:` defect correction
+- `refactor:` behavior-preserving architecture change
+- `test:` test-only change
+- `chore:` toolchain or configuration
+- `docs:` documentation
+- `style:` formatting without behavior changes

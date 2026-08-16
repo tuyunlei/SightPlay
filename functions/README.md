@@ -1,15 +1,10 @@
-# Cloudflare Pages Functions (placeholder)
+# Cloudflare Pages Functions
 
-This directory is reserved for Cloudflare Pages Functions file-based routing.
+This directory provides Cloudflare Pages' hosting-required adapter. One optional catch-all route delegates
+every `/api/*` method to `_handler.ts`; routing, method admission, OPTIONS behavior, and product handlers
+belong to `@sightplay/server-application`. Runtime configuration, including the WebAuthn RP ID, lives in
+`wrangler.toml`.
 
-## Current status
-
-- Not active yet.
-- Runtime endpoints currently use EdgeOne handlers under `edge-functions/`.
-
-## Migration note (future step)
-
-When migrating endpoints to Cloudflare Pages Functions:
-
-1. Copy endpoint logic into this `functions/` directory using file-based routes.
-2. Replace platform adapter usage from `createEdgeOneContext(...)` to `createCloudflareContext(...)`.
+The boundary is enforced by `pnpm run lint:fitness`; repository-wide operating constraints live in the
+[root `AGENTS.md`](../AGENTS.md), and the ownership contract is documented in
+[`docs/architecture/module-contracts.md`](../docs/architecture/module-contracts.md).

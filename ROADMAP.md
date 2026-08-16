@@ -8,15 +8,13 @@
 
 - CI 全绿（lint + typecheck + arch + 单元测试 + E2E + build）
 - 所有 commit 经过 review
-- 覆盖率 ≥ 当前阈值（70% → 逐步提升至 80%，见 P4.4）
 - ROADMAP 进度表已更新
 
-### 覆盖率规则
+### 测试价值规则
 
-- vitest 配置 coverage.thresholds，低于阈值 CI 失败
-- 排除列表每项必须写注释说明理由，定期 review
-- 禁止为凑覆盖率写无意义测试（只断言函数被调用等）
-- 不可测试或低价值代码可申请审批加白（需 tuyunlei 确认）
+- CI 不采集或卡测试覆盖率；覆盖率数字不作为合入条件
+- 测试必须保护可观察行为、关键边界或已知回归风险
+- 不要为静态文案、prompt、配置形态或实现细节编写只会阻碍预期修改的断言
 
 ### 开发流程约束（P4 起生效）
 
@@ -24,18 +22,18 @@
 - 新增样式必须使用 design token（颜色变量），不允许硬编码颜色值
 - 所有用户可见的功能路径必须有 Sentry 日志
 - 传给子组件的 callback prop 必须保证引用稳定（React Compiler 自动处理；Compiler bail out 的场景需手动 useCallback 或 ref 模式）
-- 新增功能必须有对应的 E2E 用户路径覆盖（不只是单元测试）
+- 新增风险必须由能直接观察该风险的最低测试层保护；只有浏览器装配或用户旅程风险才新增 E2E
 - **零白屏原则**：任何用户可达的页面/状态组合都不能出现白屏，E2E 必须覆盖验证
-- **TEST_PLAN.md 同步维护**：ROADMAP 新增功能时，必须同步在 `e2e/TEST_PLAN.md` 添加对应场景；开发提交时更新覆盖状态；Review 时检查 TEST_PLAN 一致性
+- **E2E 风险矩阵同步维护**：新增或移除跨边界证据时更新 `e2e/TEST_PLAN.md`，不维护覆盖百分比
 
 ### CI 分层
 
 | 检查项                       | 合入 develop | 合入 main |
 | ---------------------------- | :----------: | :-------: |
 | lint + typecheck + arch      |      ✅      |    ✅     |
-| 单元测试 + 覆盖率            |      ✅      |    ✅     |
-| E2E 测试                     |      —       |    ✅     |
-| build（含 Sentry sourcemap） |      —       |    ✅     |
+| 单元测试                     |      ✅      |    ✅     |
+| E2E 测试                     |      ✅      |    ✅     |
+| build（含 Sentry sourcemap） |      ✅      |    ✅     |
 | 集成测试（组件协作）         |      ✅      |    ✅     |
 
 ### 测试策略分层
@@ -64,8 +62,8 @@
 
 ### 覆盖率
 
-- [x] 配置 vitest coverage.thresholds（阈值 70%） ← vitest.config.ts
-- [x] 梳理现有未覆盖代码，合理标注排除项 ← vitest.config.ts exclude 列表
+- [x] 历史阶段配置 vitest coverage.thresholds（阈值 70%）；该门禁已在 P8 退役
+- [x] 历史阶段梳理未覆盖代码和排除项；当前不再维护 coverage 排除清单
 - [x] 补充高价值单元测试：usePracticeSession + PasskeyManagement ← `93724a7`
 
 ### 技术债
@@ -112,7 +110,7 @@
 
 - [x] 邀请码数据模型（KV 存储，字段：code、createdBy、usedBy、expiresAt） ← `d1f4daf`
 - [x] 邀请码格式：8 位 `XXXX-XXXX`，字符集 32 个（排除 0/O/I/1/L） ← `d1f4daf`
-- [x] API：管理员生成邀请码（`X-Admin-Secret` 鉴权，支持批量） ← `d1f4daf`
+- [x] API：已认证账号生成邀请码；空身份库使用一次性 bootstrap capability
 - [x] API：已注册用户生成邀请码（每码限用一次，一周过期） ← `d1f4daf`
 - [x] 注册页面改造：移除邀请链接入口，改为输入邀请码 ← `d1f4daf`
 - [x] 注册流程：验证邀请码 → 注册 → 标记已使用 ← `d1f4daf`
@@ -152,7 +150,7 @@
 
 ### P4.4 — 覆盖率提升
 
-逐步提升测试覆盖率准入门槛至 80%。
+历史阶段曾逐步提升测试覆盖率准入门槛至 80%；该门禁已在 P8 工程基线复审后移除。
 
 - [x] 阈值 70% → 73%（73.66%，补了 inviteCode 工具函数测试） ← `5a37aa0`
 - [x] 阈值 73% → 76%（76.34%） ← `fe480df`
@@ -191,7 +189,6 @@
   - [x] 🔴 关键路径 E2E（ErrorBoundary、导航不白屏、歌曲完成、登出） ← `eaf65a8`
   - [x] 🟡 功能验证 E2E（passkey 管理、邀请码、手模式、练习范围） ← `0609143`
   - [x] 🟢 剩余场景 E2E（注册错误、智能提示、语言切换、深浅色） ← `f3bc685`
-  - TEST_PLAN 覆盖率：41/41（100%），51 个 E2E 测试
 - [x] 开发流程绑定：新功能同时更新 TEST_PLAN + E2E
 
 #### P2：集成测试层建立（防住组件交互 bug）
@@ -299,6 +296,41 @@ vitest + jsdom 环境，mock WebMIDI，渲染 usePracticeSession：
 
 ---
 
+## P8 — 项目复活工程基线
+
+- [x] 固定 Node 24.18.0 + pnpm 10.34.5，CI 与本地文档统一
+- [x] 升级 Vite 8、Vitest 4 及必要工具依赖，不使用强制 audit fix
+- [x] dev 默认仅绑定 loopback；E2E 独占可配置端口且不复用未知进程
+- [x] 清零 React Compiler warning，并保持 auth、队列、MIDI/音频测试语义
+- [x] 移除覆盖率采集、阈值和 CI 产物；测试改以行为风险与回归价值为准入依据
+- [x] 清理重复 hook 管理器和陈旧 Knip 配置提示
+- [x] 工程范围、决策与剩余风险记录于 `docs/ENGINEERING_BASELINE.md`
+
+## P9 — AI 开发上下文与练习核心基线
+
+- [x] 精简根 AGENTS，并建立指令准入、放置、同 PR 更新和删除治理
+- [x] 建立风险导向的测试分层，明确禁止静态文案、返回形状和 mock-only 测试
+- [x] 建立轻量工程决策模板，并明确 Issue/PR 是当前任务状态真源
+- [x] 练习正确音符流程改为 typed Action → pure reducer → explicit Effect
+- [x] Zustand 保留为 React adapter；Audio、MIDI、AI、clock 和 scheduler 可注入
+- [x] dependency-cruiser 强制 domain/store 不反向依赖 UI 或运行时实现
+- [x] 删除低价值结构测试，补 reducer、adapter、service seam 和 deterministic scheduler 测试
+- [x] 完整门禁、PR CI 与合入证据记录于 `docs/tasks/ai-development-baseline.md`
+
+## P10 — 自主端到端验证体系
+
+- [x] Playwright 失败即保留 trace/screenshot/video/runtime diagnostics，并生成 AI 可读复现记录
+- [x] 清除固定等待、静默通过和伪“完整旅程”；随机队列使用随失败记录的确定性 seed
+- [x] 建立按 run ID 隔离的 E2E-only KV 与 typed reset/seed/provider controls
+- [x] built preview 中跑真实 auth/KV/HttpOnly Cookie/WebAuthn 注册、登出、刷新和登录验签
+- [x] 真实 chat handler 仅替换 Gemini 上游；真实 Gemini 独立为受信任 provider canary
+- [x] Web MIDI 走浏览器 adapter；麦克风走 fake capture WAV → Web Audio → pitch detection
+- [x] 合入门禁覆盖 stable Chromium、system Chromium/WebKit、audio Chromium
+- [x] 远端 preview smoke、provider canary、真实硬件证据保持独立信任边界
+- [x] 风险矩阵与 AI diagnose/fix/rerun 手册取代功能覆盖百分比
+
+---
+
 ## 进度记录
 
 | 日期       | 内容                                                       | Commit                          |
@@ -331,3 +363,5 @@ vitest + jsdom 环境，mock WebMIDI，渲染 usePracticeSession：
 | 2026-02-16 | P5 CF Pages Functions + 共享 handler 提取                  | `e3f09ad`                       |
 | 2026-02-16 | P5 CF Pages 项目 + KV + 自定义域名 + 环境变量              | API                             |
 | 2026-02-16 | P5 WEBAUTHN_RP_ID 环境变量 + 预览环境验证通过              | `1a2392f`                       |
+| 2026-08-10 | 项目复活工程基线：工具链、安全升级、端口隔离与零 warning   | —                               |
+| 2026-08-10 | AI 开发上下文治理、练习 core/effect 分离与测试重平衡       | `1d8cf37`, PR #4                |

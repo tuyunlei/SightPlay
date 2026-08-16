@@ -1,2 +1,1 @@
-npx lint-staged
-node scripts/check-file-size.js --src=. --warn
+pnpm exec lint-staged

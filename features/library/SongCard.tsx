@@ -1,7 +1,7 @@
 import React from 'react';
 
+import { useLanguage } from '../../app/presentation/useLanguage';
 import { SongMetadata } from '../../data/songs';
-import { useLanguage } from '../../hooks/useLanguage';
 
 interface SongCardProps {
   song: SongMetadata;

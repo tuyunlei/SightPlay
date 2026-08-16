@@ -1,16 +1,23 @@
-import { expect, test } from '@playwright/test';
+import { expect, identitySuccess, test } from './fixtures/app-test';
 
 test.describe('ErrorBoundary degraded UI', () => {
-  test('renders fallback UI instead of blank screen and retry recovers', async ({ page }) => {
+  test('renders fallback UI instead of blank screen and retry recovers', async ({
+    page,
+    diagnostics,
+  }) => {
+    diagnostics.allowPageError();
     await page.route('**/api/auth/session', (route) => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ authenticated: true, hasPasskeys: true }),
+        body: identitySuccess({ authenticated: true, hasPasskeys: true }),
       });
     });
+    await page.addInitScript(() => {
+      window.localStorage.setItem('__sightplay_force_render_error', '1');
+    });
 
-    await page.goto('/?__forceErrorBoundary=1');
+    await page.goto('/');
 
     await expect(
       page.getByRole('heading', { name: /something went wrong|出了点问题/i })
@@ -19,7 +26,7 @@ test.describe('ErrorBoundary degraded UI', () => {
     await expect(page.getByRole('button', { name: /retry|重试/i })).toBeVisible();
 
     await page.evaluate(() => {
-      window.history.replaceState({}, '', '/');
+      window.localStorage.removeItem('__sightplay_force_render_error');
     });
 
     await page.getByRole('button', { name: /retry|重试/i }).click();

@@ -1,33 +1,79 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { AppRoute } from '@sightplay/app-shell';
+import { createBrowserIdentityPorts, createBrowserPasskeyPort } from '@sightplay/browser-adapters';
+import { IdentityProvider } from '@sightplay/identity-client';
+import { PreferencesProvider } from '@sightplay/preferences';
+
 import { translations } from '../../../i18n';
-import { useUiStore } from '../../../store/uiStore';
 import { AuthGate } from '../AuthGate';
 
-const { registerMock, authenticateMock } = vi.hoisted(() => ({
+const identitySuccess = <T,>(data: T) => ({ ok: true, data, requestId: 'test-request' });
+const authenticationCredential = {
+  id: 'AQID',
+  rawId: 'AQID',
+  type: 'public-key',
+  response: {
+    clientDataJSON: 'BAUG',
+    authenticatorData: 'BwgJ',
+    signature: 'CgsM',
+  },
+};
+const registrationCredential = {
+  id: 'AQID',
+  rawId: 'AQID',
+  type: 'public-key',
+  response: {
+    clientDataJSON: 'BAUG',
+    attestationObject: 'BwgJ',
+    transports: ['internal'],
+  },
+};
+
+const { registerMock, authenticateMock, captureExceptionMock } = vi.hoisted(() => ({
   registerMock: vi.fn(),
   authenticateMock: vi.fn(),
-}));
-
-vi.mock('@passwordless-id/webauthn', () => ({
-  client: {
-    register: registerMock,
-    authenticate: authenticateMock,
-  },
+  captureExceptionMock: vi.fn(),
 }));
 
 vi.mock('@sentry/react', () => ({
   addBreadcrumb: vi.fn(),
   setContext: vi.fn(),
-  captureException: vi.fn(),
+  captureException: captureExceptionMock,
 }));
+
+function AuthGateHarness({ initialRoute = { kind: 'login' } }: { initialRoute?: AppRoute }) {
+  const [route, setRoute] = useState<AppRoute>(initialRoute);
+  const [ports] = useState(() => ({
+    ...createBrowserIdentityPorts(),
+    passkey: createBrowserPasskeyPort({
+      register: registerMock,
+      authenticate: authenticateMock,
+    }),
+  }));
+
+  return (
+    <PreferencesProvider initialLanguage="zh">
+      <IdentityProvider ports={ports}>
+        <output data-testid="current-route">{JSON.stringify(route)}</output>
+        <AuthGate route={route} navigate={setRoute}>
+          {(protectedRoute) => (
+            <div data-testid="main-app" data-route={JSON.stringify(protectedRoute)}>
+              main-app
+            </div>
+          )}
+        </AuthGate>
+      </IdentityProvider>
+    </PreferencesProvider>
+  );
+}
 
 describe('AuthGate integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useUiStore.setState({ lang: 'zh' });
     Object.defineProperty(window, 'PublicKeyCredential', {
       writable: true,
       configurable: true,
@@ -42,58 +88,196 @@ describe('AuthGate integration', () => {
         if (input === '/api/auth/session') {
           return {
             ok: true,
-            json: async () => ({ authenticated: false, hasPasskeys: true }),
+            json: async () => identitySuccess({ authenticated: false, hasPasskeys: true }),
           } as Response;
         }
         return { ok: true, json: async () => ({}) } as Response;
       })
     );
 
-    render(
-      <AuthGate>
-        <div data-testid="main-app">main-app</div>
-      </AuthGate>
-    );
+    render(<AuthGateHarness />);
 
     expect(await screen.findByTestId('login-screen')).toBeTruthy();
     expect(screen.queryByTestId('main-app')).not.toBeTruthy();
   });
 
-  it('shows login error and register option when login fails', async () => {
+  it('keeps session state indeterminate after a failed check and retries without misrouting', async () => {
     const user = userEvent.setup();
+    let sessionChecks = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string) => {
+        if (input !== '/api/auth/session') {
+          return { ok: true, json: async () => ({}) } as Response;
+        }
+        sessionChecks += 1;
+        if (sessionChecks === 1) throw new TypeError('network unavailable');
+        return {
+          ok: true,
+          json: async () => identitySuccess({ authenticated: false, hasPasskeys: true }),
+        } as Response;
+      })
+    );
+
+    render(<AuthGateHarness initialRoute={{ kind: 'register' }} />);
+
+    await user.click(await screen.findByRole('button', { name: translations.zh.authRetryButton }));
+    expect(await screen.findByTestId('register-screen')).toBeTruthy();
+    await user.click(
+      screen.getByRole('button', { name: translations.zh.authHaveAccountLoginLink })
+    );
+    expect(await screen.findByTestId('login-screen')).toBeTruthy();
+    expect(screen.getByTestId('current-route').textContent).toBe(JSON.stringify({ kind: 'login' }));
+    expect(screen.queryByTestId('register-screen')).toBeNull();
+  });
+
+  it('redirects an anonymous protected route before constructing protected children', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => identitySuccess({ authenticated: false, hasPasskeys: true }),
+      }))
+    );
+
+    render(<AuthGateHarness initialRoute={{ kind: 'library', difficulty: 'advanced' }} />);
+
+    expect(await screen.findByTestId('login-screen')).toBeTruthy();
+    expect(screen.getByTestId('current-route').textContent).toBe(JSON.stringify({ kind: 'login' }));
+    expect(screen.queryByTestId('main-app')).toBeNull();
+  });
+
+  it('delivers an authenticated deep link as the protected scene', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => identitySuccess({ authenticated: true, hasPasskeys: true }),
+      }))
+    );
+
+    render(<AuthGateHarness initialRoute={{ kind: 'library', difficulty: 'intermediate' }} />);
+
+    expect((await screen.findByTestId('main-app')).getAttribute('data-route')).toBe(
+      JSON.stringify({ kind: 'library', difficulty: 'intermediate' })
+    );
+  });
+
+  it('lets the user retry and complete sign-in after passkey authentication is canceled', async () => {
+    const user = userEvent.setup();
+    let sessionChecks = 0;
+    const cancellation = new Error('The operation was canceled.');
+    cancellation.name = 'NotAllowedError';
+    authenticateMock
+      .mockRejectedValueOnce(cancellation)
+      .mockResolvedValueOnce(authenticationCredential);
+
     vi.stubGlobal(
       'fetch',
       vi.fn(async (input: string) => {
         if (input === '/api/auth/session') {
+          sessionChecks += 1;
           return {
             ok: true,
-            json: async () => ({ authenticated: false, hasPasskeys: true }),
+            json: async () =>
+              identitySuccess({ authenticated: sessionChecks >= 2, hasPasskeys: true }),
           } as Response;
         }
         if (input === '/api/auth/login-options') {
-          return { ok: false, json: async () => ({}) } as Response;
+          return {
+            ok: true,
+            json: async () =>
+              identitySuccess({
+                challenge: 'challenge',
+                rpId: 'sightplay.example',
+                allowCredentials: [{ id: 'cred-1', transports: ['internal'] }],
+                userVerification: 'preferred',
+                timeout: 10000,
+              }),
+          } as Response;
+        }
+        if (input === '/api/auth/login-verify') {
+          return {
+            ok: true,
+            json: async () => identitySuccess({ completed: true }),
+          } as Response;
         }
         return { ok: true, json: async () => ({}) } as Response;
       })
     );
 
-    render(
-      <AuthGate>
-        <div data-testid="main-app">main-app</div>
-      </AuthGate>
-    );
+    render(<AuthGateHarness />);
 
     await screen.findByTestId('login-screen');
     await user.click(screen.getByRole('button', { name: translations.zh.authLoginButton }));
 
-    expect(await screen.findByText(translations.zh.authErrorLoginOptionsFailed)).toBeTruthy();
-    expect(screen.getByTestId('register-section')).toBeTruthy();
+    await waitFor(() => expect(authenticateMock).toHaveBeenCalledTimes(1));
+    await user.click(screen.getByRole('button', { name: translations.zh.authLoginButton }));
+
+    expect(await screen.findByTestId('main-app')).toBeTruthy();
+  });
+
+  it('lets a user return to passkey login after opening invite registration', async () => {
+    const user = userEvent.setup();
+    let sessionChecks = 0;
+    authenticateMock.mockResolvedValue(authenticationCredential);
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string) => {
+        if (input === '/api/auth/session') {
+          sessionChecks += 1;
+          return {
+            ok: true,
+            json: async () =>
+              identitySuccess({ authenticated: sessionChecks >= 2, hasPasskeys: true }),
+          } as Response;
+        }
+        if (input === '/api/auth/login-options') {
+          return {
+            ok: true,
+            json: async () =>
+              identitySuccess({
+                challenge: 'challenge',
+                rpId: 'sightplay.example',
+                allowCredentials: [{ id: 'cred-1', transports: ['internal'] }],
+                userVerification: 'preferred',
+                timeout: 10000,
+              }),
+          } as Response;
+        }
+        if (input === '/api/auth/login-verify') {
+          return {
+            ok: true,
+            json: async () => identitySuccess({ completed: true }),
+          } as Response;
+        }
+        return { ok: true, json: async () => ({}) } as Response;
+      })
+    );
+
+    render(<AuthGateHarness />);
+
+    await screen.findByTestId('login-screen');
+    await user.click(
+      screen.getByRole('button', { name: translations.zh.authNoAccountRegisterLink })
+    );
+    expect(await screen.findByTestId('register-screen')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: translations.zh.authLoginButton })).toBeNull();
+
+    await user.click(
+      screen.getByRole('button', { name: translations.zh.authHaveAccountLoginLink })
+    );
+    expect(await screen.findByTestId('login-screen')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: translations.zh.authLoginButton }));
+
+    expect(await screen.findByTestId('main-app')).toBeTruthy();
   });
 
   it('registers with invite code via RegisterCard flow', async () => {
     const user = userEvent.setup();
 
-    registerMock.mockResolvedValue({ id: 'credential-1' });
+    registerMock.mockResolvedValue(registrationCredential);
 
     vi.stubGlobal(
       'fetch',
@@ -101,40 +285,44 @@ describe('AuthGate integration', () => {
         if (input === '/api/auth/session') {
           return {
             ok: true,
-            json: async () => ({ authenticated: false, hasPasskeys: false }),
+            json: async () => identitySuccess({ authenticated: false, hasPasskeys: false }),
           } as Response;
         }
         if (input === '/api/auth/register-options') {
           return {
             ok: true,
-            json: async () => ({
-              challenge: 'challenge',
-              user: { id: 'u1', name: 'user', displayName: 'User' },
-              rp: { id: 'localhost', name: 'SightPlay' },
-              pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
-              authenticatorSelection: { residentKey: 'required', userVerification: 'preferred' },
-            }),
+            json: async () =>
+              identitySuccess({
+                challenge: 'challenge',
+                user: { id: 'u1', name: 'user', displayName: 'User' },
+                rp: { id: 'localhost', name: 'SightPlay' },
+                pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+                authenticatorSelection: {
+                  residentKey: 'required',
+                  userVerification: 'preferred',
+                },
+              }),
           } as Response;
         }
         if (input === '/api/auth/register-verify') {
           const body = JSON.parse((init?.body as string) || '{}');
           expect(body.inviteCode.replace('-', '')).toBe('A2CD2345');
-          return { ok: true, json: async () => ({}) } as Response;
+          return {
+            ok: true,
+            json: async () => identitySuccess({ completed: true }),
+          } as Response;
         }
         return { ok: true, json: async () => ({}) } as Response;
       })
     );
 
-    render(
-      <AuthGate>
-        <div data-testid="main-app">main-app</div>
-      </AuthGate>
-    );
+    render(<AuthGateHarness />);
 
-    await screen.findByTestId('login-screen');
-    await user.click(
-      screen.getByRole('button', { name: translations.zh.authNoAccountRegisterLink })
-    );
+    await screen.findByTestId('register-screen');
+    expect(screen.queryByRole('button', { name: translations.zh.authLoginButton })).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: translations.zh.authHaveAccountLoginLink })
+    ).toBeNull();
 
     const inviteInput = screen.getByLabelText(translations.zh.authInviteCodeLabel);
     fireEvent.change(inviteInput, { target: { value: 'A2CD2345' } });
@@ -152,7 +340,7 @@ describe('AuthGate integration', () => {
     const user = userEvent.setup();
     let sessionChecks = 0;
 
-    authenticateMock.mockResolvedValue({ id: 'assertion-1' });
+    authenticateMock.mockResolvedValue(authenticationCredential);
 
     vi.stubGlobal(
       'fetch',
@@ -160,31 +348,35 @@ describe('AuthGate integration', () => {
         if (input === '/api/auth/session') {
           sessionChecks += 1;
           const authenticated = sessionChecks >= 2;
-          return { ok: true, json: async () => ({ authenticated, hasPasskeys: true }) } as Response;
+          return {
+            ok: true,
+            json: async () => identitySuccess({ authenticated, hasPasskeys: true }),
+          } as Response;
         }
         if (input === '/api/auth/login-options') {
           return {
             ok: true,
-            json: async () => ({
-              challenge: 'challenge',
-              allowCredentials: [{ id: 'cred-1', transports: ['internal'] }],
-              userVerification: 'preferred',
-              timeout: 10000,
-            }),
+            json: async () =>
+              identitySuccess({
+                challenge: 'challenge',
+                rpId: 'sightplay.example',
+                allowCredentials: [{ id: 'cred-1', transports: ['internal'] }],
+                userVerification: 'preferred',
+                timeout: 10000,
+              }),
           } as Response;
         }
         if (input === '/api/auth/login-verify') {
-          return { ok: true, json: async () => ({}) } as Response;
+          return {
+            ok: true,
+            json: async () => identitySuccess({ completed: true }),
+          } as Response;
         }
         return { ok: true, json: async () => ({}) } as Response;
       })
     );
 
-    render(
-      <AuthGate>
-        <div data-testid="main-app">main-app</div>
-      </AuthGate>
-    );
+    render(<AuthGateHarness />);
 
     await screen.findByTestId('login-screen');
     await user.click(screen.getByRole('button', { name: translations.zh.authLoginButton }));

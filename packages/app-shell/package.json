@@ -1,0 +1,15 @@
+{
+  "name": "@sightplay/app-shell",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "sightplayArchitecture": {
+    "role": "capability",
+    "lifecycle": {
+      "kind": "none"
+    }
+  },
+  "exports": {
+    ".": "./src/public.ts"
+  }
+}

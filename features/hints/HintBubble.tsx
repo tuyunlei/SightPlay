@@ -1,14 +1,17 @@
 import { X } from 'lucide-react';
 import React from 'react';
 
-import type { Hint } from '../../hooks/useContextualHints';
+import type { GuidanceHint } from '@sightplay/guidance';
+
+import { translations } from '../../i18n';
 
 interface HintBubbleProps {
-  hint: Hint | null;
+  hint: GuidanceHint | null;
+  t: typeof translations.en;
   onDismiss: () => void;
 }
 
-export const HintBubble: React.FC<HintBubbleProps> = ({ hint, onDismiss }) => {
+export const HintBubble: React.FC<HintBubbleProps> = ({ hint, t, onDismiss }) => {
   if (!hint) return null;
 
   const bgClass =
@@ -26,7 +29,7 @@ export const HintBubble: React.FC<HintBubbleProps> = ({ hint, onDismiss }) => {
       data-testid="hint-bubble"
       className={`absolute top-2 left-1/2 -translate-x-1/2 z-20 max-w-sm px-4 py-2 rounded-xl border shadow-lg backdrop-blur-sm flex items-center gap-2 animate-fade-in ${bgClass}`}
     >
-      <span className={`text-sm font-medium ${textClass}`}>{hint.text}</span>
+      <span className={`text-sm font-medium ${textClass}`}>{hintText(hint, t)}</span>
       <button
         onClick={onDismiss}
         data-testid="hint-dismiss"
@@ -37,3 +40,15 @@ export const HintBubble: React.FC<HintBubbleProps> = ({ hint, onDismiss }) => {
     </div>
   );
 };
+
+function hintText(hint: GuidanceHint, t: typeof translations.en): string {
+  if (hint.content.kind === 'providerText') return hint.content.text;
+  const keys = {
+    greatStreak: 'hintGreatStreak',
+    awesome: 'hintAwesome',
+    trySlower: 'hintTrySlower',
+    keepGoing: 'hintKeepGoing',
+    practiceRange: 'hintPracticeRange',
+  } as const;
+  return t[keys[hint.content.message]];
+}

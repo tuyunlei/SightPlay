@@ -1,3 +1,1 @@
-npm run test:ci
-npm run lint:arch
-npx playwright test --reporter=line
+pnpm run verify:fast
