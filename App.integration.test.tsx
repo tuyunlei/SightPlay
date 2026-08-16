@@ -11,12 +11,18 @@ const {
   guidancePortsMock,
   mainAppContentMock,
   practicePortsMock,
+  screenWakeLockPortMock,
+  wakeLockRequestMock,
+  wakeLockReleaseMock,
   midiDisposeMock,
   microphoneDisposeMock,
 } = vi.hoisted(() => ({
   guidancePortsMock: vi.fn(),
   mainAppContentMock: vi.fn(),
   practicePortsMock: vi.fn(),
+  screenWakeLockPortMock: vi.fn(),
+  wakeLockRequestMock: vi.fn(),
+  wakeLockReleaseMock: vi.fn(),
   midiDisposeMock: vi.fn(),
   microphoneDisposeMock: vi.fn(),
 }));
@@ -25,6 +31,7 @@ vi.mock('@sightplay/browser-adapters', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@sightplay/browser-adapters')>()),
   createBrowserGuidancePorts: guidancePortsMock,
   createBrowserPracticePorts: practicePortsMock,
+  createBrowserScreenWakeLockPort: screenWakeLockPortMock,
 }));
 
 vi.mock('@sentry/react', () => ({
@@ -91,6 +98,15 @@ describe('App protected runtime lifecycle', () => {
         dispose: microphoneDisposeMock,
       },
     });
+    wakeLockRequestMock.mockResolvedValue({
+      release: wakeLockReleaseMock,
+      onRelease: () => vi.fn(),
+    });
+    screenWakeLockPortMock.mockReturnValue({
+      isVisible: () => true,
+      request: wakeLockRequestMock,
+      onVisibilityChange: () => vi.fn(),
+    });
   });
 
   it('does not construct practice or guidance while the session is anonymous', async () => {
@@ -125,6 +141,7 @@ describe('App protected runtime lifecycle', () => {
     expect(window.location.pathname).toBe('/practice');
     expect(requestMidiAccess).toHaveBeenCalledTimes(1);
     expect(guidancePortsMock).toHaveBeenCalledOnce();
+    expect(wakeLockRequestMock).toHaveBeenCalledOnce();
   });
 
   it('disposes the protected runtime when logout invalidates the session', async () => {
@@ -150,6 +167,7 @@ describe('App protected runtime lifecycle', () => {
     await waitFor(() => {
       expect(midiDisposeMock).toHaveBeenCalledTimes(1);
       expect(microphoneDisposeMock).toHaveBeenCalledTimes(1);
+      expect(wakeLockReleaseMock).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -171,5 +189,6 @@ describe('App protected runtime lifecycle', () => {
         route: { kind: 'library', difficulty: 'intermediate' },
       })
     );
+    expect(wakeLockRequestMock).not.toHaveBeenCalled();
   });
 });

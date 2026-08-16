@@ -74,6 +74,12 @@ export function isPublicAppRoute(route: AppRoute): route is PublicAppRoute {
   return route.kind === 'login' || route.kind === 'register';
 }
 
+export function isPracticeAppRoute(
+  route: ProtectedAppRoute
+): route is Extract<AppContentRoute, { kind: 'randomPractice' | 'songPractice' }> {
+  return route.kind === 'randomPractice' || route.kind === 'songPractice';
+}
+
 export function parseAppRoute({ pathname, search = '' }: RouteLocation): AppRoute {
   if (pathname === '/register') {
     return { kind: 'register', inviteCode: readQueryParam(search, 'code') };

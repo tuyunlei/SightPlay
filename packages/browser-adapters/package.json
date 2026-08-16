@@ -14,6 +14,7 @@
     "@sentry/react": "^10.38.0",
     "@sightplay/api-contracts": "workspace:*",
     "@sightplay/account-access-client": "workspace:*",
+    "@sightplay/app-shell": "workspace:*",
     "@sightplay/guidance": "workspace:*",
     "@sightplay/identity-client": "workspace:*",
     "@sightplay/practice": "workspace:*"

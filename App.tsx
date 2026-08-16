@@ -1,12 +1,18 @@
 import React, { useCallback, useState } from 'react';
 
 import { AccountAccessProvider } from '@sightplay/account-access-client';
-import type { AppRoute, ProtectedAppRoute } from '@sightplay/app-shell';
+import {
+  isPracticeAppRoute,
+  type AppRoute,
+  type ProtectedAppRoute,
+  type ScreenWakeLockPort,
+} from '@sightplay/app-shell';
 import {
   createBrowserAccountAccessPorts,
   createBrowserGuidancePorts,
   createBrowserIdentityPorts,
   createBrowserPracticePorts,
+  createBrowserScreenWakeLockPort,
 } from '@sightplay/browser-adapters';
 import { GuidanceProvider } from '@sightplay/guidance';
 import { IdentityProvider, useIdentity } from '@sightplay/identity-client';
@@ -17,6 +23,7 @@ import { GuidancePracticeBridge } from './app/guidance/GuidancePracticeBridge';
 import { useBrowserRoute } from './app/navigation/useBrowserRoute';
 import { createInitialRandomExercise } from './app/practice/createExercisePlan';
 import { usePracticeRoute } from './app/practice/usePracticeRoute';
+import { usePracticeScreenWakeLock } from './app/practice/usePracticeScreenWakeLock';
 import { MainAppContent } from './app/presentation/MainAppContent';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthGate } from './features/auth/AuthGate';
@@ -38,6 +45,7 @@ function AuthenticatedApp({
   const [accountAccessPorts] = useState(createBrowserAccountAccessPorts);
   const [guidancePorts] = useState(createBrowserGuidancePorts);
   const [practicePorts] = useState(createBrowserPracticePorts);
+  const [screenWakeLock] = useState(createBrowserScreenWakeLockPort);
   const [initialPlan] = useState(() => createInitialRandomExercise(practicePorts.seed.nextSeed()));
   const preferences = usePreferences();
   const lang = preferences.language;
@@ -56,6 +64,7 @@ function AuthenticatedApp({
           t={t}
           lang={lang}
           toggleLang={toggleLang}
+          screenWakeLock={screenWakeLock}
         />
       </PracticeProvider>
     </GuidanceProvider>
@@ -81,6 +90,7 @@ function PracticeApplication({
   t,
   lang,
   toggleLang,
+  screenWakeLock,
 }: {
   route: ProtectedAppRoute;
   navigate: Navigate;
@@ -88,9 +98,11 @@ function PracticeApplication({
   t: (typeof translations)['en'];
   lang: ReturnType<typeof usePreferences>['language'];
   toggleLang: () => void;
+  screenWakeLock: ScreenWakeLockPort;
 }) {
   const practice = usePractice();
   usePracticeRoute(route, practice);
+  usePracticeScreenWakeLock(isPracticeAppRoute(route), screenWakeLock);
 
   return (
     <div
