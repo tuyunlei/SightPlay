@@ -7,10 +7,12 @@ import { createAccountAccessRuntime } from '../runtime/accountAccessRuntime';
 import { AccountAccessContext, type AccountAccessClient } from './AccountAccessContext';
 
 export function AccountAccessProvider({
+  active,
   children,
   ports,
   onOutput,
 }: {
+  active: boolean;
   children: ReactNode;
   ports: AccountAccessPorts;
   onOutput: (output: AccountAccessOutput) => void;
@@ -20,9 +22,10 @@ export function AccountAccessProvider({
 
   useEffect(() => runtime.onOutput(onOutput), [onOutput, runtime]);
   useEffect(() => {
+    if (!active) return;
     runtime.start();
     return () => runtime.dispose();
-  }, [runtime]);
+  }, [active, runtime]);
 
   const value = useMemo<AccountAccessClient>(
     () => ({

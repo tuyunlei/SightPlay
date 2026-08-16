@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { AppRoute, ProtectedAppRoute } from '@sightplay/app-shell';
 import { useIdentity } from '@sightplay/identity-client';
 
 import App from './App';
@@ -38,7 +39,7 @@ vi.mock('@passwordless-id/webauthn', () => ({
 }));
 
 vi.mock('./app/presentation/MainAppContent', () => ({
-  MainAppContent: (props: { route: unknown }) => {
+  MainAppContent: (props: { route: ProtectedAppRoute; navigate: (route: AppRoute) => void }) => {
     const identity = useIdentity();
     mainAppContentMock(props);
     return (
@@ -46,6 +47,16 @@ vi.mock('./app/presentation/MainAppContent', () => ({
         protected app
         <button type="button" onClick={identity.logout}>
           test logout
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            if (props.route.kind !== 'passkeys') {
+              props.navigate({ kind: 'passkeys', returnTo: props.route });
+            }
+          }}
+        >
+          test passkeys
         </button>
       </div>
     );
@@ -151,6 +162,37 @@ describe('App protected runtime lifecycle', () => {
       expect(midiDisposeMock).toHaveBeenCalledTimes(1);
       expect(microphoneDisposeMock).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it('keeps practice and guidance mounted while passkey management opens', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => ({
+        ok: true,
+        json: async () =>
+          identitySuccess(
+            String(input).endsWith('/api/auth/passkeys')
+              ? []
+              : { authenticated: true, hasPasskeys: true }
+          ),
+      }))
+    );
+
+    render(<App />);
+
+    expect(await screen.findByTestId('protected-app')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'test passkeys' }));
+
+    await waitFor(() => {
+      expect(mainAppContentMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({ route: expect.objectContaining({ kind: 'passkeys' }) })
+      );
+    });
+    expect(practicePortsMock).toHaveBeenCalledTimes(1);
+    expect(guidancePortsMock).toHaveBeenCalledTimes(1);
+    expect(requestMidiAccess).toHaveBeenCalledTimes(1);
+    expect(midiDisposeMock).not.toHaveBeenCalled();
+    expect(microphoneDisposeMock).not.toHaveBeenCalled();
   });
 
   it('assembles an authenticated deep link with its decoded protected route', async () => {

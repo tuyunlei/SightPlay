@@ -18,6 +18,7 @@ function renderManagement(api: AccountAccessPorts['api'], onCredentialSetChanged
   render(
     <PreferencesProvider initialLanguage="en">
       <AccountAccessProvider
+        active
         ports={{ api }}
         onOutput={(output) => {
           if (output.kind === 'credentialSetChanged') onCredentialSetChanged();
