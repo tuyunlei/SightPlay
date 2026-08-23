@@ -12,7 +12,6 @@ import {
 } from './types';
 
 const MATCH_THRESHOLD_MS = 80;
-const PROCESSING_LOCKOUT_MS = 150;
 const EXIT_CLEANUP_MS = 600;
 const COMPLETION_DELAY_MS = 1_000;
 const unchanged = (state: PracticeState): PracticeTransition => ({ state, effects: [] });
@@ -24,7 +23,7 @@ export function observeInstrument(
   if (observation.kind === 'midiConnectionChanged') {
     return { state: { ...state, midiConnected: observation.connected }, effects: [] };
   }
-  if (state.completion.kind !== 'active' || observation.at < state.lockedUntil) {
+  if (state.completion.kind !== 'active') {
     return unchanged(state);
   }
   if (observation.kind === 'microphonePitch') return observeMicrophone(state, observation);
@@ -63,13 +62,12 @@ function releaseMidi(state: PracticeState, pitch: MidiPitch, at: number): Practi
   const heldPitches = state.heldPitches.filter((held) => held.pitch !== pitch);
   const shouldAccept =
     target !== null && state.matchedFrameId === target.id && target.pitches.includes(pitch);
-  if (shouldAccept) return acceptTarget({ ...state, heldPitches: [] }, target, at);
+  if (shouldAccept) return acceptTarget({ ...state, heldPitches }, target, at);
   return {
     state: {
       ...state,
       heldPitches,
       detectedPitch: heldPitches.at(-1)?.pitch ?? null,
-      matchedFrameId: null,
     },
     effects: [],
   };
@@ -152,13 +150,11 @@ function acceptTarget(state: PracticeState, target: ScoreFrame, at: number): Pra
     ...completion.state,
     cursor: nextCursor,
     lastAcceptedAt: at,
-    heldPitches: [],
     matchedFrameId: null,
     detectedPitch: null,
     matchStartedAt: null,
     wrongStartedAt: null,
     hadMistake: false,
-    lockedUntil: at + PROCESSING_LOCKOUT_MS,
     exitingFrames: [...state.exitingFrames, target],
     status: 'correct',
     score,

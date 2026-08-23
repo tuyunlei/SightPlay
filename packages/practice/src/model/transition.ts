@@ -25,7 +25,6 @@ export function createPracticeState(
     matchStartedAt: null,
     wrongStartedAt: null,
     hadMistake: false,
-    lockedUntil: now,
     exitingFrames: [],
     status: 'waiting',
     score: 0,

@@ -63,7 +63,7 @@ describe('Practice transition', () => {
     expect(accepted.effects[1]).toMatchObject({ kind: 'schedule', effect: 'exitCleanup' });
   });
 
-  it('requires the complete chord before release can advance the frame', () => {
+  it('requires the complete chord before a target release can advance the frame', () => {
     let state = createPracticeState(
       plan([
         [60, 48],
@@ -83,16 +83,82 @@ describe('Practice transition', () => {
 
     state = apply(state, {
       kind: 'instrumentObserved',
-      observation: { kind: 'midiPressed', pitch: midi(60), at: 30 },
+      observation: { kind: 'midiPressed', pitch: midi(60), at: 60 },
     });
     state = apply(state, {
       kind: 'instrumentObserved',
-      observation: { kind: 'midiPressed', pitch: midi(48), at: 40 },
+      observation: { kind: 'midiPressed', pitch: midi(48), at: 70 },
     });
     state = apply(state, {
       kind: 'instrumentObserved',
-      observation: { kind: 'midiReleased', pitch: midi(48), at: 50 },
+      observation: { kind: 'midiReleased', pitch: midi(48), at: 80 },
     });
+    expect(state.cursor).toBe(1);
+  });
+
+  it('accepts consecutive notes without an input lockout', () => {
+    let state = createPracticeState(plan(), 0);
+    state = apply(state, {
+      kind: 'instrumentObserved',
+      observation: { kind: 'midiPressed', pitch: midi(60), at: 100 },
+    });
+    state = apply(state, {
+      kind: 'instrumentObserved',
+      observation: { kind: 'midiReleased', pitch: midi(60), at: 120 },
+    });
+    expect(state.cursor).toBe(1);
+    state = apply(state, {
+      kind: 'instrumentObserved',
+      observation: { kind: 'midiPressed', pitch: midi(62), at: 121 },
+    });
+    state = apply(state, {
+      kind: 'instrumentObserved',
+      observation: { kind: 'midiReleased', pitch: midi(62), at: 130 },
+    });
+
+    expect(state).toMatchObject({ cursor: 2, stats: { totalAttempts: 2, cleanHits: 2 } });
+  });
+
+  it('accepts a simultaneous target and extra pitch as one dirty attempt', () => {
+    let state = createPracticeState(plan(), 0);
+    state = apply(state, {
+      kind: 'instrumentObserved',
+      observation: { kind: 'midiPressed', pitch: midi(60), at: 100 },
+    });
+    state = apply(state, {
+      kind: 'instrumentObserved',
+      observation: { kind: 'midiPressed', pitch: midi(62), at: 110 },
+    });
+    state = apply(state, {
+      kind: 'instrumentObserved',
+      observation: { kind: 'midiReleased', pitch: midi(62), at: 120 },
+    });
+    state = apply(state, {
+      kind: 'instrumentObserved',
+      observation: { kind: 'midiReleased', pitch: midi(60), at: 130 },
+    });
+    expect(state).toMatchObject({ cursor: 1, stats: { totalAttempts: 1, cleanHits: 0 } });
+  });
+
+  it('does not reuse an overlapping extra pitch for the next frame', () => {
+    let state = createPracticeState(plan(), 0);
+    state = apply(state, {
+      kind: 'instrumentObserved',
+      observation: { kind: 'midiPressed', pitch: midi(60), at: 100 },
+    });
+    state = apply(state, {
+      kind: 'instrumentObserved',
+      observation: { kind: 'midiPressed', pitch: midi(62), at: 110 },
+    });
+    state = apply(state, {
+      kind: 'instrumentObserved',
+      observation: { kind: 'midiReleased', pitch: midi(60), at: 120 },
+    });
+    state = apply(state, {
+      kind: 'instrumentObserved',
+      observation: { kind: 'midiReleased', pitch: midi(62), at: 130 },
+    });
+
     expect(state.cursor).toBe(1);
   });
 
