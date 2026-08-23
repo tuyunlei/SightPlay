@@ -15,6 +15,7 @@ export interface IdentityPolicy {
   readonly userVerification: 'required' | 'preferred';
   readonly ceremonyTtlMs: number;
   readonly invitationTtlMs: number;
+  readonly invitationAccessTtlMs: number;
   readonly sessionTtlMs: number;
   readonly rateLimits: Readonly<Record<IdentityRateLimitScope, IdentityRateLimitPolicy>>;
 }
@@ -28,23 +29,21 @@ export function validateIdentityPolicy(
     (policy.allowedOrigins.length === 0 && policy.allowedHttpsSubdomainSuffixes.length === 0) ||
     policy.allowedOrigins.some((origin) => origin.length === 0) ||
     policy.allowedHttpsSubdomainSuffixes.some((suffix) => !isCanonicalDomain(suffix)) ||
-    !Number.isSafeInteger(policy.ceremonyTtlMs) ||
-    policy.ceremonyTtlMs <= 0 ||
-    !Number.isSafeInteger(policy.invitationTtlMs) ||
-    policy.invitationTtlMs <= 0 ||
-    !Number.isSafeInteger(policy.sessionTtlMs) ||
-    policy.sessionTtlMs <= 0 ||
+    !isPositiveSafeInteger(policy.ceremonyTtlMs) ||
+    !isPositiveSafeInteger(policy.invitationTtlMs) ||
+    !isPositiveSafeInteger(policy.invitationAccessTtlMs) ||
+    !isPositiveSafeInteger(policy.sessionTtlMs) ||
     Object.values(policy.rateLimits).some(
-      (rule) =>
-        !Number.isSafeInteger(rule.limit) ||
-        rule.limit <= 0 ||
-        !Number.isSafeInteger(rule.windowMs) ||
-        rule.windowMs <= 0
+      (rule) => !isPositiveSafeInteger(rule.limit) || !isPositiveSafeInteger(rule.windowMs)
     )
   ) {
     return failed('invalidRequest');
   }
   return { ok: true, value: policy };
+}
+
+function isPositiveSafeInteger(value: number): boolean {
+  return Number.isSafeInteger(value) && value > 0;
 }
 
 export function acceptsOrigin(policy: IdentityPolicy, origin: string): boolean {

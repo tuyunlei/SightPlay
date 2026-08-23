@@ -6,11 +6,13 @@ import { createAccountAccessRuntime } from './accountAccessRuntime';
 
 describe('Account Access runtime lifecycle', () => {
   it('aborts active capabilities and rejects late results after disposal', async () => {
-    let resolveLoad: ((value: { ok: true; value: readonly [] }) => void) | undefined;
+    let resolveLoad:
+      | ((value: { ok: true; value: { credentials: readonly []; invitationAccess: null } }) => void)
+      | undefined;
     const signalSeen = vi.fn();
     const ports: AccountAccessPorts = {
       api: {
-        listCredentials: (signal) => {
+        loadAccountAccess: (signal) => {
           signalSeen(signal);
           return new Promise((resolve) => {
             resolveLoad = resolve;
@@ -18,6 +20,8 @@ describe('Account Access runtime lifecycle', () => {
         },
         createInvitation: vi.fn(),
         revokeCredential: vi.fn(),
+        createInvitationAccess: vi.fn(),
+        revokeInvitationAccess: vi.fn(),
       },
     };
     const runtime = createAccountAccessRuntime(ports);
@@ -25,7 +29,7 @@ describe('Account Access runtime lifecycle', () => {
 
     runtime.dispose();
     expect(signalSeen.mock.calls[0][0].aborted).toBe(true);
-    resolveLoad?.({ ok: true, value: [] });
+    resolveLoad?.({ ok: true, value: { credentials: [], invitationAccess: null } });
     await Promise.resolve();
 
     expect(runtime.getState().loaded).toBe(false);

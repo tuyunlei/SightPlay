@@ -1,4 +1,4 @@
-import { KeyRound, Trash2, Ticket, X, Copy, Check } from 'lucide-react';
+import { Check, Copy, KeyRound, Ticket, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 
 import { useAccountAccess } from '@sightplay/account-access-client';
@@ -6,6 +6,8 @@ import type { CredentialSummary } from '@sightplay/account-access-client';
 import { useIdentity } from '@sightplay/identity-client';
 
 import { useLanguage } from '../../app/presentation/useLanguage';
+
+import { InvitationCliAccess } from './InvitationCliAccess';
 
 interface PasskeyManagementProps {
   onClose: () => void;
@@ -161,9 +163,11 @@ function GenerateInviteButton({
     </button>
   );
 }
+
 function usePasskeyPresentationState() {
   const accountAccess = useAccountAccess();
   const [copied, setCopied] = useState(false);
+  const [cliCopied, setCliCopied] = useState(false);
   const { t } = useLanguage();
 
   const handleGenerateInvite = () => {
@@ -184,11 +188,30 @@ function usePasskeyPresentationState() {
     accountAccess.requestCredentialRevocation(id);
   };
 
+  const handleCreateInvitationAccess = () => {
+    if (accountAccess.state.invitationAccess && !confirm(t.inviteCliReplaceConfirm)) return;
+    accountAccess.requestInvitationAccess();
+  };
+
+  const handleCopyInvitationAccess = () => {
+    if (!accountAccess.state.invitationAccessToken) return;
+    void navigator.clipboard.writeText(accountAccess.state.invitationAccessToken);
+    setCliCopied(true);
+    setTimeout(() => setCliCopied(false), 2000);
+  };
+
+  const handleRevokeInvitationAccess = () => {
+    if (!confirm(t.inviteCliRevokeConfirm)) return;
+    accountAccess.requestInvitationAccessRevocation();
+  };
+
   const failure = accountAccess.state.failure;
   const error = failure
     ? failure.code === 'invitationRejected'
       ? t.inviteCodeFailed
-      : t.passkeyRemoveFailed
+      : failure.code === 'invitationAccessRejected'
+        ? t.inviteCliFailed
+        : t.passkeyRemoveFailed
     : null;
 
   return {
@@ -197,10 +220,23 @@ function usePasskeyPresentationState() {
     isGenerating: accountAccess.state.operation?.kind === 'creatingInvitation',
     inviteCode: accountAccess.state.invitationCode,
     copied,
+    cliCopied,
+    invitationAccess: accountAccess.state.invitationAccess,
+    invitationAccessToken: accountAccess.state.invitationAccessToken,
+    isInvitationAccessBusy:
+      accountAccess.state.operation?.kind === 'creatingInvitationAccess' ||
+      accountAccess.state.operation?.kind === 'revokingInvitationAccess',
     error,
     handleGenerateInvite,
     handleCopyInvite,
     handleRemovePasskey,
+    handleCreateInvitationAccess,
+    handleCopyInvitationAccess,
+    handleRevokeInvitationAccess,
+    handleDismissInvitationAccess: () => {
+      accountAccess.dismissInvitationAccessToken();
+      setCliCopied(false);
+    },
     handleCloseInvite: () => {
       accountAccess.dismissInvitation();
       setCopied(false);
@@ -215,10 +251,18 @@ export function PasskeyManagement({ onClose }: PasskeyManagementProps) {
     isGenerating,
     inviteCode,
     copied,
+    cliCopied,
+    invitationAccess,
+    invitationAccessToken,
+    isInvitationAccessBusy,
     error,
     handleGenerateInvite,
     handleCopyInvite,
     handleRemovePasskey,
+    handleCreateInvitationAccess,
+    handleCopyInvitationAccess,
+    handleRevokeInvitationAccess,
+    handleDismissInvitationAccess,
     handleCloseInvite,
   } = usePasskeyPresentationState();
   const { t } = useLanguage();
@@ -235,6 +279,17 @@ export function PasskeyManagement({ onClose }: PasskeyManagementProps) {
         <div className="mb-4 space-y-2">
           <PasskeyList passkeys={passkeys} isLoading={isLoading} onRemove={handleRemovePasskey} />
         </div>
+
+        <InvitationCliAccess
+          expiresAt={invitationAccess?.expiresAt ?? null}
+          token={invitationAccessToken}
+          busy={isInvitationAccessBusy}
+          copied={cliCopied}
+          onCreate={handleCreateInvitationAccess}
+          onCopy={handleCopyInvitationAccess}
+          onDismiss={handleDismissInvitationAccess}
+          onRevoke={handleRevokeInvitationAccess}
+        />
 
         {inviteCode ? (
           <InviteCodeDisplay

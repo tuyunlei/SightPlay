@@ -7,6 +7,9 @@ export interface AccountAccessClient {
   requestInvitation(): void;
   dismissInvitation(): void;
   requestCredentialRevocation(credentialId: string): void;
+  requestInvitationAccess(): void;
+  dismissInvitationAccessToken(): void;
+  requestInvitationAccessRevocation(): void;
   clearFailure(): void;
 }
 

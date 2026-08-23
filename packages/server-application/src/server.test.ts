@@ -14,6 +14,9 @@ const platform = (path: string, method = 'GET'): PlatformContext => ({
 describe('Server application routing', () => {
   it('distinguishes authenticated, bootstrap, and validation invitation capabilities', () => {
     expect(resolveServerRoute(request('/api/auth/invite', 'POST'))?.id).toBe('invite');
+    expect(resolveServerRoute(request('/api/auth/invitation-access', 'POST'))?.id).toBe(
+      'invitation-access'
+    );
     expect(resolveServerRoute(request('/api/auth/bootstrap/invitations', 'POST'))?.id).toBe(
       'identity-bootstrap-invitations'
     );

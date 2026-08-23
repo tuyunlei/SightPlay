@@ -107,15 +107,38 @@ class AccountAccessRuntimeImpl implements AccountAccessRuntime {
   }
 
   private runEffect(effect: AccountAccessEffect, generation: number): void {
-    if (effect.kind === 'loadCredentials') {
+    if (effect.kind === 'loadAccountAccess') {
       void this.invoke(
         effect,
-        (signal) => this.ports.api.listCredentials(signal),
-        (credentials) => ({
-          kind: 'credentialsLoaded',
+        (signal) => this.ports.api.loadAccountAccess(signal),
+        (snapshot) => ({
+          kind: 'accountAccessLoaded',
           operationId: effect.operationId,
-          credentials,
+          snapshot,
         }),
+        generation
+      );
+      return;
+    }
+    if (effect.kind === 'createInvitationAccess') {
+      void this.invoke(
+        effect,
+        (signal) => this.ports.api.createInvitationAccess(signal),
+        ({ token, credential }) => ({
+          kind: 'invitationAccessCreated',
+          operationId: effect.operationId,
+          token,
+          credential,
+        }),
+        generation
+      );
+      return;
+    }
+    if (effect.kind === 'revokeInvitationAccess') {
+      void this.invoke(
+        effect,
+        (signal) => this.ports.api.revokeInvitationAccess(signal),
+        () => ({ kind: 'invitationAccessRevoked', operationId: effect.operationId }),
         generation
       );
       return;

@@ -31,6 +31,11 @@ export function AccountAccessProvider({
       dismissInvitation: () => runtime.dispatch({ kind: 'invitationDismissed' }),
       requestCredentialRevocation: (credentialId) =>
         runtime.dispatch({ kind: 'credentialRevocationRequested', credentialId }),
+      requestInvitationAccess: () => runtime.dispatch({ kind: 'invitationAccessRequested' }),
+      dismissInvitationAccessToken: () =>
+        runtime.dispatch({ kind: 'invitationAccessTokenDismissed' }),
+      requestInvitationAccessRevocation: () =>
+        runtime.dispatch({ kind: 'invitationAccessRevocationRequested' }),
       clearFailure: () => runtime.dispatch({ kind: 'failureCleared' }),
     }),
     [runtime, state]

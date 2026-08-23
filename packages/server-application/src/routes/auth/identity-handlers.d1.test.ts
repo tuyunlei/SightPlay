@@ -2,6 +2,7 @@ import {
   decodeApiResult,
   decodeCredentialSummaries,
   decodeInvitationCodes,
+  decodeIssuedInvitationAccess,
   decodeLoginOptions,
   decodeOperationCompleted,
   decodeSessionSnapshot,
@@ -17,7 +18,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import type { PlatformContext } from '../../platform';
 
-import { handlePostInviteBootstrap } from './invite';
+import { handleDeleteInvitationAccess, handlePostInvitationAccess } from './invitation-access';
+import { handlePostInvite, handlePostInviteBootstrap } from './invite';
 import { handlePostLoginOptions } from './login-options';
 import { handleDeletePasskey, handleGetPasskeys } from './passkeys';
 import { handlePostRegisterOptions } from './register-options';
@@ -36,6 +38,7 @@ const configuration: Record<string, string> = {
   WEBAUTHN_USER_VERIFICATION: 'required',
   IDENTITY_CEREMONY_TTL_MS: '300000',
   IDENTITY_INVITATION_TTL_MS: '604800000',
+  IDENTITY_INVITATION_ACCESS_TTL_MS: '7776000000',
   IDENTITY_SESSION_TTL_MS: '604800000',
   IDENTITY_RATE_LIMIT_SOURCE_COUNT: '20',
   IDENTITY_RATE_LIMIT_SOURCE_WINDOW_MS: '60000',
@@ -93,6 +96,7 @@ beforeEach(async () => {
       'DELETE FROM authentication_claims',
       'DELETE FROM registration_claims',
       'DELETE FROM sessions',
+      'DELETE FROM invitation_access_credentials',
       'DELETE FROM credentials',
       'DELETE FROM ceremonies',
       'DELETE FROM invitations',
@@ -256,6 +260,47 @@ describe('Identity HTTP assembly over D1', () => {
       ok: false,
       error: { code: 'lastCredential', retryable: false },
     });
+  });
+
+  it('issues, rotates, and revokes invitation-only CLI access through the same invite use case', async () => {
+    await seedAuthenticatedAccount();
+    const sessionHeaders = { Cookie: `sightplay_session=${token}`, Origin: origin };
+    const issue = async () => {
+      const response = await handlePostInvitationAccess(
+        platform('/api/auth/invitation-access', { method: 'POST', headers: sessionHeaders })
+      );
+      const decoded = decodeApiResult(await response.json(), decodeIssuedInvitationAccess);
+      if (!decoded.ok || !decoded.value.ok) throw new Error('failed invitation access fixture');
+      return decoded.value.data.token;
+    };
+    const createInvite = (accessToken: string) =>
+      handlePostInvite(
+        platform('/api/auth/invite', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ count: 1 }),
+        })
+      );
+
+    const first = await issue();
+    const created = await createInvite(first);
+    expect(decodeApiResult(await created.json(), decodeInvitationCodes)).toMatchObject({
+      ok: true,
+      value: { ok: true, data: { codes: [expect.stringMatching(/^[A-Z2-9]{4}-[A-Z2-9]{4}$/)] } },
+    });
+
+    const replacement = await issue();
+    expect((await createInvite(first)).status).toBe(401);
+    expect((await createInvite(replacement)).status).toBe(200);
+
+    const revoked = await handleDeleteInvitationAccess(
+      platform('/api/auth/invitation-access', { method: 'DELETE', headers: sessionHeaders })
+    );
+    expect(revoked.status).toBe(200);
+    expect((await createInvite(replacement)).status).toBe(401);
   });
 
   it('rejects a credential mutation from an unapproved origin', async () => {

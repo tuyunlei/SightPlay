@@ -3,6 +3,7 @@ import {
   asCeremonyId,
   asSecretDigest,
   asSessionId,
+  asInvitationAccessId,
   asTimestamp,
 } from '../../model/types';
 import type { ClockPort, IdentityIdsPort, IdentitySecretsPort } from '../../ports';
@@ -30,6 +31,10 @@ class SystemSecrets implements IdentitySecretsPort {
     return `${characters.slice(0, 4)}-${characters.slice(4)}`;
   }
 
+  createInvitationAccessToken() {
+    return `sp_inv_${randomSecret(32)}`;
+  }
+
   createSessionToken() {
     return randomSecret(32);
   }
@@ -48,6 +53,10 @@ class SystemIds implements IdentityIdsPort {
 
   createSessionId() {
     return asSessionId(crypto.randomUUID());
+  }
+
+  createInvitationAccessId() {
+    return asInvitationAccessId(crypto.randomUUID());
   }
 }
 

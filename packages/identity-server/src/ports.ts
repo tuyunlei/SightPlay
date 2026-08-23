@@ -8,6 +8,7 @@ import type {
   CredentialRecord,
   CredentialTransport,
   InvitationRecord,
+  InvitationAccessRecord,
   SecretDigest,
   SessionRecord,
   Timestamp,
@@ -88,6 +89,22 @@ export interface IdentityStore {
     readonly credentialId: CredentialId;
     readonly now: Timestamp;
   }): Promise<IdentityServerResult<undefined>>;
+  findInvitationAccess(input: {
+    readonly now: Timestamp;
+    readonly tokenDigest: SecretDigest;
+  }): Promise<IdentityServerResult<InvitationAccessRecord>>;
+  getInvitationAccess(
+    accountId: AccountId,
+    now: Timestamp
+  ): Promise<IdentityServerResult<InvitationAccessRecord | null>>;
+  replaceInvitationAccess(input: {
+    readonly now: Timestamp;
+    readonly credential: InvitationAccessRecord;
+  }): Promise<IdentityServerResult<undefined>>;
+  revokeInvitationAccess(input: {
+    readonly accountId: AccountId;
+    readonly now: Timestamp;
+  }): Promise<IdentityServerResult<undefined>>;
 }
 
 export interface ClockPort {
@@ -98,6 +115,7 @@ export interface IdentitySecretsPort {
   digest(value: string): Promise<SecretDigest>;
   createChallenge(): string;
   createInvitationCode(): string;
+  createInvitationAccessToken(): string;
   createSessionToken(): string;
 }
 
@@ -105,6 +123,7 @@ export interface IdentityIdsPort {
   createAccountId(): AccountId;
   createCeremonyId(): CeremonyRecord['id'];
   createSessionId(): SessionRecord['id'];
+  createInvitationAccessId(): InvitationAccessRecord['id'];
 }
 
 export type IdentityRateLimitScope = 'source' | 'ceremony' | 'invitation' | 'account';

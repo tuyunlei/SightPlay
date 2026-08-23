@@ -43,6 +43,20 @@ Production release remains separately authorized. Before it, PPE must prove:
 The read-only remote smoke command remains appropriate for generated previews, but it cannot replace any
 of these proofs.
 
+## Invite CLI
+
+After signing in once, Account Management can issue a revocable Invite CLI credential. Copy it directly
+to macOS Keychain without placing it in shell history:
+
+```bash
+pbpaste | pnpm identity:invite -- save --env preview
+pnpm identity:invite -- create --env preview --url https://<deployment>.sightplay.pages.dev
+```
+
+Production uses a separately issued credential and defaults to `https://sightplay.xclz.org`. Replacing or
+revoking a credential in Account Management invalidates the Keychain copy; it must then be replaced or
+deleted locally. The CLI prints a newly created invitation exactly once.
+
 ## PPE provisioning plan
 
 Provision through Wrangler OAuth, a scoped API token, or the Cloudflare dashboard. Authentication is an

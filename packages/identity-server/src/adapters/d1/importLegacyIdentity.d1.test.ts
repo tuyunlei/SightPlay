@@ -35,6 +35,7 @@ beforeEach(async () => {
       'DELETE FROM authentication_claims',
       'DELETE FROM registration_claims',
       'DELETE FROM sessions',
+      'DELETE FROM invitation_access_credentials',
       'DELETE FROM credentials',
       'DELETE FROM ceremonies',
       'DELETE FROM invitations',

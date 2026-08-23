@@ -30,6 +30,20 @@ function renderManagement(api: AccountAccessPorts['api'], onCredentialSetChanged
   return onCredentialSetChanged;
 }
 
+function accountApi(overrides: Partial<AccountAccessPorts['api']> = {}): AccountAccessPorts['api'] {
+  return {
+    loadAccountAccess: vi.fn(async () => ({
+      ok: true as const,
+      value: { credentials: [], invitationAccess: null },
+    })),
+    createInvitation: vi.fn(),
+    revokeCredential: vi.fn(),
+    createInvitationAccess: vi.fn(),
+    revokeInvitationAccess: vi.fn(),
+    ...overrides,
+  };
+}
+
 describe('PasskeyManagement assembled behavior', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -38,17 +52,19 @@ describe('PasskeyManagement assembled behavior', () => {
 
   it('executes credential revocation through the core and reports the resulting capability output', async () => {
     const user = userEvent.setup();
-    const api: AccountAccessPorts['api'] = {
-      listCredentials: vi.fn(async () => ({
+    const api = accountApi({
+      loadAccountAccess: vi.fn(async () => ({
         ok: true as const,
-        value: [
-          { id: 'phone', name: 'Phone', createdAt: 1 },
-          { id: 'laptop', name: 'Laptop', createdAt: 2 },
-        ],
+        value: {
+          credentials: [
+            { id: 'phone', name: 'Phone', createdAt: 1 },
+            { id: 'laptop', name: 'Laptop', createdAt: 2 },
+          ],
+          invitationAccess: null,
+        },
       })),
-      createInvitation: vi.fn(),
       revokeCredential: vi.fn(async () => ({ ok: true as const, value: undefined })),
-    };
+    });
     const onCredentialSetChanged = renderManagement(api);
 
     await user.click(
@@ -67,14 +83,16 @@ describe('PasskeyManagement assembled behavior', () => {
       value: { writeText },
       configurable: true,
     });
-    const api: AccountAccessPorts['api'] = {
-      listCredentials: vi.fn(async () => ({
+    const api = accountApi({
+      loadAccountAccess: vi.fn(async () => ({
         ok: true as const,
-        value: [{ id: 'phone', name: 'Phone', createdAt: 1 }],
+        value: {
+          credentials: [{ id: 'phone', name: 'Phone', createdAt: 1 }],
+          invitationAccess: null,
+        },
       })),
       createInvitation: vi.fn(async () => ({ ok: true as const, value: 'ABCD-EFGH' })),
-      revokeCredential: vi.fn(),
-    };
+    });
     renderManagement(api);
 
     await user.click(
@@ -85,13 +103,33 @@ describe('PasskeyManagement assembled behavior', () => {
     expect(writeText).toHaveBeenCalledWith('ABCD-EFGH');
   });
 
+  it('shows an invitation-only CLI credential once and copies it locally', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+    const api = accountApi({
+      createInvitationAccess: vi.fn(async () => ({
+        ok: true as const,
+        value: {
+          token: 'sp_inv_example-token-for-ui-testing-1234567890',
+          credential: { id: 'access-1', createdAt: 1, expiresAt: 2 },
+        },
+      })),
+    });
+    renderManagement(api);
+
+    await user.click(await screen.findByRole('button', { name: translations.en.inviteCliCreate }));
+    await user.click(await screen.findByRole('button', { name: translations.en.inviteCliCopy }));
+
+    expect(writeText).toHaveBeenCalledWith('sp_inv_example-token-for-ui-testing-1234567890');
+  });
+
   it('keeps logout as an Identity intent rather than an Account Access mutation', async () => {
     const user = userEvent.setup();
-    renderManagement({
-      listCredentials: vi.fn(async () => ({ ok: true as const, value: [] })),
-      createInvitation: vi.fn(),
-      revokeCredential: vi.fn(),
-    });
+    renderManagement(accountApi());
 
     await user.click(await screen.findByRole('button', { name: translations.en.authLogoutButton }));
     expect(logoutMock).toHaveBeenCalledTimes(1);

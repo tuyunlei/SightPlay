@@ -26,7 +26,7 @@ describe('HTTP Account Access contract', () => {
       )
     );
 
-    expect(await api.listCredentials(new AbortController().signal)).toEqual({
+    expect(await api.loadAccountAccess(new AbortController().signal)).toEqual({
       ok: false,
       failure: { code: 'invalidResponse', retryable: true },
     });

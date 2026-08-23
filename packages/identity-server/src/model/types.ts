@@ -4,6 +4,7 @@ export type AccountId = Brand<string, 'AccountId'>;
 export type CredentialId = Brand<string, 'CredentialId'>;
 export type CeremonyId = Brand<string, 'CeremonyId'>;
 export type SessionId = Brand<string, 'SessionId'>;
+export type InvitationAccessId = Brand<string, 'InvitationAccessId'>;
 export type SecretDigest = Brand<string, 'SecretDigest'>;
 export type Timestamp = Brand<number, 'Timestamp'>;
 
@@ -61,9 +62,20 @@ export interface SessionRecord {
   readonly revokedAt: Timestamp | null;
 }
 
+export interface InvitationAccessRecord {
+  readonly id: InvitationAccessId;
+  readonly tokenDigest: SecretDigest;
+  readonly accountId: AccountId;
+  readonly createdAt: Timestamp;
+  readonly expiresAt: Timestamp;
+  readonly revokedAt: Timestamp | null;
+}
+
 export const asAccountId = (value: string): AccountId => value as AccountId;
 export const asCredentialId = (value: string): CredentialId => value as CredentialId;
 export const asCeremonyId = (value: string): CeremonyId => value as CeremonyId;
 export const asSessionId = (value: string): SessionId => value as SessionId;
+export const asInvitationAccessId = (value: string): InvitationAccessId =>
+  value as InvitationAccessId;
 export const asSecretDigest = (value: string): SecretDigest => value as SecretDigest;
 export const asTimestamp = (value: number): Timestamp => value as Timestamp;
