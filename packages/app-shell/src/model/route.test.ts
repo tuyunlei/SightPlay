@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseAppRoute, serializeAppRoute, type AppRoute } from './route';
+import { isPracticeAppRoute, parseAppRoute, serializeAppRoute, type AppRoute } from './route';
 
 describe('App route', () => {
   it.each<[AppRoute, string]>([
@@ -29,6 +29,15 @@ describe('App route', () => {
 
   it('falls back to login for an unknown route', () => {
     expect(parseAppRoute({ pathname: '/unknown' })).toEqual({ kind: 'login' });
+  });
+
+  it.each([
+    [{ kind: 'randomPractice' }, true],
+    [{ kind: 'songPractice', songId: 'song-1' }, true],
+    [{ kind: 'library' }, false],
+    [{ kind: 'passkeys', returnTo: { kind: 'randomPractice' } }, false],
+  ] as const)('identifies whether %o is an active practice route', (route, expected) => {
+    expect(isPracticeAppRoute(route)).toBe(expected);
   });
 
   it('treats a key-only query parameter as an empty value', () => {

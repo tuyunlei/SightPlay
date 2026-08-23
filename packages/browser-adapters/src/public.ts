@@ -9,6 +9,8 @@ export type { BrowserMicrophoneEnvironment } from './practice/browserMicrophoneI
 export { createBrowserMidiInput } from './practice/browserMidiInput';
 export type { BrowserMidiEnvironment } from './practice/browserMidiInput';
 export { createBrowserPracticePorts } from './practice/createBrowserPracticePorts';
+export { createBrowserScreenWakeLockPort } from './practice/browserScreenWakeLock';
+export type { BrowserScreenWakeLockEnvironment } from './practice/browserScreenWakeLock';
 export { createBrowserGuidancePorts } from './guidance/createBrowserGuidancePorts';
 export { createHttpGuidanceChat } from './guidance/httpGuidanceChat';
 export { detectMidiPitch } from './practice/pitchDetection';

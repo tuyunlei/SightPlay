@@ -194,6 +194,9 @@ importers:
       '@sightplay/api-contracts':
         specifier: workspace:*
         version: link:../api-contracts
+      '@sightplay/app-shell':
+        specifier: workspace:*
+        version: link:../app-shell
       '@sightplay/guidance':
         specifier: workspace:*
         version: link:../guidance
