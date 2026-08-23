@@ -1,3 +1,4 @@
+import { createInvitationCode } from '../../model/invitation';
 import {
   asAccountId,
   asCeremonyId,
@@ -26,9 +27,7 @@ class SystemSecrets implements IdentitySecretsPort {
   }
 
   createInvitationCode() {
-    const bytes = crypto.getRandomValues(new Uint8Array(8));
-    const characters = [...bytes].map((value) => INVITATION_CHARSET[value & 31]).join('');
-    return `${characters.slice(0, 4)}-${characters.slice(4)}`;
+    return createInvitationCode(crypto.getRandomValues(new Uint8Array(8)));
   }
 
   createInvitationAccessToken() {
@@ -39,8 +38,6 @@ class SystemSecrets implements IdentitySecretsPort {
     return randomSecret(32);
   }
 }
-
-const INVITATION_CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 class SystemIds implements IdentityIdsPort {
   createAccountId() {

@@ -45,6 +45,18 @@ of these proofs.
 
 ## Invite CLI
 
+Developers with an authenticated Wrangler control-plane session can create an invitation without an
+end-user session or Invite CLI credential:
+
+```bash
+pnpm identity:invite:operator -- --env preview
+```
+
+The command fails unless the environment has exactly one active account, or an active account is selected
+explicitly with `--account`. It writes only the invitation digest to D1 and prints the raw invitation after
+the remote insert succeeds. Production remains release-authorized separately and additionally requires the
+explicit `--confirm-production` flag.
+
 After signing in once, Account Management can issue a revocable Invite CLI credential. Copy it directly
 to macOS Keychain without placing it in shell history:
 
