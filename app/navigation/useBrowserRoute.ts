@@ -22,7 +22,10 @@ export function useBrowserRoute() {
     const currentHref = `${window.location.pathname}${window.location.search}`;
     if (href === currentHref) return;
 
-    const isDismissible = nextRoute.kind === 'passkeys' || nextRoute.kind === 'songPractice';
+    const isDismissible =
+      nextRoute.kind === 'passkeys' ||
+      nextRoute.kind === 'songPractice' ||
+      nextRoute.kind === 'lessonPractice';
     const state = !replace && isDismissible ? { [DISMISSIBLE_ENTRY_KEY]: true } : null;
     if (replace) window.history.replaceState(state, '', href);
     else window.history.pushState(state, '', href);

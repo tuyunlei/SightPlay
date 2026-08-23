@@ -1,5 +1,10 @@
 import type { PracticeView } from '../model/selectors';
-import type { ExercisePlan, PracticeState, RandomExerciseConfig } from '../model/types';
+import type {
+  CurriculumLessonId,
+  ExercisePlan,
+  PracticeState,
+  RandomExerciseConfig,
+} from '../model/types';
 
 export type PracticeOutput =
   | {
@@ -27,6 +32,7 @@ export type PracticeIntent =
   | { readonly kind: 'startExercise'; readonly plan: ExercisePlan }
   | { readonly kind: 'restartExercise' }
   | { readonly kind: 'configureRandom'; readonly config: RandomExerciseConfig }
+  | { readonly kind: 'startLesson'; readonly lessonId: CurriculumLessonId }
   | { readonly kind: 'selectClef'; readonly clef: RandomExerciseConfig['clef'] }
   | {
       readonly kind: 'selectPracticeRange';

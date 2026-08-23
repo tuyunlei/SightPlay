@@ -11,6 +11,8 @@ export type Clef = 'treble' | 'bass';
 export type PracticeRange = 'central' | 'upper' | 'combined';
 export type HandMode = 'right-hand' | 'left-hand' | 'both-hands';
 export type NoteDuration = 'whole' | 'half' | 'quarter' | 'eighth' | 'sixteenth';
+export type ExerciseFrameRole = 'warmup' | 'guided' | 'familiar' | 'transfer';
+export type CurriculumLessonId = 'landmark-steps' | 'five-finger-phrases' | 'familiar-variations';
 export type NonEmptyReadonlyArray<Value> = readonly [Value, ...Value[]];
 
 export interface ScoreFrame {
@@ -18,6 +20,7 @@ export interface ScoreFrame {
   readonly index: number;
   readonly pitches: NonEmptyReadonlyArray<MidiPitch>;
   readonly duration?: NoteDuration;
+  readonly role?: ExerciseFrameRole;
 }
 
 export interface RandomExerciseConfig {
@@ -33,12 +36,16 @@ export interface ExerciseMetadata {
   readonly description?: string;
   readonly difficulty?: 'beginner' | 'intermediate' | 'advanced';
   readonly noteLabels?: readonly string[];
+  readonly curriculum?: {
+    readonly lessonId: CurriculumLessonId;
+    readonly seed: RandomSeed;
+  };
 }
 
 export type ExercisePlan =
   | {
       readonly kind: 'finite';
-      readonly source: 'song' | 'coach';
+      readonly source: 'song' | 'coach' | 'lesson';
       readonly frames: NonEmptyReadonlyArray<ScoreFrame>;
       readonly metadata: ExerciseMetadata;
       readonly clef: Clef;
@@ -63,6 +70,13 @@ export interface SessionStats {
   readonly cleanHits: number;
   readonly bpm: number;
 }
+
+export interface AttemptStats {
+  readonly totalAttempts: number;
+  readonly cleanHits: number;
+}
+
+export type RoleStats = Readonly<Record<ExerciseFrameRole, AttemptStats>>;
 
 export type PracticeStatus = 'waiting' | 'listening' | 'correct' | 'incorrect';
 
@@ -99,6 +113,7 @@ export interface PracticeState {
   readonly score: number;
   readonly streak: number;
   readonly stats: SessionStats;
+  readonly roleStats: RoleStats;
   readonly microphone: 'inactive' | 'starting' | 'listening';
   readonly midiConnected: boolean;
   readonly completion: PracticeCompletion;

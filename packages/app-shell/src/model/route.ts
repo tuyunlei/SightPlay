@@ -3,6 +3,8 @@ export type RouteDifficulty = 'beginner' | 'intermediate' | 'advanced';
 export type PublicAppRoute = { kind: 'login' } | { kind: 'register'; inviteCode?: string };
 
 export type AppContentRoute =
+  | { kind: 'course' }
+  | { kind: 'lessonPractice'; lessonId: string }
   | { kind: 'randomPractice' }
   | { kind: 'library'; difficulty?: RouteDifficulty }
   | { kind: 'songPractice'; songId: string };
@@ -54,6 +56,12 @@ function decodeDifficulty(value: string | undefined): RouteDifficulty | undefine
 
 function decodePasskeysReturnRoute(search: string): AppContentRoute | undefined {
   switch (readQueryParam(search, 'from')) {
+    case 'course':
+      return { kind: 'course' };
+    case 'lesson': {
+      const lessonId = readQueryParam(search, 'lessonId');
+      return lessonId ? { kind: 'lessonPractice', lessonId } : undefined;
+    }
     case 'practice':
       return { kind: 'randomPractice' };
     case 'library':
@@ -78,6 +86,11 @@ export function parseAppRoute({ pathname, search = '' }: RouteLocation): AppRout
   if (pathname === '/register') {
     return { kind: 'register', inviteCode: readQueryParam(search, 'code') };
   }
+  if (pathname === '/course') return { kind: 'course' };
+  if (pathname.startsWith('/course/')) {
+    const lessonId = decodePathSegment(pathname.slice('/course/'.length));
+    if (lessonId) return { kind: 'lessonPractice', lessonId };
+  }
   if (pathname === '/library') {
     return { kind: 'library', difficulty: decodeDifficulty(readQueryParam(search, 'difficulty')) };
   }
@@ -94,34 +107,47 @@ export function parseAppRoute({ pathname, search = '' }: RouteLocation): AppRout
 }
 
 export function serializeAppRoute(route: AppRoute): string {
+  if (route.kind === 'login') return '/';
+  if (route.kind === 'register') {
+    if (!route.inviteCode) return '/register';
+    return `/register?${serializeQueryParam('code', route.inviteCode)}`;
+  }
+  if (route.kind === 'passkeys') return serializePasskeysRoute(route);
+  return serializeContentRoute(route);
+}
+
+function serializeContentRoute(route: AppContentRoute): string {
   switch (route.kind) {
-    case 'login':
-      return '/';
-    case 'register': {
-      if (!route.inviteCode) return '/register';
-      return `/register?${serializeQueryParam('code', route.inviteCode)}`;
-    }
     case 'randomPractice':
       return '/practice';
+    case 'course':
+      return '/course';
+    case 'lessonPractice':
+      return `/course/${encodeURIComponent(route.lessonId)}`;
     case 'library': {
       if (!route.difficulty) return '/library';
       return `/library?${serializeQueryParam('difficulty', route.difficulty)}`;
     }
     case 'songPractice':
       return `/songs/${encodeURIComponent(route.songId)}`;
-    case 'passkeys': {
-      if (!route.returnTo) return '/passkeys';
-      switch (route.returnTo.kind) {
-        case 'randomPractice':
-          return '/passkeys?from=practice';
-        case 'library': {
-          const from = serializeQueryParam('from', 'library');
-          if (!route.returnTo.difficulty) return `/passkeys?${from}`;
-          return `/passkeys?${from}&${serializeQueryParam('difficulty', route.returnTo.difficulty)}`;
-        }
-        case 'songPractice':
-          return `/passkeys?${serializeQueryParam('from', 'song')}&${serializeQueryParam('songId', route.returnTo.songId)}`;
-      }
+  }
+}
+
+function serializePasskeysRoute(route: PasskeysAppRoute): string {
+  if (!route.returnTo) return '/passkeys';
+  switch (route.returnTo.kind) {
+    case 'course':
+      return '/passkeys?from=course';
+    case 'lessonPractice':
+      return `/passkeys?${serializeQueryParam('from', 'lesson')}&${serializeQueryParam('lessonId', route.returnTo.lessonId)}`;
+    case 'randomPractice':
+      return '/passkeys?from=practice';
+    case 'library': {
+      const from = serializeQueryParam('from', 'library');
+      if (!route.returnTo.difficulty) return `/passkeys?${from}`;
+      return `/passkeys?${from}&${serializeQueryParam('difficulty', route.returnTo.difficulty)}`;
     }
+    case 'songPractice':
+      return `/passkeys?${serializeQueryParam('from', 'song')}&${serializeQueryParam('songId', route.returnTo.songId)}`;
   }
 }

@@ -29,6 +29,18 @@ vi.mock('../../features/library/SongLibrary', () => ({
   ),
 }));
 
+vi.mock('../../features/curriculum/CourseOverview', () => ({
+  CourseOverview: ({ onLessonSelect }: { onLessonSelect: (id: string) => void }) => (
+    <button onClick={() => onLessonSelect('landmark-steps')}>pick-lesson</button>
+  ),
+}));
+
+vi.mock('../../features/curriculum/CoursePractice', () => ({
+  CoursePractice: ({ lessonId }: { lessonId: string }) => (
+    <output data-testid="course-practice">{lessonId}</output>
+  ),
+}));
+
 vi.mock('../../features/practice/PracticeArea', () => ({
   default: () => <div data-testid="practice-area" />,
 }));
@@ -91,6 +103,17 @@ function ContentViewHarness({ initialRoute }: { initialRoute: AppContentRoute })
 }
 
 describe('ContentView route integration', () => {
+  it('navigates atomically from the course to a lesson', () => {
+    render(<ContentViewHarness initialRoute={{ kind: 'course' }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'pick-lesson' }));
+
+    expect(screen.getByTestId('course-practice').textContent).toBe('landmark-steps');
+    expect(screen.getByTestId('current-route').textContent).toBe(
+      JSON.stringify({ kind: 'lessonPractice', lessonId: 'landmark-steps' })
+    );
+  });
+
   it('renders random practice from the route', () => {
     render(<ContentViewHarness initialRoute={{ kind: 'randomPractice' }} />);
 

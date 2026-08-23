@@ -38,6 +38,7 @@ export function PracticeProvider({
       startExercise: (plan) => runtime.dispatch({ kind: 'startExercise', plan }),
       restartExercise: () => runtime.dispatch({ kind: 'restartExercise' }),
       startRandom: (config) => runtime.dispatch({ kind: 'configureRandom', config }),
+      startLesson: (lessonId) => runtime.dispatch({ kind: 'startLesson', lessonId }),
       selectClef: (clef) => runtime.dispatch({ kind: 'selectClef', clef }),
       selectPracticeRange: (practiceRange) =>
         runtime.dispatch({ kind: 'selectPracticeRange', practiceRange }),

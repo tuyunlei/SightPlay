@@ -1,3 +1,4 @@
+import { createCurriculumExercise } from '../model/curriculum';
 import { createRandomExercise } from '../model/exercise';
 import { selectPracticeView, type PracticeView } from '../model/selectors';
 import { createPracticeState, transitionPractice } from '../model/transition';
@@ -76,6 +77,14 @@ export class PracticeRuntimeImpl implements PracticeRuntime {
     }
     if (intent.kind === 'configureRandom') {
       this.replaceRandomExercise(intent.config);
+      return;
+    }
+    if (intent.kind === 'startLesson') {
+      const plan = createCurriculumExercise({
+        lessonId: intent.lessonId,
+        seed: this.ports.seed.nextSeed(),
+      });
+      if (plan.ok) this.replaceExercise(plan.value);
       return;
     }
     if (intent.kind === 'selectClef') {

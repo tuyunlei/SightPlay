@@ -5,6 +5,12 @@ export {
   frameAt,
   parseScientificPitch,
 } from './model/exercise';
+export {
+  createCurriculumExercise,
+  CURRICULUM_LESSONS,
+  isCurriculumLessonId,
+} from './model/curriculum';
+export type { CurriculumLessonSummary } from './model/curriculum';
 export type {
   ExerciseResult,
   FiniteExerciseResult,
@@ -17,7 +23,9 @@ export type { PracticeNoteView, PracticeView, PressedPitchView } from './model/s
 export { createPracticeState, transitionPractice } from './model/transition';
 export type {
   Clef,
+  CurriculumLessonId,
   ExerciseMetadata,
+  ExerciseFrameRole,
   ExercisePlan,
   HandMode,
   InstrumentObservation,
@@ -31,6 +39,8 @@ export type {
   PracticeTransition,
   RandomExerciseConfig,
   ScoreFrame,
+  RoleStats,
+  AttemptStats,
   SessionStats,
 } from './model/types';
 export type {

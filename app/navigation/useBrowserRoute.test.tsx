@@ -74,4 +74,14 @@ describe('browser route adapter', () => {
 
     expect(back).toHaveBeenCalledOnce();
   });
+
+  it('removes an application-opened lesson so its prior course state remains authoritative', () => {
+    const back = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
+    const { result } = renderHook(() => useBrowserRoute());
+
+    act(() => result.current.navigate({ kind: 'lessonPractice', lessonId: 'landmark-steps' }));
+    act(() => result.current.dismissEntry({ kind: 'course' }));
+
+    expect(back).toHaveBeenCalledOnce();
+  });
 });

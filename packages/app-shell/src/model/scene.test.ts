@@ -34,7 +34,7 @@ describe('App scene selection', () => {
     [
       { status: 'authenticated', hasPasskeys: true },
       { kind: 'login' },
-      { kind: 'redirect', route: { kind: 'randomPractice' } },
+      { kind: 'redirect', route: { kind: 'course' } },
     ],
     [
       { status: 'authenticated', hasPasskeys: true },

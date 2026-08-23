@@ -1,7 +1,7 @@
 export type GuidanceLanguage = 'en' | 'zh';
 export type GuidanceClef = 'treble' | 'bass';
 export type GuidanceRange = 'central' | 'upper' | 'combined';
-export type GuidanceSource = 'random' | 'song' | 'coach';
+export type GuidanceSource = 'random' | 'song' | 'coach' | 'lesson';
 export type HintKind = 'encouragement' | 'tip';
 
 export type GuidanceMessageContent =

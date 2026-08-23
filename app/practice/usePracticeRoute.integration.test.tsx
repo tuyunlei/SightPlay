@@ -34,7 +34,7 @@ function fixture() {
 }
 
 describe('Practice route composition', () => {
-  it('maps song and random routes to one live Practice runtime without a parallel owner', async () => {
+  it('maps lesson, song, and random routes to one live Practice runtime without a parallel owner', async () => {
     const test = fixture();
     const Wrapper = ({ children }: { children: ReactNode }) => {
       return (
@@ -47,8 +47,8 @@ describe('Practice route composition', () => {
       () => {
         const practice = usePractice();
         const [route, setRoute] = useState<ProtectedAppRoute>({
-          kind: 'songPractice',
-          songId: 'twinkle-twinkle',
+          kind: 'lessonPractice',
+          lessonId: 'landmark-steps',
         });
         usePracticeRoute(route, practice);
         return { practice, setRoute };
@@ -56,6 +56,11 @@ describe('Practice route composition', () => {
       { wrapper: Wrapper }
     );
 
+    await waitFor(() => expect(result.current.practice.view.source).toBe('lesson'));
+    expect(result.current.practice.view.metadata.curriculum?.lessonId).toBe('landmark-steps');
+    expect(result.current.practice.view.currentRole).toBe('warmup');
+
+    act(() => result.current.setRoute({ kind: 'songPractice', songId: 'twinkle-twinkle' }));
     await waitFor(() => expect(result.current.practice.view.source).toBe('song'));
     expect(result.current.practice.view.metadata.id).toBe('twinkle-twinkle');
 

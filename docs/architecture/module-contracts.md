@@ -29,6 +29,8 @@ Navigation is the sole page-selection fact:
 
 ```ts
 type ContentRoute =
+  | { kind: 'course' }
+  | { kind: 'lessonPractice'; lessonId: LessonId }
   | { kind: 'randomPractice' }
   | { kind: 'library'; difficulty?: Difficulty }
   | { kind: 'songPractice'; songId: SongId };
@@ -83,11 +85,16 @@ exception wording.
 
 ## Exercise and Practice
 
-Song, random, and coach content compile into one plan:
+Curriculum lessons, songs, random drills, and coach content compile into one plan:
 
 ```ts
 type ExercisePlan =
-  | { kind: 'finite'; source: 'song' | 'coach'; frames: readonly ScoreFrame[]; metadata: Metadata }
+  | {
+      kind: 'finite';
+      source: 'lesson' | 'song' | 'coach';
+      frames: readonly ScoreFrame[];
+      metadata: Metadata;
+    }
   | { kind: 'generated'; source: 'random'; config: RandomConfig; seed: RandomSeed };
 
 type ScoreFrame = {
@@ -95,6 +102,7 @@ type ScoreFrame = {
   pitches: NonEmptyReadonlyArray<MidiPitch>;
   duration?: Duration;
   notation?: NoteSpelling;
+  role?: 'warmup' | 'guided' | 'familiar' | 'transfer';
 };
 ```
 

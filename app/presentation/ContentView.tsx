@@ -4,6 +4,8 @@ import type { AppContentRoute } from '@sightplay/app-shell';
 import { useGuidance } from '@sightplay/guidance';
 import { usePractice } from '@sightplay/practice';
 
+import { CourseOverview } from '../../features/curriculum/CourseOverview';
+import { CoursePractice } from '../../features/curriculum/CoursePractice';
 import { SongLibrary } from '../../features/library/SongLibrary';
 import { translations } from '../../i18n';
 
@@ -26,6 +28,22 @@ export const ContentView: React.FC<ContentViewProps> = (props) => {
   const exitSong = () => {
     props.dismissEntry({ kind: 'library' });
   };
+
+  const exitLesson = () => {
+    props.dismissEntry({ kind: 'course' });
+  };
+
+  if (route.kind === 'course') {
+    return (
+      <CourseOverview
+        onLessonSelect={(lessonId) => navigate({ kind: 'lessonPractice', lessonId })}
+      />
+    );
+  }
+
+  if (route.kind === 'lessonPractice') {
+    return <CoursePractice lessonId={route.lessonId} onExit={exitLesson} />;
+  }
 
   if (route.kind === 'library') {
     return (

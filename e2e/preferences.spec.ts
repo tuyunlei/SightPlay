@@ -5,15 +5,14 @@ test.describe('Preferences E2E', () => {
     await mockAuthenticatedSession(page);
     await page.goto('/');
 
-    await expect(page.getByRole('heading', { name: /视弹 SightPlay/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /随机练习/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /识谱课程/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /自由练习/i })).toBeVisible();
 
     // language toggle is the icon button before reset-stats button
-    const allButtons = page.locator('nav button');
-    await allButtons.nth(2).click();
+    await page.getByTitle(/切换语言/i).click();
 
-    await expect(page.getByRole('heading', { name: 'SightPlay' })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Random Practice/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Sight-reading Course/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Free Practice/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /Song Library/i })).toBeVisible();
   });
 
@@ -57,7 +56,9 @@ test.describe('Preferences E2E', () => {
       expect(vars.bgPrimary).toBe('#f8fafc');
       expect(vars.textPrimary).toBe('#0f172a');
 
-      await expect(page.getByTestId('staff-display')).toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: /sight-reading course|识谱课程/i })
+      ).toBeVisible();
 
       const appBg = await page.evaluate(() => {
         const root = document.querySelector('#root > div');

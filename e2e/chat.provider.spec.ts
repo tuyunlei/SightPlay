@@ -6,7 +6,9 @@ const INVITE_CODE = 'PRVV-E2E2';
 async function register(page: Page): Promise<void> {
   await page.goto(`/register?code=${INVITE_CODE}`);
   await page.getByRole('button', { name: /create passkey|创建 Passkey/i }).click();
-  await expect(page.getByTestId('staff-display')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('heading', { name: /sight-reading course|识谱课程/i })).toBeVisible({
+    timeout: 15_000,
+  });
 }
 
 test('@provider real Gemini returns the SightPlay chat contract', async ({ page, system }) => {

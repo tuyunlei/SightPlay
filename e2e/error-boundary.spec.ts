@@ -31,7 +31,8 @@ test.describe('ErrorBoundary degraded UI', () => {
 
     await page.getByRole('button', { name: /retry|重试/i }).click();
 
-    await expect(page.getByTestId('staff-display')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByTestId('piano-display')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /sight-reading course|识谱课程/i })).toBeVisible(
+      { timeout: 10000 }
+    );
   });
 });

@@ -57,7 +57,9 @@ test.describe('Song Library Practice flow', () => {
     await page.addInitScript({ content: webmidiMockScript });
     await mockAuthenticatedSession(page);
     await page.goto('/');
-    await expect(page.getByText('SightPlay')).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /sight-reading course|识谱课程/i })
+    ).toBeVisible();
   });
 
   test('navigate to library and see songs', async ({ page }) => {

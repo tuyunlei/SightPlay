@@ -5,6 +5,7 @@ import { computeAccuracy } from './scoring';
 import type {
   Clef,
   ExerciseMetadata,
+  ExerciseFrameRole,
   HandMode,
   MidiPitch,
   NoteDuration,
@@ -12,6 +13,7 @@ import type {
   PracticeRange,
   PracticeState,
   PracticeStatus,
+  RoleStats,
   ScoreFrame,
   SessionStats,
 } from './types';
@@ -35,7 +37,7 @@ export interface PressedPitchView {
 }
 
 export interface PracticeView {
-  readonly source: 'random' | 'song' | 'coach';
+  readonly source: 'random' | 'song' | 'coach' | 'lesson';
   readonly metadata: ExerciseMetadata;
   readonly clef: Clef;
   readonly practiceRange: PracticeRange;
@@ -49,6 +51,8 @@ export interface PracticeView {
   readonly score: number;
   readonly streak: number;
   readonly sessionStats: SessionStats;
+  readonly roleStats: RoleStats;
+  readonly currentRole: ExerciseFrameRole | null;
   readonly accuracy: number;
   readonly isListening: boolean;
   readonly isMidiConnected: boolean;
@@ -87,6 +91,8 @@ export function selectPracticeView(state: PracticeState): PracticeView {
     score: state.score,
     streak: state.streak,
     sessionStats: state.stats,
+    roleStats: state.roleStats,
+    currentRole: targetFrame?.role ?? null,
     accuracy: computeAccuracy(state.stats),
     isListening: state.microphone === 'listening',
     isMidiConnected: state.midiConnected,

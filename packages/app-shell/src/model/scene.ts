@@ -31,6 +31,6 @@ export function selectAppScene(identity: IdentitySessionView, route: AppRoute): 
   }
 
   return isPublicAppRoute(route)
-    ? { kind: 'redirect', route: { kind: 'randomPractice' } }
+    ? { kind: 'redirect', route: { kind: 'course' } }
     : { kind: 'authenticated', route };
 }

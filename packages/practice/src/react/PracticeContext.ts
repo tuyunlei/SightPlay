@@ -3,6 +3,7 @@ import { createContext } from 'react';
 import type { PracticeView } from '../model/selectors';
 import type {
   Clef,
+  CurriculumLessonId,
   ExercisePlan,
   HandMode,
   PracticeRange,
@@ -14,6 +15,7 @@ export interface PracticeActions {
   startExercise(plan: ExercisePlan): void;
   restartExercise(): void;
   startRandom(config: RandomExerciseConfig): void;
+  startLesson(lessonId: CurriculumLessonId): void;
   selectClef(clef: Clef): void;
   selectPracticeRange(practiceRange: PracticeRange): void;
   selectHandMode(handMode: HandMode): void;
