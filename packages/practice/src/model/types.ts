@@ -94,7 +94,6 @@ export interface PracticeState {
   readonly matchStartedAt: number | null;
   readonly wrongStartedAt: number | null;
   readonly hadMistake: boolean;
-  readonly lockedUntil: number;
   readonly exitingFrames: readonly ScoreFrame[];
   readonly status: PracticeStatus;
   readonly score: number;
