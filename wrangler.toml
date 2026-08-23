@@ -35,6 +35,7 @@ migrations_dir = "packages/identity-server/migrations"
 [env.preview.vars]
 WEBAUTHN_RP_ID = "sightplay.pages.dev"
 WEBAUTHN_RP_NAME = "SightPlay"
+IDENTITY_ALLOWED_ORIGINS = ""
 IDENTITY_ALLOWED_HTTPS_SUBDOMAIN_SUFFIXES = "sightplay.pages.dev"
 WEBAUTHN_USER_VERIFICATION = "required"
 IDENTITY_CEREMONY_TTL_MS = "300000"
