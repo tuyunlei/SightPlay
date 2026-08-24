@@ -26,8 +26,8 @@ export const SongCard: React.FC<SongCardProps> = ({ song, onSelect }) => {
     return mins > 0 ? `${mins}:${secs.toString().padStart(2, '0')}` : `${secs}s`;
   };
 
-  const difficultyKey = `difficulty_${song.difficulty}` as keyof typeof t;
-  const categoryKey = `category_${song.category}` as keyof typeof t;
+  const difficultyKey = `difficulty_${song.difficulty}` as const;
+  const categoryKey = `category_${song.category}` as const;
 
   return (
     <div

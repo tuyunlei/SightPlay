@@ -1,18 +1,29 @@
-import type { CurriculumLessonId, ExerciseFrameRole } from '@sightplay/practice';
+import type {
+  CurriculumCapability,
+  CurriculumChapterId,
+  CurriculumLessonId,
+  CurriculumModuleId,
+  ExerciseFrameRole,
+} from '@sightplay/practice';
 
 import type { translations } from '../../i18n';
 
 type Translation = typeof translations.en;
 
 export function curriculumLessonCopy(t: Translation, lessonId: CurriculumLessonId) {
-  switch (lessonId) {
-    case 'landmark-steps':
-      return { title: t.lessonLandmarkTitle, description: t.lessonLandmarkDescription };
-    case 'five-finger-phrases':
-      return { title: t.lessonFiveFingerTitle, description: t.lessonFiveFingerDescription };
-    case 'familiar-variations':
-      return { title: t.lessonVariationTitle, description: t.lessonVariationDescription };
-  }
+  return t.curriculumLessons[lessonId];
+}
+
+export function curriculumModuleCopy(t: Translation, moduleId: CurriculumModuleId) {
+  return t.curriculumModules[moduleId];
+}
+
+export function curriculumChapterCopy(t: Translation, chapterId: CurriculumChapterId) {
+  return t.curriculumChapters[chapterId];
+}
+
+export function curriculumCapabilityCopy(t: Translation, capability: CurriculumCapability) {
+  return t.curriculumCapabilities[capability];
 }
 
 export function curriculumStageCopy(t: Translation, role: ExerciseFrameRole | null) {

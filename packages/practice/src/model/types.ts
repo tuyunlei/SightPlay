@@ -12,7 +12,65 @@ export type PracticeRange = 'central' | 'upper' | 'combined';
 export type HandMode = 'right-hand' | 'left-hand' | 'both-hands';
 export type NoteDuration = 'whole' | 'half' | 'quarter' | 'eighth' | 'sixteenth';
 export type ExerciseFrameRole = 'warmup' | 'guided' | 'familiar' | 'transfer';
-export type CurriculumLessonId = 'landmark-steps' | 'five-finger-phrases' | 'familiar-variations';
+export type CurriculumLessonId =
+  | 'keyboard-groups'
+  | 'key-names'
+  | 'landmark-steps'
+  | 'treble-landmarks'
+  | 'bass-landmarks'
+  | 'repeated-notes'
+  | 'ascending-descending'
+  | 'five-finger-phrases'
+  | 'thirds-in-treble'
+  | 'thirds-in-bass'
+  | 'fourths-and-fifths'
+  | 'mixed-interval-phrases'
+  | 'expanding-treble'
+  | 'expanding-bass'
+  | 'ledger-lines'
+  | 'hand-alternation'
+  | 'hands-together'
+  | 'independent-voices'
+  | 'steady-pulse'
+  | 'note-values'
+  | 'rests'
+  | 'eighth-note-patterns'
+  | 'dotted-notes-and-ties'
+  | 'compound-meter'
+  | 'syncopation'
+  | 'familiar-variations'
+  | 'c-major-patterns'
+  | 'g-and-f-major'
+  | 'chord-shapes'
+  | 'arpeggio-shapes'
+  | 'transposition'
+  | 'fingering'
+  | 'articulation'
+  | 'dynamics'
+  | 'phrasing'
+  | 'pedal'
+  | 'preview-and-scan'
+  | 'first-sight-mix'
+  | 'continuous-reading'
+  | 'error-recovery'
+  | 'adaptive-review'
+  | 'repertoire-transfer';
+export type PlayableCurriculumLessonId =
+  | 'landmark-steps'
+  | 'treble-landmarks'
+  | 'bass-landmarks'
+  | 'repeated-notes'
+  | 'ascending-descending'
+  | 'five-finger-phrases'
+  | 'thirds-in-treble'
+  | 'thirds-in-bass'
+  | 'fourths-and-fifths'
+  | 'mixed-interval-phrases'
+  | 'expanding-treble'
+  | 'expanding-bass'
+  | 'familiar-variations'
+  | 'c-major-patterns'
+  | 'first-sight-mix';
 export type NonEmptyReadonlyArray<Value> = readonly [Value, ...Value[]];
 
 export interface ScoreFrame {
@@ -37,7 +95,7 @@ export interface ExerciseMetadata {
   readonly difficulty?: 'beginner' | 'intermediate' | 'advanced';
   readonly noteLabels?: readonly string[];
   readonly curriculum?: {
-    readonly lessonId: CurriculumLessonId;
+    readonly lessonId: PlayableCurriculumLessonId;
     readonly seed: RandomSeed;
   };
 }

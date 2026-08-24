@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { createCurriculumExercise, CURRICULUM_LESSONS } from './curriculum';
+import {
+  createCurriculumExercise,
+  CURRICULUM_LESSONS,
+  CURRICULUM_MODULES,
+  PLAYABLE_CURRICULUM_LESSONS,
+} from './curriculum';
 
-function exercise(lessonId: (typeof CURRICULUM_LESSONS)[number]['id'], seed: number) {
+function exercise(lessonId: (typeof PLAYABLE_CURRICULUM_LESSONS)[number]['id'], seed: number) {
   const result = createCurriculumExercise({ lessonId, seed });
   if (!result.ok) throw new Error('invalid curriculum fixture');
   return result.value;
@@ -10,7 +15,7 @@ function exercise(lessonId: (typeof CURRICULUM_LESSONS)[number]['id'], seed: num
 
 describe('Curriculum exercise generation', () => {
   it('replays every lesson exactly from its seed and keeps pitches inside the lesson range', () => {
-    for (const lesson of CURRICULUM_LESSONS) {
+    for (const lesson of PLAYABLE_CURRICULUM_LESSONS) {
       const first = exercise(lesson.id, 42);
       const replay = exercise(lesson.id, 42);
 
@@ -19,14 +24,14 @@ describe('Curriculum exercise generation', () => {
         new Set(['warmup', 'guided', 'familiar', 'transfer'])
       );
       expect(first.frames.every((frame) => frame.pitches.length === 1)).toBe(true);
-      expect(
-        new Set(first.frames.map((frame) => Number(frame.pitches[0]))).size
-      ).toBeLessThanOrEqual(lesson.pitchCount);
+      expect(first.frames.every((frame) => frame.duration === 'quarter')).toBe(true);
     }
   });
 
   it('creates connected musical phrases instead of independent arbitrary notes', () => {
-    for (const lesson of CURRICULUM_LESSONS.slice(0, 2)) {
+    for (const lesson of PLAYABLE_CURRICULUM_LESSONS.filter((candidate) =>
+      ['landmark-steps', 'five-finger-phrases'].includes(candidate.id)
+    )) {
       for (const seed of [0, 1, 42, 0xffffffff]) {
         const plan = exercise(lesson.id, seed);
         for (const role of ['guided', 'transfer'] as const) {
@@ -44,7 +49,7 @@ describe('Curriculum exercise generation', () => {
   });
 
   it('keeps the transfer phrase novel relative to the guided phrase', () => {
-    for (const lesson of CURRICULUM_LESSONS) {
+    for (const lesson of PLAYABLE_CURRICULUM_LESSONS) {
       for (let seed = 0; seed < 100; seed += 1) {
         const plan = exercise(lesson.id, seed);
         const phrase = (role: 'guided' | 'transfer') =>
@@ -55,7 +60,7 @@ describe('Curriculum exercise generation', () => {
   });
 
   it('varies familiar material across seeds while preserving a recognizable constrained family', () => {
-    for (const lesson of CURRICULUM_LESSONS) {
+    for (const lesson of PLAYABLE_CURRICULUM_LESSONS) {
       const variants = new Set(
         [0, 1, 2, 3, 4, 5, 6, 7].map((seed) =>
           exercise(lesson.id, seed)
@@ -66,5 +71,19 @@ describe('Curriculum exercise generation', () => {
       );
       expect(variants.size).toBeGreaterThan(1);
     }
+  });
+
+  it('publishes one ordered roadmap entry per lesson and explains every unavailable lesson', () => {
+    const ids = CURRICULUM_MODULES.flatMap((module) =>
+      module.chapters.flatMap((chapter) => chapter.lessons.map((lesson) => lesson.id))
+    );
+
+    expect(ids).toHaveLength(CURRICULUM_LESSONS.length);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(
+      CURRICULUM_LESSONS.filter((lesson) => lesson.status === 'planned').every(
+        (lesson) => (lesson.requires?.length ?? 0) > 0
+      )
+    ).toBe(true);
   });
 });

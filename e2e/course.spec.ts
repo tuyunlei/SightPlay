@@ -30,12 +30,16 @@ test('authenticated entry starts a structured curriculum lesson', async ({ page 
   await expect(page).toHaveURL(/\/course$/);
   await expect(page.getByRole('heading', { name: /sight-reading course|识谱课程/i })).toBeVisible();
 
-  await page
-    .getByRole('heading', { name: /steps around middle c|中央 c 附近的级进/i })
-    .locator('..')
-    .locator('..')
-    .getByRole('button', { name: /start lesson|开始练习/i })
-    .click();
+  const plannedKeyboardLesson = page.getByRole('article').filter({
+    has: page.getByRole('heading', { name: /groups of two and three|两黑键与三黑键/i }),
+  });
+  await expect(plannedKeyboardLesson.getByText(/planned|规划中/i)).toBeVisible();
+  await expect(plannedKeyboardLesson.getByRole('button')).toHaveCount(0);
+
+  const landmarkLesson = page.getByRole('article').filter({
+    has: page.getByRole('heading', { name: /steps around middle c|中央 c 附近的级进/i }),
+  });
+  await landmarkLesson.getByRole('button', { name: /start lesson|开始练习/i }).click();
 
   await expect(page).toHaveURL(/\/course\/landmark-steps$/);
   await expect(page.getByTestId('staff-display')).toBeVisible();

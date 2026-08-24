@@ -1,7 +1,7 @@
 import { RefreshCw } from 'lucide-react';
 import React from 'react';
 
-import { isCurriculumLessonId, usePractice } from '@sightplay/practice';
+import { isPlayableCurriculumLessonId, usePractice } from '@sightplay/practice';
 
 import { useLanguage } from '../../app/presentation/useLanguage';
 import type { translations } from '../../i18n';
@@ -81,7 +81,7 @@ export const CoursePractice: React.FC<{
   const { t } = useLanguage();
   const practice = usePractice();
 
-  if (!isCurriculumLessonId(lessonId)) {
+  if (!isPlayableCurriculumLessonId(lessonId)) {
     return (
       <main className="relative z-10 mx-auto max-w-xl p-8 text-center">
         <p className="text-red-500 dark:text-red-400">{t.courseLessonNotFound}</p>

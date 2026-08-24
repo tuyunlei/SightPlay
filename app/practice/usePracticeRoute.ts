@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 
 import type { AppContentRoute, ProtectedAppRoute } from '@sightplay/app-shell';
-import { isCurriculumLessonId, type PracticeClient } from '@sightplay/practice';
+import { isPlayableCurriculumLessonId, type PracticeClient } from '@sightplay/practice';
 
 import { createSongExercise, DEFAULT_RANDOM_CONFIG } from './createExercisePlan';
 
@@ -13,7 +13,7 @@ export function usePracticeRoute(route: ProtectedAppRoute, practice: PracticeCli
   const contentRoute = contentRouteOf(route);
   const songId = contentRoute.kind === 'songPractice' ? contentRoute.songId : null;
   const lessonId =
-    contentRoute.kind === 'lessonPractice' && isCurriculumLessonId(contentRoute.lessonId)
+    contentRoute.kind === 'lessonPractice' && isPlayableCurriculumLessonId(contentRoute.lessonId)
       ? contentRoute.lessonId
       : null;
   const songPlan = useMemo(() => (songId ? createSongExercise(songId) : null), [songId]);

@@ -8,9 +8,20 @@ export {
 export {
   createCurriculumExercise,
   CURRICULUM_LESSONS,
+  CURRICULUM_MODULES,
   isCurriculumLessonId,
+  isPlayableCurriculumLessonId,
+  PLAYABLE_CURRICULUM_LESSONS,
 } from './model/curriculum';
-export type { CurriculumLessonSummary } from './model/curriculum';
+export type {
+  CurriculumCapability,
+  CurriculumChapter,
+  CurriculumChapterId,
+  CurriculumImplementationStatus,
+  CurriculumLessonSummary,
+  CurriculumModule,
+  CurriculumModuleId,
+} from './model/curriculum';
 export type {
   ExerciseResult,
   FiniteExerciseResult,
@@ -35,6 +46,7 @@ export type {
   PracticeAction,
   PracticeEffect,
   PracticeRange,
+  PlayableCurriculumLessonId,
   PracticeState,
   PracticeTransition,
   RandomExerciseConfig,

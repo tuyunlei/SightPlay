@@ -10,7 +10,10 @@ interface HandModeSelectorProps {
   disabled?: boolean;
 }
 
-const HAND_MODE_OPTIONS: { value: HandPracticeMode; labelKey: keyof typeof translations.en }[] = [
+const HAND_MODE_OPTIONS: {
+  value: HandPracticeMode;
+  labelKey: 'rightHand' | 'leftHand' | 'bothHands';
+}[] = [
   { value: 'right-hand', labelKey: 'rightHand' },
   { value: 'left-hand', labelKey: 'leftHand' },
   { value: 'both-hands', labelKey: 'bothHands' },

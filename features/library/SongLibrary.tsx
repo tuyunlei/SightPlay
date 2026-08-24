@@ -63,8 +63,7 @@ export const SongLibrary: React.FC<SongLibraryProps> = ({
       {/* Difficulty Filter */}
       <div className="mb-6 flex gap-2 flex-wrap">
         {difficulties.map((diff) => {
-          const label =
-            diff === 'all' ? t.allDifficulties : t[`difficulty_${diff}` as keyof typeof t];
+          const label = diff === 'all' ? t.allDifficulties : t[`difficulty_${diff}`];
           return (
             <button
               key={diff}
@@ -92,7 +91,7 @@ export const SongLibrary: React.FC<SongLibraryProps> = ({
             return (
               <div key={difficulty} className="mb-8">
                 <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-slate-200">
-                  {t[`difficulty_${difficulty}` as keyof typeof t]}
+                  {t[`difficulty_${difficulty}`]}
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2">
                   {songsInGroup.map((song) => (
