@@ -26,21 +26,28 @@ async function getSongProgress(page: Page): Promise<number> {
   return match ? parseInt(match[1], 10) : 0;
 }
 
-async function playAcceptedSongNote(page: Page, midi: number): Promise<void> {
+async function sendSongFrame(page: Page, pitches: readonly number[]): Promise<void> {
+  await page.evaluate((notes) => {
+    notes.forEach((note) => window.__simulateMidiNoteOn(note));
+    notes.forEach((note) => window.__simulateMidiNoteOff(note));
+  }, pitches);
+}
+
+async function playAcceptedSongFrame(page: Page, pitches: readonly number[]): Promise<void> {
   const progressBefore = await getSongProgress(page);
   await expect
     .poll(
       async () => {
-        await page.evaluate((note) => {
-          window.__simulateMidiNoteOn(note);
-          window.__simulateMidiNoteOff(note);
-        }, midi);
+        await sendSongFrame(page, pitches);
         if (await page.getByRole('heading', { name: /song complete|完成曲目/i }).isVisible()) {
           return 100;
         }
         return getSongProgress(page);
       },
-      { timeout: 5_000, message: `song note ${midi} should be accepted through WebMIDI` }
+      {
+        timeout: 5_000,
+        message: `song frame ${pitches.join('+')} should be accepted through WebMIDI`,
+      }
     )
     .toBeGreaterThan(progressBefore);
 }
@@ -48,7 +55,7 @@ async function playAcceptedSongNote(page: Page, midi: number): Promise<void> {
 async function completeSong(page: Page) {
   const song = getSongById(SONG_ID);
   if (!song) throw new Error('missing song fixture');
-  for (const note of song.notes) await playAcceptedSongNote(page, note.midi);
+  for (const frame of song.frames) await playAcceptedSongFrame(page, frame.pitches);
   await expect(page.getByRole('heading', { name: /song complete|完成曲目/i })).toBeVisible();
 }
 
@@ -93,8 +100,33 @@ test.describe('Song Library Practice flow', () => {
     if (!song) throw new Error('missing song fixture');
     const initialProgress = await getSongProgress(page);
 
-    for (const note of song.notes.slice(0, 3)) await playAcceptedSongNote(page, note.midi);
+    for (const frame of song.frames.slice(0, 3)) {
+      await playAcceptedSongFrame(page, frame.pitches);
+    }
     await expect.poll(() => getSongProgress(page)).toBeGreaterThan(initialProgress);
+  });
+
+  test('requires both pitches in the Canon two-hand lesson', async ({ page }) => {
+    const song = getSongById('canon-in-d-two-hands');
+    if (!song) throw new Error('missing Canon two-hand fixture');
+    const firstFrame = song.frames[0];
+    if (!firstFrame) throw new Error('missing Canon two-hand opening frame');
+
+    await openSongLibrary(page);
+    await page.getByText('Canon in D — Two-Hand Theme').click();
+    await expect(page).toHaveURL(/\/songs\/canon-in-d-two-hands$/);
+    await expect(page.getByText(/normalizes rhythm|统一了节奏/i)).toBeVisible();
+    await expect(page.getByRole('link', { name: /source|谱源/i })).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: /Creative Commons Attribution 4.0/i })
+    ).toBeVisible();
+
+    expect(firstFrame.pitches).toHaveLength(2);
+    const initialProgress = await getSongProgress(page);
+    await sendSongFrame(page, firstFrame.pitches.slice(0, 1));
+    await expect.poll(() => getSongProgress(page)).toBe(initialProgress);
+
+    await playAcceptedSongFrame(page, firstFrame.pitches);
   });
 
   test('complete a song through WebMIDI and return from the result', async ({ page }) => {

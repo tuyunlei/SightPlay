@@ -23,8 +23,10 @@ const convertToMetadata = (song: (typeof SONG_LIBRARY)[number]): SongMetadata & 
   category: song.category,
   clef: song.clef,
   timeSignature: song.timeSignature,
-  noteCount: song.notes.length,
-  estimatedDuration: estimateDuration(song.notes.length),
+  noteCount: song.frames.length,
+  estimatedDuration: estimateDuration(song.frames.length),
+  ...(song.source ? { composer: song.source.composer } : {}),
+  ...(song.practiceFocus ? { practiceFocus: song.practiceFocus } : {}),
 });
 
 export const SongLibrary: React.FC<SongLibraryProps> = ({

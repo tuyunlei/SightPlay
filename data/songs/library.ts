@@ -1,5 +1,10 @@
 import { arpeggiosExercise } from './advanced/arpeggiosExercise';
-import { canonInD } from './advanced/canonInD';
+import {
+  canonFlowingVariation,
+  canonGroundBass,
+  canonInD,
+  canonTwoHands,
+} from './advanced/canonInD';
 import { cMajorScale } from './beginner/cMajorScale';
 import { odeToJoy } from './beginner/odeToJoy';
 import { twinkleTwinkle } from './beginner/twinkleTwinkle';
@@ -14,7 +19,10 @@ export const SONG_LIBRARY: Song[] = [
   cMajorScale,
   maryHadLittleLamb,
   minuetInG,
+  canonGroundBass,
   canonInD,
+  canonTwoHands,
+  canonFlowingVariation,
   arpeggiosExercise,
   bassClefExercise,
 ];

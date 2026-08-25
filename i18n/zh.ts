@@ -74,6 +74,10 @@ export const zh = {
   songNotFound: '未找到曲目',
   backToLibrary: '返回曲库',
   songCompleteTitle: '完成曲目！',
+  songPitchPractice: '音高练习版',
+  songPitchPracticeNotice:
+    '这个教学版本统一了节奏；SightPlay 当前只评估音高与和弦是否正确，还不会评估实际演奏时值。',
+  songSource: '谱源',
   correctNotes: '正确音符',
   retrySong: '再试一次',
   randomPractice: '自由练习',

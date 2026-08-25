@@ -74,6 +74,10 @@ export const en = {
   songNotFound: 'Song not found',
   backToLibrary: 'Back to Library',
   songCompleteTitle: 'Song Complete!',
+  songPitchPractice: 'Pitch practice',
+  songPitchPracticeNotice:
+    'This educational edition normalizes rhythm. SightPlay currently assesses pitch and chord identity, not performed note length.',
+  songSource: 'source',
   correctNotes: 'Correct Notes',
   retrySong: 'Try Again',
   randomPractice: 'Free Practice',

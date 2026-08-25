@@ -39,9 +39,6 @@ importers:
       '@sightplay/identity-server':
         specifier: workspace:*
         version: link:packages/identity-server
-      '@sightplay/music-domain':
-        specifier: workspace:*
-        version: link:packages/music-domain
       '@sightplay/practice':
         specifier: workspace:*
         version: link:packages/practice

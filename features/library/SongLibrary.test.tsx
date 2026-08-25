@@ -36,7 +36,7 @@ describe('SongLibrary route projection', () => {
         />
       </PreferencesProvider>
     );
-    expect(screen.getByText('Canon in D')).toBeTruthy();
+    expect(screen.getByText('Canon in D — Flowing Variation')).toBeTruthy();
     expect(screen.queryByText('Minuet in G')).toBeNull();
   });
 });
