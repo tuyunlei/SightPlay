@@ -8,9 +8,11 @@ import {
 } from './types';
 
 type AccountAccessOperationInput =
-  | { readonly kind: 'loadingCredentials' }
+  | { readonly kind: 'loadingAccountAccess' }
   | { readonly kind: 'creatingInvitation' }
-  | { readonly kind: 'revokingCredential'; readonly credentialId: string };
+  | { readonly kind: 'revokingCredential'; readonly credentialId: string }
+  | { readonly kind: 'creatingInvitationAccess' }
+  | { readonly kind: 'revokingInvitationAccess' };
 
 const unchanged = (state: AccountAccessState): AccountAccessTransition => ({
   state,
@@ -42,8 +44,8 @@ function handleIntent(
   action: AccountAccessAction
 ): AccountAccessTransition | null {
   if (action.kind === 'started') {
-    return begin(state, { kind: 'loadingCredentials' }, (operationId) => ({
-      kind: 'loadCredentials',
+    return begin(state, { kind: 'loadingAccountAccess' }, (operationId) => ({
+      kind: 'loadAccountAccess',
       operationId,
     }));
   }
@@ -69,6 +71,21 @@ function handleIntent(
   if (action.kind === 'invitationDismissed') {
     return { state: { ...state, invitationCode: null }, effects: [], outputs: [] };
   }
+  if (action.kind === 'invitationAccessRequested' && state.loaded) {
+    return begin(state, { kind: 'creatingInvitationAccess' }, (operationId) => ({
+      kind: 'createInvitationAccess',
+      operationId,
+    }));
+  }
+  if (action.kind === 'invitationAccessRevocationRequested' && state.invitationAccess) {
+    return begin(state, { kind: 'revokingInvitationAccess' }, (operationId) => ({
+      kind: 'revokeInvitationAccess',
+      operationId,
+    }));
+  }
+  if (action.kind === 'invitationAccessTokenDismissed') {
+    return { state: { ...state, invitationAccessToken: null }, effects: [], outputs: [] };
+  }
   if (action.kind === 'failureCleared') {
     return { state: { ...state, failure: null }, effects: [], outputs: [] };
   }
@@ -81,6 +98,13 @@ export function transitionAccountAccess(
 ): AccountAccessTransition {
   const intent = handleIntent(state, action);
   if (intent) return intent;
+  return handleOperationResult(state, action);
+}
+
+function handleOperationResult(
+  state: AccountAccessState,
+  action: AccountAccessAction
+): AccountAccessTransition {
   const operation = state.operation;
   if (!operation || !('operationId' in action) || action.operationId !== operation.id) {
     return unchanged(state);
@@ -92,9 +116,15 @@ export function transitionAccountAccess(
       outputs: [],
     };
   }
-  if (action.kind === 'credentialsLoaded' && operation.kind === 'loadingCredentials') {
+  if (action.kind === 'accountAccessLoaded' && operation.kind === 'loadingAccountAccess') {
     return {
-      state: { ...state, credentials: action.credentials, loaded: true, operation: null },
+      state: {
+        ...state,
+        credentials: action.snapshot.credentials,
+        invitationAccess: action.snapshot.invitationAccess,
+        loaded: true,
+        operation: null,
+      },
       effects: [],
       outputs: [],
     };
@@ -115,6 +145,30 @@ export function transitionAccountAccess(
       },
       effects: [],
       outputs: [{ kind: 'credentialSetChanged' }],
+    };
+  }
+  if (action.kind === 'invitationAccessCreated' && operation.kind === 'creatingInvitationAccess') {
+    return {
+      state: {
+        ...state,
+        invitationAccess: action.credential,
+        invitationAccessToken: action.token,
+        operation: null,
+      },
+      effects: [],
+      outputs: [],
+    };
+  }
+  if (action.kind === 'invitationAccessRevoked' && operation.kind === 'revokingInvitationAccess') {
+    return {
+      state: {
+        ...state,
+        invitationAccess: null,
+        invitationAccessToken: null,
+        operation: null,
+      },
+      effects: [],
+      outputs: [],
     };
   }
   return unchanged(state);

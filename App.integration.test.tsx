@@ -122,7 +122,7 @@ describe('App protected runtime lifecycle', () => {
     render(<App />);
 
     expect(await screen.findByTestId('protected-app')).toBeTruthy();
-    expect(window.location.pathname).toBe('/practice');
+    expect(window.location.pathname).toBe('/course');
     expect(requestMidiAccess).toHaveBeenCalledTimes(1);
     expect(guidancePortsMock).toHaveBeenCalledOnce();
   });

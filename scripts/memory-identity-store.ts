@@ -16,6 +16,7 @@ import {
   type IdentityServerResult,
   type IdentityStore,
   type InvitationRecord,
+  type InvitationAccessRecord,
   type SecretDigest,
   type SessionRecord,
   type Timestamp,
@@ -27,6 +28,7 @@ export class MemoryIdentityStore implements IdentityStore {
   private readonly invitations = new Map<string, InvitationRecord>();
   private readonly ceremonies = new Map<string, CeremonyRecord>();
   private readonly sessions = new Map<string, SessionRecord>();
+  private readonly invitationAccess = new Map<string, InvitationAccessRecord>();
   private bootstrapClaimed = false;
   private serial = Promise.resolve();
 
@@ -36,6 +38,7 @@ export class MemoryIdentityStore implements IdentityStore {
     this.invitations.clear();
     this.ceremonies.clear();
     this.sessions.clear();
+    this.invitationAccess.clear();
     this.bootstrapClaimed = false;
   }
 
@@ -234,6 +237,48 @@ export class MemoryIdentityStore implements IdentityStore {
       this.credentials.set(credential.id, { ...credential, revokedAt: input.now });
       return accepted(undefined);
     });
+  }
+
+  async findInvitationAccess(input: Parameters<IdentityStore['findInvitationAccess']>[0]) {
+    const credential = this.invitationAccess.get(input.tokenDigest);
+    const account = credential ? this.accounts.get(credential.accountId) : null;
+    return credential &&
+      !credential.revokedAt &&
+      credential.expiresAt > input.now &&
+      account?.status === 'active'
+      ? accepted(credential)
+      : failed('authenticationRequired');
+  }
+
+  async getInvitationAccess(
+    accountId: Parameters<IdentityStore['getInvitationAccess']>[0],
+    now: Parameters<IdentityStore['getInvitationAccess']>[1]
+  ) {
+    const credential = [...this.invitationAccess.values()].find(
+      (item) => item.accountId === accountId && !item.revokedAt && item.expiresAt > now
+    );
+    return accepted(credential ?? null);
+  }
+
+  async replaceInvitationAccess(input: Parameters<IdentityStore['replaceInvitationAccess']>[0]) {
+    return this.exclusive(() => {
+      for (const [digest, credential] of this.invitationAccess) {
+        if (credential.accountId === input.credential.accountId && !credential.revokedAt) {
+          this.invitationAccess.set(digest, { ...credential, revokedAt: input.now });
+        }
+      }
+      this.invitationAccess.set(input.credential.tokenDigest, input.credential);
+      return accepted(undefined);
+    });
+  }
+
+  async revokeInvitationAccess(input: Parameters<IdentityStore['revokeInvitationAccess']>[0]) {
+    for (const [digest, credential] of this.invitationAccess) {
+      if (credential.accountId === input.accountId && !credential.revokedAt) {
+        this.invitationAccess.set(digest, { ...credential, revokedAt: input.now });
+      }
+    }
+    return accepted(undefined);
   }
 
   private async exclusive<T>(operation: () => IdentityServerResult<T>) {

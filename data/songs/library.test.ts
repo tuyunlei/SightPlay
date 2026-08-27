@@ -18,7 +18,7 @@ describe('Song Library', () => {
         expect(song).toHaveProperty('category');
         expect(song).toHaveProperty('clef');
         expect(song).toHaveProperty('timeSignature');
-        expect(song).toHaveProperty('notes');
+        expect(song).toHaveProperty('frames');
 
         expect(typeof song.id).toBe('string');
         expect(typeof song.title).toBe('string');
@@ -27,8 +27,8 @@ describe('Song Library', () => {
         expect([ClefType.TREBLE, ClefType.BASS]).toContain(song.clef);
         expect(song.timeSignature).toHaveProperty('beats');
         expect(song.timeSignature).toHaveProperty('beatUnit');
-        expect(Array.isArray(song.notes)).toBe(true);
-        expect(song.notes.length).toBeGreaterThan(0);
+        expect(Array.isArray(song.frames)).toBe(true);
+        expect(song.frames.length).toBeGreaterThan(0);
       });
     });
 
@@ -40,19 +40,15 @@ describe('Song Library', () => {
 
     it('should have valid notes with duration', () => {
       SONG_LIBRARY.forEach((song) => {
-        song.notes.forEach((note) => {
-          expect(note).toHaveProperty('id');
-          expect(note).toHaveProperty('name');
-          expect(note).toHaveProperty('octave');
-          expect(note).toHaveProperty('midi');
-          expect(note).toHaveProperty('frequency');
-          expect(note).toHaveProperty('globalIndex');
-          expect(note).toHaveProperty('duration');
-
-          expect(['whole', 'half', 'quarter', 'eighth', 'sixteenth']).toContain(note.duration);
-          expect(typeof note.midi).toBe('number');
-          expect(note.midi).toBeGreaterThanOrEqual(21); // A0
-          expect(note.midi).toBeLessThanOrEqual(108); // C8
+        song.frames.forEach((frame, index) => {
+          expect(frame.index).toBe(index);
+          expect(frame.pitches.length).toBeGreaterThan(0);
+          expect(['whole', 'half', 'quarter', 'eighth', 'sixteenth']).toContain(frame.duration);
+          frame.pitches.forEach((pitch) => {
+            expect(typeof pitch).toBe('number');
+            expect(pitch).toBeGreaterThanOrEqual(21); // A0
+            expect(pitch).toBeLessThanOrEqual(108); // C8
+          });
         });
       });
     });
@@ -69,6 +65,59 @@ describe('Song Library', () => {
       expect(categories).toContain('classical');
       expect(categories).toContain('folk');
       expect(categories).toContain('exercise');
+    });
+  });
+
+  describe('Canon in D collection', () => {
+    it('keeps the original route and provides a graded pitch-reading path', () => {
+      const canonSongs = SONG_LIBRARY.filter((song) => song.id.startsWith('canon-in-d'));
+
+      expect(getSongById('canon-in-d')?.title).toBe('Pachelbel Canon — White-Key Melody');
+      expect(canonSongs.map((song) => song.difficulty)).toEqual([
+        'beginner',
+        'beginner',
+        'intermediate',
+        'advanced',
+      ]);
+      expect(canonSongs.every((song) => song.practiceFocus === 'pitch')).toBe(true);
+      expect(
+        canonSongs.every((song) => song.source?.license === 'Creative Commons Attribution 4.0')
+      ).toBe(true);
+    });
+
+    it('starts with short white-key phrases before introducing the original key', () => {
+      const introductorySongs = [
+        getSongById('canon-in-d-ground-bass'),
+        getSongById('canon-in-d'),
+        getSongById('canon-in-d-two-hands'),
+      ];
+      const isWhiteKey = (pitch: number) => ![1, 3, 6, 8, 10].includes(pitch % 12);
+
+      expect(introductorySongs.every((song) => song?.frames.length === 8)).toBe(true);
+      expect(
+        introductorySongs.every((song) =>
+          song?.frames.every((frame) => frame.pitches.every(isWhiteKey))
+        )
+      ).toBe(true);
+
+      const melodyPitches =
+        getSongById('canon-in-d')?.frames.flatMap((frame) => frame.pitches) ?? [];
+      expect(Math.max(...melodyPitches) - Math.min(...melodyPitches)).toBeLessThanOrEqual(9);
+      expect(getSongById('canon-in-d-flowing-variation')?.frames).toHaveLength(32);
+      expect(
+        getSongById('canon-in-d-flowing-variation')?.frames.some((frame) =>
+          frame.pitches.some((pitch) => !isWhiteKey(pitch))
+        )
+      ).toBe(true);
+    });
+
+    it('models the two-hand theme as simultaneous bass and melody events', () => {
+      const song = getSongById('canon-in-d-two-hands');
+
+      expect(song?.handMode).toBe('both-hands');
+      expect(song?.frames).toHaveLength(8);
+      expect(song?.frames.every((frame) => frame.pitches.length === 2)).toBe(true);
+      expect(song?.frames.every((frame) => frame.duration === 'quarter')).toBe(true);
     });
   });
 

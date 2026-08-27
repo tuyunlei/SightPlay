@@ -1,4 +1,29 @@
-import type { SessionStats } from './types';
+import type { ExerciseFrameRole, RoleStats, SessionStats } from './types';
+
+export function createEmptyRoleStats(): RoleStats {
+  return {
+    warmup: { totalAttempts: 0, cleanHits: 0 },
+    guided: { totalAttempts: 0, cleanHits: 0 },
+    familiar: { totalAttempts: 0, cleanHits: 0 },
+    transfer: { totalAttempts: 0, cleanHits: 0 },
+  };
+}
+
+export function acceptRoleAttempt(
+  previous: RoleStats,
+  role: ExerciseFrameRole | undefined,
+  hadMistake: boolean
+): RoleStats {
+  if (!role) return previous;
+  const stats = previous[role];
+  return {
+    ...previous,
+    [role]: {
+      totalAttempts: stats.totalAttempts + 1,
+      cleanHits: stats.cleanHits + (hadMistake ? 0 : 1),
+    },
+  };
+}
 
 export function computeAccuracy(stats: SessionStats): number {
   return stats.totalAttempts === 0

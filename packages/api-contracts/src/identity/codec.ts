@@ -5,6 +5,9 @@ import type {
   ApiResult,
   CredentialSummaryDto,
   InvitationCodesDto,
+  InvitationAccessSnapshotDto,
+  InvitationAccessSummaryDto,
+  IssuedInvitationAccessDto,
   LoginOptionsDto,
   LoginVerificationRequest,
   OperationCompletedDto,
@@ -113,6 +116,36 @@ export function decodeInvitationCodes(value: unknown): DecodeResult<InvitationCo
     value.codes.every((code) => typeof code === 'string')
     ? decoded({ codes: value.codes })
     : rejected('Invitation result requires at least one code');
+}
+
+function decodeInvitationAccessSummary(value: unknown): DecodeResult<InvitationAccessSummaryDto> {
+  return isRecord(value) &&
+    typeof value.id === 'string' &&
+    typeof value.createdAt === 'number' &&
+    typeof value.expiresAt === 'number'
+    ? decoded({ id: value.id, createdAt: value.createdAt, expiresAt: value.expiresAt })
+    : rejected('Invitation access summary is invalid');
+}
+
+export function decodeInvitationAccessSnapshot(
+  value: unknown
+): DecodeResult<InvitationAccessSnapshotDto> {
+  if (!isRecord(value)) return rejected('Invitation access snapshot must be an object');
+  if (value.credential === null) return decoded({ credential: null });
+  const credential = decodeInvitationAccessSummary(value.credential);
+  return credential.ok ? decoded({ credential: credential.value }) : rejected(credential.issue);
+}
+
+export function decodeIssuedInvitationAccess(
+  value: unknown
+): DecodeResult<IssuedInvitationAccessDto> {
+  if (!isRecord(value) || typeof value.token !== 'string' || !value.token.startsWith('sp_inv_')) {
+    return rejected('Issued invitation access requires a token');
+  }
+  const credential = decodeInvitationAccessSummary(value.credential);
+  return credential.ok
+    ? decoded({ token: value.token, credential: credential.value })
+    : rejected(credential.issue);
 }
 
 const parseUserVerification = (value: unknown): UserVerificationDto | undefined =>

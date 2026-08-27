@@ -11,6 +11,66 @@ export type Clef = 'treble' | 'bass';
 export type PracticeRange = 'central' | 'upper' | 'combined';
 export type HandMode = 'right-hand' | 'left-hand' | 'both-hands';
 export type NoteDuration = 'whole' | 'half' | 'quarter' | 'eighth' | 'sixteenth';
+export type ExerciseFrameRole = 'warmup' | 'guided' | 'familiar' | 'transfer';
+export type CurriculumLessonId =
+  | 'keyboard-groups'
+  | 'key-names'
+  | 'landmark-steps'
+  | 'treble-landmarks'
+  | 'bass-landmarks'
+  | 'repeated-notes'
+  | 'ascending-descending'
+  | 'five-finger-phrases'
+  | 'thirds-in-treble'
+  | 'thirds-in-bass'
+  | 'fourths-and-fifths'
+  | 'mixed-interval-phrases'
+  | 'expanding-treble'
+  | 'expanding-bass'
+  | 'ledger-lines'
+  | 'hand-alternation'
+  | 'hands-together'
+  | 'independent-voices'
+  | 'steady-pulse'
+  | 'note-values'
+  | 'rests'
+  | 'eighth-note-patterns'
+  | 'dotted-notes-and-ties'
+  | 'compound-meter'
+  | 'syncopation'
+  | 'familiar-variations'
+  | 'c-major-patterns'
+  | 'g-and-f-major'
+  | 'chord-shapes'
+  | 'arpeggio-shapes'
+  | 'transposition'
+  | 'fingering'
+  | 'articulation'
+  | 'dynamics'
+  | 'phrasing'
+  | 'pedal'
+  | 'preview-and-scan'
+  | 'first-sight-mix'
+  | 'continuous-reading'
+  | 'error-recovery'
+  | 'adaptive-review'
+  | 'repertoire-transfer';
+export type PlayableCurriculumLessonId =
+  | 'landmark-steps'
+  | 'treble-landmarks'
+  | 'bass-landmarks'
+  | 'repeated-notes'
+  | 'ascending-descending'
+  | 'five-finger-phrases'
+  | 'thirds-in-treble'
+  | 'thirds-in-bass'
+  | 'fourths-and-fifths'
+  | 'mixed-interval-phrases'
+  | 'expanding-treble'
+  | 'expanding-bass'
+  | 'familiar-variations'
+  | 'c-major-patterns'
+  | 'first-sight-mix';
 export type NonEmptyReadonlyArray<Value> = readonly [Value, ...Value[]];
 
 export interface ScoreFrame {
@@ -18,6 +78,7 @@ export interface ScoreFrame {
   readonly index: number;
   readonly pitches: NonEmptyReadonlyArray<MidiPitch>;
   readonly duration?: NoteDuration;
+  readonly role?: ExerciseFrameRole;
 }
 
 export interface RandomExerciseConfig {
@@ -33,12 +94,16 @@ export interface ExerciseMetadata {
   readonly description?: string;
   readonly difficulty?: 'beginner' | 'intermediate' | 'advanced';
   readonly noteLabels?: readonly string[];
+  readonly curriculum?: {
+    readonly lessonId: PlayableCurriculumLessonId;
+    readonly seed: RandomSeed;
+  };
 }
 
 export type ExercisePlan =
   | {
       readonly kind: 'finite';
-      readonly source: 'song' | 'coach';
+      readonly source: 'song' | 'coach' | 'lesson';
       readonly frames: NonEmptyReadonlyArray<ScoreFrame>;
       readonly metadata: ExerciseMetadata;
       readonly clef: Clef;
@@ -63,6 +128,13 @@ export interface SessionStats {
   readonly cleanHits: number;
   readonly bpm: number;
 }
+
+export interface AttemptStats {
+  readonly totalAttempts: number;
+  readonly cleanHits: number;
+}
+
+export type RoleStats = Readonly<Record<ExerciseFrameRole, AttemptStats>>;
 
 export type PracticeStatus = 'waiting' | 'listening' | 'correct' | 'incorrect';
 
@@ -99,6 +171,7 @@ export interface PracticeState {
   readonly score: number;
   readonly streak: number;
   readonly stats: SessionStats;
+  readonly roleStats: RoleStats;
   readonly microphone: 'inactive' | 'starting' | 'listening';
   readonly midiConnected: boolean;
   readonly completion: PracticeCompletion;

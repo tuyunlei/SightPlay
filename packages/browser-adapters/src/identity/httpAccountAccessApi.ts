@@ -7,6 +7,8 @@ import {
   decodeApiResult,
   decodeCredentialSummaries,
   decodeInvitationCodes,
+  decodeInvitationAccessSnapshot,
+  decodeIssuedInvitationAccess,
   decodeOperationCompleted,
   readUnknownJson,
   type DecodeResult,
@@ -41,14 +43,32 @@ async function requestJson<T>(
 class HttpAccountAccessApi implements AccountAccessApiPort {
   constructor(private readonly fetchPort: FetchPort) {}
 
-  listCredentials(signal: AbortSignal) {
-    return requestJson(
-      this.fetchPort,
-      '/api/auth/passkeys',
-      { credentials: 'include', signal },
-      'credentialsUnavailable',
-      decodeCredentialSummaries
-    );
+  async loadAccountAccess(signal: AbortSignal) {
+    const [credentials, invitationAccess] = await Promise.all([
+      requestJson(
+        this.fetchPort,
+        '/api/auth/passkeys',
+        { credentials: 'include', signal },
+        'credentialsUnavailable',
+        decodeCredentialSummaries
+      ),
+      requestJson(
+        this.fetchPort,
+        '/api/auth/invitation-access',
+        { credentials: 'include', signal },
+        'invitationAccessRejected',
+        decodeInvitationAccessSnapshot
+      ),
+    ]);
+    if (!credentials.ok) return credentials;
+    if (!invitationAccess.ok) return invitationAccess;
+    return {
+      ok: true as const,
+      value: {
+        credentials: credentials.value,
+        invitationAccess: invitationAccess.value.credential,
+      },
+    };
   }
 
   async createInvitation(signal: AbortSignal): Promise<AccountAccessResult<string>> {
@@ -80,6 +100,27 @@ class HttpAccountAccessApi implements AccountAccessApiPort {
       decodeOperationCompleted
     );
     return result.ok ? { ok: true, value: undefined } : result;
+  }
+
+  createInvitationAccess(signal: AbortSignal) {
+    return requestJson(
+      this.fetchPort,
+      '/api/auth/invitation-access',
+      { method: 'POST', credentials: 'include', signal },
+      'invitationAccessRejected',
+      decodeIssuedInvitationAccess
+    );
+  }
+
+  async revokeInvitationAccess(signal: AbortSignal) {
+    const result = await requestJson(
+      this.fetchPort,
+      '/api/auth/invitation-access',
+      { method: 'DELETE', credentials: 'include', signal },
+      'invitationAccessRejected',
+      decodeOperationCompleted
+    );
+    return result.ok ? { ok: true as const, value: undefined } : result;
   }
 }
 

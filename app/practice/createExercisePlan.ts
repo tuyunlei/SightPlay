@@ -34,11 +34,15 @@ export function createSongExercise(
     source: 'song',
     id: song.id,
     clef: song.clef,
-    frames: song.notes.map((note) => ({
-      pitches: [note.midi],
-      ...(note.duration ? { duration: note.duration } : {}),
+    handMode: song.handMode,
+    frames: song.frames.map((frame) => ({
+      pitches: frame.pitches,
+      duration: frame.duration,
     })),
-    metadata: { title: song.title, difficulty: song.difficulty },
+    metadata: {
+      title: song.title,
+      difficulty: song.difficulty,
+    },
   });
   return result.ok ? result.value : null;
 }

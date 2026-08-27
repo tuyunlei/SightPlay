@@ -1,5 +1,10 @@
 import type { PlatformContext } from './platform';
 import {
+  handleDeleteInvitationAccess,
+  handleGetInvitationAccess,
+  handlePostInvitationAccess,
+} from './routes/auth/invitation-access';
+import {
   handleGetInviteByCode,
   handlePostInvite,
   handlePostInviteBootstrap,
@@ -62,6 +67,15 @@ const ROUTES: readonly ServerRoute[] = [
     handlers: { POST: handlePostInviteBootstrap },
   },
   { id: 'invite', matches: exact('/api/auth/invite'), handlers: { POST: handlePostInvite } },
+  {
+    id: 'invitation-access',
+    matches: exact('/api/auth/invitation-access'),
+    handlers: {
+      GET: handleGetInvitationAccess,
+      POST: handlePostInvitationAccess,
+      DELETE: handleDeleteInvitationAccess,
+    },
+  },
   {
     id: 'invite-code',
     matches: (path) => /^\/api\/auth\/invite\/[^/]+$/.test(path),

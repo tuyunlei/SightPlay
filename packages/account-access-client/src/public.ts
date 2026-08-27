@@ -9,6 +9,8 @@ export type {
   AccountAccessOutput,
   AccountAccessState,
   AccountAccessTransition,
+  AccountAccessSnapshot,
+  InvitationAccessSummary,
   CredentialSummary,
 } from './model/types';
 export type { AccountAccessApiPort, AccountAccessPorts, AccountAccessResult } from './ports';

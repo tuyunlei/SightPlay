@@ -54,6 +54,21 @@ export interface InvitationCodesDto {
   readonly codes: readonly string[];
 }
 
+export interface InvitationAccessSummaryDto {
+  readonly id: string;
+  readonly createdAt: number;
+  readonly expiresAt: number;
+}
+
+export interface InvitationAccessSnapshotDto {
+  readonly credential: InvitationAccessSummaryDto | null;
+}
+
+export interface IssuedInvitationAccessDto {
+  readonly token: string;
+  readonly credential: InvitationAccessSummaryDto;
+}
+
 export type PasskeyTransportDto = 'ble' | 'hybrid' | 'internal' | 'nfc' | 'smart-card' | 'usb';
 
 export type UserVerificationDto = 'required' | 'preferred' | 'discouraged';

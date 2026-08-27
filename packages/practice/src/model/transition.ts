@@ -1,4 +1,5 @@
 import { observeInstrument } from './observation';
+import { createEmptyRoleStats } from './scoring';
 import {
   asSessionEpoch,
   type PracticeAction,
@@ -30,6 +31,7 @@ export function createPracticeState(
     score: 0,
     streak: 0,
     stats: emptyStats,
+    roleStats: createEmptyRoleStats(),
     microphone: 'inactive',
     midiConnected: false,
     completion: { kind: 'active' },
@@ -49,7 +51,14 @@ export function transitionPractice(
   }
   if (action.kind === 'statsReset') {
     return {
-      state: { ...state, score: 0, streak: 0, stats: emptyStats, lastAcceptedAt: action.now },
+      state: {
+        ...state,
+        score: 0,
+        streak: 0,
+        stats: emptyStats,
+        roleStats: createEmptyRoleStats(),
+        lastAcceptedAt: action.now,
+      },
       effects: [],
     };
   }

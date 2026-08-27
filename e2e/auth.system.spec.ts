@@ -9,7 +9,9 @@ async function registerWithRealPasskey(page: Page): Promise<void> {
   await expect(page.getByTestId('register-screen')).toBeVisible();
   await expect(page.locator('#invite-code')).toHaveValue(INVITE_CODE);
   await page.getByRole('button', { name: /create passkey|创建 Passkey/i }).click();
-  await expect(page.getByTestId('staff-display')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('heading', { name: /sight-reading course|识谱课程/i })).toBeVisible({
+    timeout: 15_000,
+  });
 }
 
 test.describe('real local system journeys', () => {
@@ -48,7 +50,9 @@ test.describe('real local system journeys', () => {
     await expect(page.getByTestId('login-screen')).toBeVisible();
 
     await page.getByRole('button', { name: /use passkey|sign in|登录/i }).click();
-    await expect(page.getByTestId('staff-display')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: /sight-reading course|识谱课程/i })).toBeVisible(
+      { timeout: 15_000 }
+    );
   });
 
   test('@critical authenticated UI → real chat handler → controlled Gemini upstream', async ({
@@ -60,7 +64,7 @@ test.describe('real local system journeys', () => {
       action: 'setChatScenario',
       scenario: { kind: 'success', replyText: 'Controlled system response.' },
     });
-    await page.goto('/');
+    await page.goto('/practice');
     await expect(page.getByTestId('staff-display')).toBeVisible({ timeout: 15_000 });
 
     await page.getByTestId('open-chat-button').click();
@@ -76,7 +80,9 @@ test.describe('real local system journeys', () => {
   }) => {
     await system.send({ action: 'seedAuthenticatedSession' });
     await page.goto('/');
-    await expect(page.getByTestId('staff-display')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: /sight-reading course|识谱课程/i })).toBeVisible(
+      { timeout: 15_000 }
+    );
 
     const authenticatedSession = await page.evaluate(async () => {
       const response = await fetch('/api/auth/session', { credentials: 'include' });

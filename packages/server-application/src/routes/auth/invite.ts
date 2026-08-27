@@ -1,6 +1,7 @@
 import { isRecord } from '@sightplay/api-contracts';
 import {
   bootstrapInvitations,
+  authenticateInvitationAccess,
   createInvitations,
   validateInvitation,
 } from '@sightplay/identity-server';
@@ -20,12 +21,12 @@ import { createIdentityDependencies } from './identity-runtime';
 
 export async function handlePostInvite(platform: PlatformContext): Promise<Response> {
   return handleInvite(platform, async (request) => {
-    const session = await authenticateIdentityRequest(request, true);
-    if (!session.ok) return resultResponse(session, request.requestId);
+    const issuer = await authenticateInvitationIssuer(request);
+    if (!issuer.ok) return resultResponse(issuer, request.requestId);
     const count = decodeCount(await readUnknownJson(platform.request));
     if (count === null) return invalidRequestResponse(request.requestId);
     const result = await createInvitations(
-      { issuerAccountId: session.value.accountId, count },
+      { issuerAccountId: issuer.value.accountId, count },
       request.dependencies
     );
     return resultResponse(
@@ -33,6 +34,18 @@ export async function handlePostInvite(platform: PlatformContext): Promise<Respo
       request.requestId
     );
   });
+}
+
+async function authenticateInvitationIssuer(request: ReturnType<typeof createIdentityRequest>) {
+  const authorization = request.platform.request.headers.get('Authorization');
+  if (!authorization) return authenticateIdentityRequest(request, true);
+  const match = /^Bearer (sp_inv_[A-Za-z0-9_-]+)$/.exec(authorization);
+  return match
+    ? authenticateInvitationAccess(match[1], request.dependencies)
+    : {
+        ok: false as const,
+        failure: { code: 'authenticationRequired' as const, retryable: false },
+      };
 }
 
 export async function handlePostInviteBootstrap(platform: PlatformContext): Promise<Response> {

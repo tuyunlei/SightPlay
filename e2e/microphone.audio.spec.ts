@@ -2,7 +2,7 @@ import { expect, mockAuthenticatedSession, test } from './fixtures/app-test';
 
 test('@critical fake capture device drives the real Web Audio pitch pipeline', async ({ page }) => {
   await mockAuthenticatedSession(page);
-  await page.goto('/');
+  await page.goto('/practice');
   await expect(page.getByTestId('staff-display')).toBeVisible();
   await expect(page.getByTestId('score-display').first()).toHaveText('0');
 

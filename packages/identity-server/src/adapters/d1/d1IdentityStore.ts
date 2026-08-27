@@ -14,6 +14,12 @@ import {
   classifyRegistrationFailure,
   inspectInvitation,
 } from './classify';
+import {
+  findD1InvitationAccess,
+  getD1InvitationAccess,
+  replaceD1InvitationAccess,
+  revokeD1InvitationAccess,
+} from './d1InvitationAccess';
 import { bootstrapD1Invitations, createD1Invitations } from './d1Invitations';
 import type { D1DatabasePort } from './d1Types';
 import {
@@ -184,6 +190,25 @@ export class D1IdentityStore implements IdentityStore {
     } catch {
       return this.classifyCredentialRevocation(input);
     }
+  }
+
+  async findInvitationAccess(input: Parameters<IdentityStore['findInvitationAccess']>[0]) {
+    return findD1InvitationAccess(this.db, input);
+  }
+
+  async getInvitationAccess(
+    accountId: Parameters<IdentityStore['getInvitationAccess']>[0],
+    now: Parameters<IdentityStore['getInvitationAccess']>[1]
+  ) {
+    return getD1InvitationAccess(this.db, accountId, now);
+  }
+
+  async replaceInvitationAccess(input: Parameters<IdentityStore['replaceInvitationAccess']>[0]) {
+    return replaceD1InvitationAccess(this.db, input);
+  }
+
+  async revokeInvitationAccess(input: Parameters<IdentityStore['revokeInvitationAccess']>[0]) {
+    return revokeD1InvitationAccess(this.db, input);
   }
 
   private insertCeremony(

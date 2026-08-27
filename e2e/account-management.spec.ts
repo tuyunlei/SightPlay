@@ -10,7 +10,7 @@ type Passkey = { id: string; name: string; createdAt: number };
 
 async function openPasskeyManagement(page: Page) {
   await page.goto('/');
-  await expect(page.getByText('SightPlay')).toBeVisible();
+  await expect(page.getByRole('heading', { name: /sight-reading course|识谱课程/i })).toBeVisible();
 
   const manageButton = page.getByTitle(/manage passkeys|管理 passkey/i);
   await expect(manageButton).toBeVisible();

@@ -54,7 +54,7 @@ test.describe('WebMIDI production adapter', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript({ content: webmidiMockScript });
     await mockAuthenticatedSession(page);
-    await page.goto('/');
+    await page.goto('/practice');
     await expect(page.getByTestId('staff-display')).toBeVisible();
   });
 

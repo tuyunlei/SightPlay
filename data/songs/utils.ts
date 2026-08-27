@@ -1,17 +1,14 @@
-import { createNoteFromMidi } from '@sightplay/music-domain';
+import { Duration } from '../../types';
 
-import { Duration, Note } from '../../types';
+import type { SongFrame } from './types';
 
-export const createSongNote = (
-  midi: number,
-  globalIndex: number,
+export const createSongFrame = (
+  pitches: readonly [number, ...number[]],
+  index: number,
   duration: Duration = 'quarter'
-): Note => {
-  const note = createNoteFromMidi(midi);
-  return {
-    id: `song-note:${globalIndex}:${midi}`,
-    ...note,
-    globalIndex,
-    duration,
-  };
-};
+): SongFrame => ({
+  id: `song-frame:${index}:${pitches.join('+')}`,
+  index,
+  pitches,
+  duration,
+});

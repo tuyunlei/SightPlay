@@ -1,5 +1,5 @@
 import { frameAt } from './exercise';
-import { acceptAttempt, computeScore } from './scoring';
+import { acceptAttempt, acceptRoleAttempt, computeScore } from './scoring';
 import {
   asEffectToken,
   type HeldPitch,
@@ -141,6 +141,7 @@ function acceptTarget(state: PracticeState, target: ScoreFrame, at: number): Pra
   const score = computeScore(state.score, state.streak);
   const streak = state.streak + 1;
   const stats = acceptAttempt(state.stats, state.hadMistake, at - state.lastAcceptedAt);
+  const roleStats = acceptRoleAttempt(state.roleStats, target.role, state.hadMistake);
   const completed = state.plan.kind === 'finite' && frameAt(state.plan, nextCursor) === null;
   const exit = scheduleEffect(state, 'exitCleanup', EXIT_CLEANUP_MS, target.id);
   const completion = completed
@@ -160,6 +161,7 @@ function acceptTarget(state: PracticeState, target: ScoreFrame, at: number): Pra
     score,
     streak,
     stats,
+    roleStats,
     completion: completion.effect
       ? { kind: 'pending', token: completion.effect.token }
       : state.completion,

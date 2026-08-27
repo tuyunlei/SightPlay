@@ -3,7 +3,7 @@ import React from 'react';
 import { usePractice } from '@sightplay/practice';
 
 import { useLanguage } from '../../app/presentation/useLanguage';
-import { getSongById } from '../../data/songs';
+import { getSongById, type Song } from '../../data/songs';
 import PracticeArea from '../practice/PracticeArea';
 
 interface SongPracticeProps {
@@ -15,6 +15,30 @@ function formatElapsed(elapsedMs: number): string {
   const seconds = Math.floor(elapsedMs / 1_000);
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }
+
+const SongAttribution: React.FC<{ song: Song; sourceLabel: string }> = ({ song, sourceLabel }) =>
+  song.source ? (
+    <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
+      {song.source.composer} · {song.source.arranger} ·{' '}
+      <a
+        href={song.source.sourceUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="underline hover:text-blue-600 dark:hover:text-blue-300"
+      >
+        {sourceLabel}
+      </a>{' '}
+      ·{' '}
+      <a
+        href={song.source.licenseUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="underline hover:text-blue-600 dark:hover:text-blue-300"
+      >
+        {song.source.license}
+      </a>
+    </p>
+  ) : null;
 
 export const SongPractice: React.FC<SongPracticeProps> = ({ songId, onExit }) => {
   const { t } = useLanguage();
@@ -39,6 +63,7 @@ export const SongPractice: React.FC<SongPracticeProps> = ({ songId, onExit }) =>
         <div className="max-w-4xl mx-auto flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">{song.title}</h2>
+            <SongAttribution song={song} sourceLabel={t.songSource} />
             <div className="flex gap-4 mt-2 text-sm text-gray-600 dark:text-slate-300">
               <span>{`${t.progress}: ${view.progress}%`}</span>
               <span>•</span>
@@ -54,6 +79,11 @@ export const SongPractice: React.FC<SongPracticeProps> = ({ songId, onExit }) =>
             {t.exitSong}
           </button>
         </div>
+        {song.practiceFocus === 'pitch' && (
+          <p className="mx-auto mt-3 max-w-4xl rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+            {t.songPitchPracticeNotice}
+          </p>
+        )}
         <div className="max-w-4xl mx-auto mt-4">
           <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
             <div

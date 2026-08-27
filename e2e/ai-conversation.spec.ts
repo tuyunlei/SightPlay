@@ -80,7 +80,7 @@ test.describe('AI conversation E2E', () => {
   }) => {
     await mockAuthenticatedSession(page);
     await mockChatApi(page);
-    await page.goto('/');
+    await page.goto('/practice');
 
     await expect(page.getByText('SightPlay')).toBeVisible();
     await openChatDrawer(page);
@@ -118,7 +118,7 @@ test.describe('AI conversation E2E', () => {
     diagnostics.allowHttpError('/api/chat', 500);
     await mockAuthenticatedSession(page);
     await mockChatApi(page, { shouldFail: true });
-    await page.goto('/');
+    await page.goto('/practice');
     await openChatDrawer(page);
 
     await sendMessage(page, 'Can you help me?');
@@ -131,7 +131,7 @@ test.describe('AI conversation E2E', () => {
   test('should not send empty or whitespace-only message', async ({ page }) => {
     await mockAuthenticatedSession(page);
     const chatMock = await mockChatApi(page);
-    await page.goto('/');
+    await page.goto('/practice');
     await openChatDrawer(page);
 
     await sendMessage(page, '   ');
@@ -143,7 +143,7 @@ test.describe('AI conversation E2E', () => {
   test('should preserve chat history when navigating between tabs', async ({ page }) => {
     await mockAuthenticatedSession(page);
     await mockChatApi(page);
-    await page.goto('/');
+    await page.goto('/practice');
     await openChatDrawer(page);
 
     const userMessage = 'Remember this context please';
@@ -153,7 +153,7 @@ test.describe('AI conversation E2E', () => {
 
     await page.getByTestId('close-chat-drawer').click();
     await page.getByRole('button', { name: /song library|曲库/i }).click();
-    await page.getByRole('button', { name: /random practice|随机练习/i }).click();
+    await page.getByRole('button', { name: /free practice|自由练习/i }).click();
 
     await openChatDrawer(page);
     await expect(page.getByText(userMessage, { exact: true })).toBeVisible();
@@ -165,7 +165,7 @@ test.describe('AI conversation E2E', () => {
   }) => {
     await mockAuthenticatedSession(page);
     const chatMock = await mockChatApi(page, { deferred: true });
-    await page.goto('/');
+    await page.goto('/practice');
     await openChatDrawer(page);
 
     const longMessage = `Long message: ${'practice '.repeat(80)}`;

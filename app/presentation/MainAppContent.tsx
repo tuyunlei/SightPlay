@@ -20,9 +20,7 @@ type MainAppContentProps = {
 
 export const MainAppContent: React.FC<MainAppContentProps> = (props) => {
   const contentRoute: AppContentRoute =
-    props.route.kind === 'passkeys'
-      ? (props.route.returnTo ?? { kind: 'randomPractice' })
-      : props.route;
+    props.route.kind === 'passkeys' ? (props.route.returnTo ?? { kind: 'course' }) : props.route;
 
   const openPasskeys = () => {
     if (props.route.kind === 'passkeys') return;
@@ -31,7 +29,7 @@ export const MainAppContent: React.FC<MainAppContentProps> = (props) => {
 
   const closePasskeys = () => {
     if (props.route.kind !== 'passkeys') return;
-    props.dismissEntry(props.route.returnTo ?? { kind: 'randomPractice' });
+    props.dismissEntry(props.route.returnTo ?? { kind: 'course' });
   };
 
   return (
@@ -39,10 +37,13 @@ export const MainAppContent: React.FC<MainAppContentProps> = (props) => {
       <BackgroundDecor />
       {props.route.kind !== 'passkeys' && <PasskeyButton onClick={openPasskeys} />}
       {props.route.kind === 'passkeys' && <PasskeyManagement onClose={closePasskeys} />}
-      {(props.route.kind === 'randomPractice' || props.route.kind === 'library') && (
+      {(props.route.kind === 'course' ||
+        props.route.kind === 'randomPractice' ||
+        props.route.kind === 'library') && (
         <NavigationTabs
           activeRoute={props.route.kind}
           onNavigate={(kind) => props.navigate({ kind })}
+          onToggleLang={props.toggleLang}
           t={props.t}
         />
       )}

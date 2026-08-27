@@ -8,6 +8,13 @@ export {
   createInvitations,
   validateInvitation,
 } from './application/invitations';
+export {
+  authenticateInvitationAccess,
+  createInvitationAccess,
+  getInvitationAccess,
+  revokeInvitationAccess,
+} from './application/invitationAccess';
+export type { InvitationAccessSummary } from './application/invitationAccess';
 export type { IdentityUseCaseDependencies } from './application/dependencies';
 export { authenticateSession, revokeSession } from './application/session';
 export type {
@@ -34,6 +41,7 @@ export {
   asAccountId,
   asCeremonyId,
   asCredentialId,
+  asInvitationAccessId,
   asSecretDigest,
   asSessionId,
   asTimestamp,
@@ -50,6 +58,8 @@ export type {
   CredentialRecord,
   CredentialTransport,
   InvitationRecord,
+  InvitationAccessId,
+  InvitationAccessRecord,
   SecretDigest,
   SessionId,
   SessionRecord,

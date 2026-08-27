@@ -23,6 +23,16 @@ The transactional identity store owns these conceptual records:
 Raw invitation codes, session tokens, and challenges are not stored as retrievable secrets. Repository
 interfaces expose atomic domain commands, not generic key/value operations.
 
+An account may own one active Invite CLI credential. It is a narrow `invitation:create` capability, not
+a general administrator token: the raw credential is returned only when it is issued, D1 stores only its
+digest, replacement revokes the previous credential, and account suspension, expiry, or explicit
+revocation stops it. CLI-authenticated requests invoke the same invitation use case as browser sessions.
+
+Developers may create an invitation through the Wrangler-authenticated control plane without an end-user
+session. The checked-in operator command is the only such adapter: it selects an active issuer account,
+uses the shared invitation generation and normalization rules, writes only the digest to the selected D1
+environment, and requires an additional production confirmation flag.
+
 ## Empty-store bootstrap
 
 An empty Identity database has no authenticated account that can issue its first invitation. The only
@@ -34,8 +44,9 @@ the secret immediately after registering the first account; all later invitation
 account capability.
 
 Bootstrap still passes through invitation normalization, digesting, TTL policy, rate limits, and the
-transactional `IdentityStore`. Operators must not seed invitation rows directly or preserve a general
-administrator route as a second business implementation.
+transactional `IdentityStore`. Operators must not use ad hoc SQL to seed invitations or preserve a general
+administrator route as a second runtime implementation; post-bootstrap control-plane access stays in the
+checked-in Wrangler operator adapter described above.
 
 ## Atomic commands
 
@@ -91,3 +102,6 @@ Provider messages, stack traces, and arbitrary JSON never become product state.
   select the source, ceremony, invitation, or account policy before creating protected state.
 - Secrets remain platform bindings. Logs contain stable codes and identifiers, never credential
   material, invitation codes, session tokens, raw AI prompts, or unredacted user input.
+- Invite CLI credentials live in macOS Keychain under separate Preview and Production accounts. The CLI
+  accepts them only through stdin when saving and never places them in arguments, environment variables,
+  files, logs, or command output.

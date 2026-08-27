@@ -5,6 +5,7 @@ import type {
   Clef,
   ExercisePlan,
   HandMode,
+  PlayableCurriculumLessonId,
   PracticeRange,
   RandomExerciseConfig,
 } from '../model/types';
@@ -14,6 +15,7 @@ export interface PracticeActions {
   startExercise(plan: ExercisePlan): void;
   restartExercise(): void;
   startRandom(config: RandomExerciseConfig): void;
+  startLesson(lessonId: PlayableCurriculumLessonId): void;
   selectClef(clef: Clef): void;
   selectPracticeRange(practiceRange: PracticeRange): void;
   selectHandMode(handMode: HandMode): void;

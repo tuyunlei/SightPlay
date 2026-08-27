@@ -41,7 +41,7 @@ test.describe('Practice Flow', () => {
   test.describe('Authenticated State - Practice UI', () => {
     test.beforeEach(async ({ page }) => {
       await mockAuthenticatedSession(page);
-      await page.goto('/');
+      await page.goto('/practice');
       // Wait for the app to load
       await expect(page.getByText('SightPlay')).toBeVisible();
     });

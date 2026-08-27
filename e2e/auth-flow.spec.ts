@@ -118,7 +118,7 @@ async function mockBypassAuth(page: Page, scenario: 'register' | 'login') {
 
 test.describe('Authentication Flow E2E', () => {
   test.describe('Registration Flow', () => {
-    test('should complete passkey registration and reach practice screen', async ({ page }) => {
+    test('should complete passkey registration and reach the course', async ({ page }) => {
       await mockBypassAuth(page, 'register');
       await page.goto('/');
 
@@ -131,10 +131,9 @@ test.describe('Authentication Flow E2E', () => {
       await expect(registerButton).toBeEnabled();
       await registerButton.click();
 
-      await expect(page.getByTestId('staff-display')).toBeVisible({ timeout: 10000 });
-
-      await expect(page.getByTestId('piano-display')).toBeVisible();
-      await expect(page.getByText('SightPlay')).toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: /sight-reading course|识谱课程/i })
+      ).toBeVisible({ timeout: 10000 });
     });
 
     test('should open /register route with pre-filled invite code', async ({ page }) => {
@@ -182,7 +181,7 @@ test.describe('Authentication Flow E2E', () => {
   });
 
   test.describe('Login Flow', () => {
-    test('should complete passkey login and reach practice screen', async ({ page }) => {
+    test('should complete passkey login and reach the course', async ({ page }) => {
       await mockBypassAuth(page, 'login');
       await page.goto('/');
 
@@ -192,10 +191,9 @@ test.describe('Authentication Flow E2E', () => {
       await expect(loginButton).toBeVisible();
       await loginButton.click();
 
-      await expect(page.getByTestId('staff-display')).toBeVisible({ timeout: 10000 });
-
-      await expect(page.getByTestId('piano-display')).toBeVisible();
-      await expect(page.getByTestId('toggle-clef-button')).toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: /sight-reading course|识谱课程/i })
+      ).toBeVisible({ timeout: 10000 });
     });
 
     test('should persist session across page reloads', async ({ page }) => {
@@ -209,11 +207,15 @@ test.describe('Authentication Flow E2E', () => {
 
       await page.goto('/');
 
-      await expect(page.getByTestId('staff-display')).toBeVisible({ timeout: 10000 });
+      await expect(
+        page.getByRole('heading', { name: /sight-reading course|识谱课程/i })
+      ).toBeVisible({ timeout: 10000 });
 
       await page.reload();
 
-      await expect(page.getByTestId('staff-display')).toBeVisible({ timeout: 10000 });
+      await expect(
+        page.getByRole('heading', { name: /sight-reading course|识谱课程/i })
+      ).toBeVisible({ timeout: 10000 });
     });
   });
 });

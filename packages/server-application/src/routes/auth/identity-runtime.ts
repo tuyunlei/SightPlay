@@ -37,6 +37,7 @@ function readIdentityPolicy(platform: PlatformContext): IdentityPolicy {
         : 'preferred',
     ceremonyTtlMs: parsePositiveInteger(platform, 'IDENTITY_CEREMONY_TTL_MS'),
     invitationTtlMs: parsePositiveInteger(platform, 'IDENTITY_INVITATION_TTL_MS'),
+    invitationAccessTtlMs: parsePositiveInteger(platform, 'IDENTITY_INVITATION_ACCESS_TTL_MS'),
     sessionTtlMs: parsePositiveInteger(platform, 'IDENTITY_SESSION_TTL_MS'),
     rateLimits: {
       source: readRateLimit(platform, 'SOURCE'),

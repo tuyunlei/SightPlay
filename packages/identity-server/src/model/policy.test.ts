@@ -10,6 +10,7 @@ const policy: IdentityPolicy = {
   userVerification: 'required',
   ceremonyTtlMs: 300_000,
   invitationTtlMs: 604_800_000,
+  invitationAccessTtlMs: 7_776_000_000,
   sessionTtlMs: 604_800_000,
   rateLimits: {
     source: { limit: 30, windowMs: 60_000 },

@@ -63,6 +63,44 @@ describe('Practice transition', () => {
     expect(accepted.effects[1]).toMatchObject({ kind: 'schedule', effect: 'exitCleanup' });
   });
 
+  it('separates transfer accuracy from rehearsed lesson performance', () => {
+    const result = createFiniteExercise({
+      source: 'lesson',
+      id: 'test-lesson',
+      clef: 'treble',
+      frames: [
+        { pitches: [60], role: 'guided' },
+        { pitches: [62], role: 'transfer' },
+      ],
+    });
+    if (!result.ok) throw new Error('invalid lesson plan');
+    let state = createPracticeState(result.value, 0);
+
+    state = apply(state, {
+      kind: 'instrumentObserved',
+      observation: { kind: 'midiPressed', pitch: midi(60), at: 100 },
+    });
+    state = apply(state, {
+      kind: 'instrumentObserved',
+      observation: { kind: 'midiReleased', pitch: midi(60), at: 120 },
+    });
+    state = apply(state, {
+      kind: 'instrumentObserved',
+      observation: { kind: 'midiPressed', pitch: midi(64), at: 300 },
+    });
+    state = apply(state, {
+      kind: 'instrumentObserved',
+      observation: { kind: 'midiPressed', pitch: midi(62), at: 320 },
+    });
+    state = apply(state, {
+      kind: 'instrumentObserved',
+      observation: { kind: 'midiReleased', pitch: midi(62), at: 340 },
+    });
+
+    expect(state.roleStats.guided).toEqual({ totalAttempts: 1, cleanHits: 1 });
+    expect(state.roleStats.transfer).toEqual({ totalAttempts: 1, cleanHits: 0 });
+  });
+
   it('requires the complete chord before a target release can advance the frame', () => {
     let state = createPracticeState(
       plan([

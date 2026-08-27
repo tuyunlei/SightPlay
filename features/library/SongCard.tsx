@@ -26,8 +26,8 @@ export const SongCard: React.FC<SongCardProps> = ({ song, onSelect }) => {
     return mins > 0 ? `${mins}:${secs.toString().padStart(2, '0')}` : `${secs}s`;
   };
 
-  const difficultyKey = `difficulty_${song.difficulty}` as keyof typeof t;
-  const categoryKey = `category_${song.category}` as keyof typeof t;
+  const difficultyKey = `difficulty_${song.difficulty}` as const;
+  const categoryKey = `category_${song.category}` as const;
 
   return (
     <div
@@ -35,7 +35,12 @@ export const SongCard: React.FC<SongCardProps> = ({ song, onSelect }) => {
       className="p-4 bg-white dark:bg-slate-900 border-2 border-gray-200 dark:border-slate-700 rounded-lg hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer"
     >
       <div className="flex justify-between items-start mb-2">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{song.title}</h3>
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{song.title}</h3>
+          {song.composer && (
+            <p className="text-xs text-gray-500 dark:text-slate-400">{song.composer}</p>
+          )}
+        </div>
         <span
           className={`px-2 py-1 text-xs font-semibold rounded border ${difficultyColors[song.difficulty]}`}
         >
@@ -61,6 +66,11 @@ export const SongCard: React.FC<SongCardProps> = ({ song, onSelect }) => {
         <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded dark:bg-slate-800 dark:text-slate-300">
           {t[categoryKey]}
         </span>
+        {song.practiceFocus === 'pitch' && (
+          <span className="ml-2 rounded bg-indigo-50 px-2 py-1 text-xs text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+            {t.songPitchPractice}
+          </span>
+        )}
       </div>
     </div>
   );

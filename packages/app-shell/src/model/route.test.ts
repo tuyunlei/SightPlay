@@ -7,11 +7,18 @@ describe('App route', () => {
     [{ kind: 'login' }, '/'],
     [{ kind: 'register' }, '/register'],
     [{ kind: 'register', inviteCode: 'ABCD-EFGH' }, '/register?code=ABCD-EFGH'],
+    [{ kind: 'course' }, '/course'],
+    [{ kind: 'lessonPractice', lessonId: 'lesson / 1' }, '/course/lesson%20%2F%201'],
     [{ kind: 'randomPractice' }, '/practice'],
     [{ kind: 'library' }, '/library'],
     [{ kind: 'library', difficulty: 'intermediate' }, '/library?difficulty=intermediate'],
     [{ kind: 'songPractice', songId: 'song / 1' }, '/songs/song%20%2F%201'],
     [{ kind: 'passkeys' }, '/passkeys'],
+    [{ kind: 'passkeys', returnTo: { kind: 'course' } }, '/passkeys?from=course'],
+    [
+      { kind: 'passkeys', returnTo: { kind: 'lessonPractice', lessonId: 'lesson / 1' } },
+      '/passkeys?from=lesson&lessonId=lesson%20%2F%201',
+    ],
     [{ kind: 'passkeys', returnTo: { kind: 'randomPractice' } }, '/passkeys?from=practice'],
     [
       { kind: 'passkeys', returnTo: { kind: 'library', difficulty: 'advanced' } },

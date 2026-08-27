@@ -54,6 +54,7 @@ export const en = {
   openAiChat: 'AI Coach',
   closeChat: 'Close',
   languageToggle: 'Switch language',
+  mainNavigation: 'Main navigation',
   songLibrary: 'Song Library',
   difficulty_beginner: 'Beginner',
   difficulty_intermediate: 'Intermediate',
@@ -73,9 +74,275 @@ export const en = {
   songNotFound: 'Song not found',
   backToLibrary: 'Back to Library',
   songCompleteTitle: 'Song Complete!',
+  songPitchPractice: 'Pitch practice',
+  songPitchPracticeNotice:
+    'This educational edition normalizes rhythm. SightPlay currently assesses pitch and chord identity, not performed note length.',
+  songSource: 'source',
   correctNotes: 'Correct Notes',
   retrySong: 'Try Again',
-  randomPractice: 'Random Practice',
+  randomPractice: 'Free Practice',
+  course: 'Course',
+  courseTitle: 'Sight-reading Course',
+  courseDescription:
+    'Build score-to-keyboard fluency with musical phrases that stay familiar enough to guide you and varied enough to keep you reading.',
+  courseLesson: 'Lesson',
+  courseStart: 'Start lesson',
+  courseAvailable: 'Available now',
+  coursePlanned: 'Planned',
+  courseRoadmapSummary: '{available} of {total} lessons are playable now',
+  coursePlannedReason: 'Needs: {capabilities}',
+  curriculumModules: {
+    foundations: {
+      title: 'Keyboard & landmarks',
+      description: 'Build reliable anchors before asking the eye and hand to cover more territory.',
+    },
+    intervals: {
+      title: 'Intervals & contour',
+      description: 'Read repeated notes, steps, skips, and phrase shapes as patterns.',
+    },
+    'grand-staff': {
+      title: 'Grand staff & coordination',
+      description: 'Coordinate both clefs and eventually read simultaneous voices.',
+    },
+    rhythm: {
+      title: 'Rhythm & pulse',
+      description: 'Turn spacing and symbols into a steady, measurable flow of time.',
+    },
+    'tonal-patterns': {
+      title: 'Keys, melody & harmony',
+      description: 'Recognize familiar tonal shapes without relying on a fixed memorized piece.',
+    },
+    expression: {
+      title: 'Technique & expression',
+      description: 'Add fingering, articulation, dynamics, phrasing, and pedal control.',
+    },
+    fluency: {
+      title: 'First-sight fluency',
+      description: 'Preview, keep moving, recover, and transfer reading to genuinely unseen music.',
+    },
+  },
+  curriculumChapters: {
+    'keyboard-map': 'Keyboard map',
+    landmarks: 'Staff landmarks',
+    direction: 'Direction of motion',
+    'steps-and-thirds': 'Steps and thirds',
+    'wider-intervals': 'Wider intervals',
+    range: 'Expanding range',
+    coordination: 'Hand coordination',
+    'pulse-and-values': 'Pulse and note values',
+    'rhythm-patterns': 'Rhythmic vocabulary',
+    'melody-and-key': 'Melody and key',
+    harmony: 'Harmonic shapes',
+    'technique-and-expression': 'Playing instructions',
+    'first-sight': 'Reading at first sight',
+    'long-term-transfer': 'Long-term transfer',
+  },
+  curriculumLessons: {
+    'keyboard-groups': {
+      title: 'Groups of two and three',
+      description: 'Find any key from the black-key pattern.',
+    },
+    'key-names': {
+      title: 'Keyboard letter names',
+      description: 'Name and locate natural keys across the keyboard.',
+    },
+    'landmark-steps': {
+      title: 'Steps around Middle C',
+      description: 'Read C, D, and E in connected phrases.',
+    },
+    'treble-landmarks': {
+      title: 'Treble landmark notes',
+      description: 'Use Middle C, treble E, G, and high C as anchors.',
+    },
+    'bass-landmarks': {
+      title: 'Bass landmark notes',
+      description: 'Use low C, bass F, and Middle C as anchors.',
+    },
+    'repeated-notes': {
+      title: 'Repeat or move?',
+      description: 'Separate repeated notes from a step up or down.',
+    },
+    'ascending-descending': {
+      title: 'Follow the contour',
+      description: 'Track ascending and descending five-note phrases.',
+    },
+    'five-finger-phrases': {
+      title: 'Five-finger phrases',
+      description: 'Read stepwise motion across C–G.',
+    },
+    'thirds-in-treble': {
+      title: 'Treble thirds',
+      description: 'Recognize line-to-line and space-to-space skips.',
+    },
+    'thirds-in-bass': {
+      title: 'Bass thirds',
+      description: 'Transfer third recognition to the left hand.',
+    },
+    'fourths-and-fifths': {
+      title: 'Fourths and fifths',
+      description: 'Recognize wider shapes without counting every line.',
+    },
+    'mixed-interval-phrases': {
+      title: 'Mixed interval phrases',
+      description: 'Combine steps and skips in short musical ideas.',
+    },
+    'expanding-treble': {
+      title: 'Treble octave',
+      description: 'Read from Middle C through the next C.',
+    },
+    'expanding-bass': { title: 'Bass octave', description: 'Read a full octave below Middle C.' },
+    'ledger-lines': {
+      title: 'Ledger-line anchors',
+      description: 'Extend landmark reading beyond the staff.',
+    },
+    'hand-alternation': {
+      title: 'Hands take turns',
+      description: 'Follow one melody as it moves between clefs.',
+    },
+    'hands-together': {
+      title: 'Hands together',
+      description: 'Read simple simultaneous notes on the grand staff.',
+    },
+    'independent-voices': {
+      title: 'Independent voices',
+      description: 'Track two lines with different motion.',
+    },
+    'steady-pulse': {
+      title: 'Keep a steady pulse',
+      description: 'Match each event to an audible beat.',
+    },
+    'note-values': {
+      title: 'Quarter, half, and whole',
+      description: 'Read duration from symbol and horizontal spacing.',
+    },
+    rests: {
+      title: 'Rests and silence',
+      description: 'Keep the pulse moving through silent beats.',
+    },
+    'eighth-note-patterns': {
+      title: 'Eighth-note patterns',
+      description: 'Subdivide the beat into common two-note groups.',
+    },
+    'dotted-notes-and-ties': {
+      title: 'Dots and ties',
+      description: 'Sustain sound across longer and joined values.',
+    },
+    'compound-meter': {
+      title: 'Compound meter',
+      description: 'Feel and read beats divided into three.',
+    },
+    syncopation: { title: 'Syncopation', description: 'Keep the beat while accents shift off it.' },
+    'familiar-variations': {
+      title: 'Familiar, not fixed',
+      description: 'Use melodic familiarity while variations keep you reading.',
+    },
+    'c-major-patterns': {
+      title: 'C-major patterns',
+      description: 'Recognize scale fragments, sequences, and stable tones.',
+    },
+    'g-and-f-major': {
+      title: 'G and F major',
+      description: 'Read key signatures and altered scale patterns.',
+    },
+    'chord-shapes': {
+      title: 'Chord shapes',
+      description: 'Read stacked thirds as a single harmonic unit.',
+    },
+    'arpeggio-shapes': {
+      title: 'Arpeggio shapes',
+      description: 'Recognize broken chords across time.',
+    },
+    transposition: {
+      title: 'Transpose a pattern',
+      description: 'Keep the interval shape while changing the starting key.',
+    },
+    fingering: {
+      title: 'Flexible fingering',
+      description: 'Choose and follow fingering without tying notes to fixed fingers.',
+    },
+    articulation: {
+      title: 'Legato and staccato',
+      description: 'Make articulation visible, audible, and measurable.',
+    },
+    dynamics: {
+      title: 'Dynamic levels',
+      description: 'Control soft and loud playing from the score.',
+    },
+    phrasing: {
+      title: 'Phrase direction',
+      description: 'Shape longer ideas instead of producing isolated notes.',
+    },
+    pedal: {
+      title: 'Pedal changes',
+      description: 'Coordinate sustain pedal with harmonic changes.',
+    },
+    'preview-and-scan': {
+      title: 'Preview before playing',
+      description: 'Scan key, meter, rhythm, patterns, and hazards first.',
+    },
+    'first-sight-mix': {
+      title: 'First-sight pitch mix',
+      description: 'Read a fresh mixture of the pitch patterns learned so far.',
+    },
+    'continuous-reading': {
+      title: 'Keep moving',
+      description: 'Read ahead while maintaining an external pulse.',
+    },
+    'error-recovery': {
+      title: 'Recover without stopping',
+      description: 'Rejoin the score after an error without restarting.',
+    },
+    'adaptive-review': {
+      title: 'Adaptive review',
+      description: 'Revisit weak patterns with spaced, varied practice.',
+    },
+    'repertoire-transfer': {
+      title: 'Transfer to repertoire',
+      description: 'Apply fluent reading to level-appropriate complete pieces.',
+    },
+  },
+  curriculumCapabilities: {
+    'pre-staff-notation': 'pre-staff and landmark-specific notation',
+    'clef-per-frame': 'clef changes inside one exercise',
+    'polyphonic-score': 'two-staff polyphonic layout and scoring',
+    'rhythm-engine': 'beat-proportional layout and duration scoring',
+    'key-signatures': 'key-signature rendering and tonal generation',
+    'chord-reading': 'chord-aware notation and assessment',
+    'fingering-feedback': 'fingering input and feedback',
+    'articulation-scoring': 'note-on/note-off articulation scoring',
+    'velocity-dynamics': 'MIDI velocity scoring',
+    'pedal-input': 'sustain-pedal input and scoring',
+    'preview-timer': 'structured preview mode',
+    'continuous-pulse': 'metronome-synchronised continuous scoring',
+    'adaptive-progress': 'durable mastery and review scheduling',
+    'repertoire-library': 'levelled, licensed repertoire path',
+  },
+  courseLoading: 'Preparing a new variation...',
+  courseLessonNotFound: 'This lesson does not exist.',
+  exitLesson: 'Exit',
+  backToCourse: 'Back to Course',
+  courseCompleteTitle: 'Lesson complete!',
+  courseTransferAccuracy: 'New phrase',
+  courseTransferExplanation:
+    'The new-phrase score comes only from material you did not rehearse in this lesson.',
+  courseNewVariation: 'New variation',
+  courseStageWarmup: 'Warm-up',
+  courseStageWarmupDescription: 'Find the anchor notes and settle your hand position.',
+  courseStageGuided: 'Musical phrase',
+  courseStageGuidedDescription: 'Read the direction and shape instead of isolated notes.',
+  courseStageFamiliar: 'Familiar variation',
+  courseStageFamiliarDescription:
+    'Use the melody as support, but follow what the score actually says.',
+  courseStageTransfer: 'First-sight check',
+  courseStageTransferDescription: 'This phrase is new. Its first attempt measures transfer.',
+  lessonLandmarkTitle: 'Steps around Middle C',
+  lessonLandmarkDescription:
+    'Read C, D, and E in short connected phrases before expanding your range.',
+  lessonFiveFingerTitle: 'Five-finger Phrases',
+  lessonFiveFingerDescription: 'Follow stepwise motion across C–G and finish on stable notes.',
+  lessonVariationTitle: 'Familiar, Not Fixed',
+  lessonVariationDescription:
+    'Recognize familiar melodic shapes while note changes and variations keep your eyes on the score.',
   recTryBassTitle: 'Ready for a challenge?',
   recTryBassDesc: "You're doing great with treble clef — try bass clef!",
   recExpandRangeTitle: 'Expand your range',
@@ -116,6 +383,21 @@ export const en = {
   inviteCodeGenerate: 'Generate Invite Code',
   inviteCodeGenerating: 'Generating...',
   inviteCodeFailed: 'Failed to generate invite code',
+  inviteCliTitle: 'Invite CLI access',
+  inviteCliDescription:
+    'Create a revocable credential that can only generate invitation codes from the CLI.',
+  inviteCliTokenOnce: 'Copy this credential now. It will not be shown again.',
+  inviteCliCopy: 'Copy credential',
+  inviteCliCopied: 'Copied',
+  inviteCliDone: 'Done',
+  inviteCliActive: 'Active until {date}',
+  inviteCliCreate: 'Create CLI credential',
+  inviteCliReplace: 'Replace credential',
+  inviteCliRevoke: 'Revoke',
+  inviteCliReplaceConfirm:
+    'Replace the current CLI credential? The old credential will stop working.',
+  inviteCliRevokeConfirm: 'Revoke CLI invitation access?',
+  inviteCliFailed: 'CLI invitation access could not be updated. Please try again.',
   passkeyManageTitle: 'Manage Passkeys',
   passkeyClose: 'Close',
   passkeyLoading: 'Loading...',

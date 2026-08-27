@@ -5,6 +5,7 @@ import {
   asAccountId,
   asCeremonyId,
   asCredentialId,
+  asInvitationAccessId,
   asSecretDigest,
   asSessionId,
   asTimestamp,
@@ -22,6 +23,12 @@ import { beginRegistration } from './beginRegistration';
 import { completeAuthentication } from './completeAuthentication';
 import { completeRegistration } from './completeRegistration';
 import type { IdentityUseCaseDependencies } from './dependencies';
+import {
+  authenticateInvitationAccess,
+  createInvitationAccess,
+  getInvitationAccess,
+  revokeInvitationAccess,
+} from './invitationAccess';
 import { bootstrapInvitations } from './invitations';
 
 const NOW = asTimestamp(1_000);
@@ -80,6 +87,10 @@ function createStore(): IdentityStore {
     revokeSession: vi.fn(async () => accepted(undefined)),
     listCredentials: vi.fn(async () => accepted([credential()])),
     revokeCredential: vi.fn(async () => accepted(undefined)),
+    findInvitationAccess: vi.fn(async () => failed('authenticationRequired')),
+    getInvitationAccess: vi.fn(async () => accepted(null)),
+    replaceInvitationAccess: vi.fn(async () => accepted(undefined)),
+    revokeInvitationAccess: vi.fn(async () => accepted(undefined)),
   };
 }
 
@@ -113,10 +124,12 @@ function createDependencies(
       createAccountId: () => ACCOUNT_ID,
       createCeremonyId: () => CEREMONY_ID,
       createSessionId: () => asSessionId('session-1'),
+      createInvitationAccessId: () => asInvitationAccessId('invitation-access-1'),
     },
     secrets: {
       createChallenge: () => 'challenge-1',
       createInvitationCode: () => 'ABCD-EFGH',
+      createInvitationAccessToken: () => 'sp_inv_raw-token',
       createSessionToken: () => 'raw-session-token',
       digest: async (value) => asSecretDigest(`digest:${value}`),
     },
@@ -128,6 +141,7 @@ function createDependencies(
       userVerification: 'required',
       ceremonyTtlMs: 60_000,
       invitationTtlMs: 604_800_000,
+      invitationAccessTtlMs: 7_776_000_000,
       sessionTtlMs: 604_800_000,
       rateLimits: {
         source: { limit: 20, windowMs: 60_000 },
@@ -143,6 +157,45 @@ function createDependencies(
 }
 
 describe('Identity Server use cases', () => {
+  it('issues one hashed invitation-only credential and can revoke it', async () => {
+    const store = createStore();
+    const dependencies = createDependencies({ store });
+    const issued = await createInvitationAccess(ACCOUNT_ID, dependencies);
+
+    expect(issued).toMatchObject({
+      ok: true,
+      value: {
+        token: 'sp_inv_raw-token',
+        credential: { id: 'invitation-access-1', createdAt: NOW },
+      },
+    });
+    expect(store.replaceInvitationAccess).toHaveBeenCalledWith({
+      now: NOW,
+      credential: expect.objectContaining({
+        tokenDigest: 'digest:sp_inv_raw-token',
+        accountId: ACCOUNT_ID,
+      }),
+    });
+
+    const record = vi.mocked(store.replaceInvitationAccess).mock.calls[0][0].credential;
+    vi.mocked(store.getInvitationAccess).mockResolvedValue(accepted(record));
+    vi.mocked(store.findInvitationAccess).mockResolvedValue(accepted(record));
+    expect(await getInvitationAccess(ACCOUNT_ID, dependencies)).toMatchObject({
+      ok: true,
+      value: { id: 'invitation-access-1' },
+    });
+    expect(await authenticateInvitationAccess('sp_inv_raw-token', dependencies)).toEqual({
+      ok: true,
+      value: { accountId: ACCOUNT_ID },
+    });
+
+    expect(await revokeInvitationAccess(ACCOUNT_ID, dependencies)).toEqual({
+      ok: true,
+      value: undefined,
+    });
+    expect(store.revokeInvitationAccess).toHaveBeenCalledWith({ accountId: ACCOUNT_ID, now: NOW });
+  });
+
   it('commits invitation bootstrap through its dedicated atomic store command', async () => {
     const store = createStore();
     const dependencies = createDependencies({ store });

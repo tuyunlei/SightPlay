@@ -17,5 +17,6 @@ test('@preview deployed app serves a usable entry state without runtime failures
       .getByTestId('login-screen')
       .or(page.getByTestId('register-screen'))
       .or(page.getByTestId('staff-display'))
+      .or(page.getByRole('heading', { name: /sight-reading course|识谱课程/i }))
   ).toBeVisible({ timeout: 15_000 });
 });

@@ -32,8 +32,18 @@ test.describe('Logout Flow', () => {
       });
     });
 
+    await page.route('**/api/auth/invitation-access', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: identitySuccess({ credential: null }),
+      });
+    });
+
     await page.goto('/');
-    await expect(page.getByTestId('staff-display')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: /sight-reading course|识谱课程/i })).toBeVisible(
+      { timeout: 10000 }
+    );
 
     await page.getByRole('button', { name: /manage passkeys|管理 passkey/i }).click();
     const logoutButton = page.getByRole('button', { name: /logout|退出登录/i });

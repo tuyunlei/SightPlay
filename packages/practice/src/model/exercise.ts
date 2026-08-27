@@ -3,6 +3,7 @@ import {
   asRandomSeed,
   type Clef,
   type ExerciseMetadata,
+  type ExerciseFrameRole,
   type ExercisePlan,
   type HandMode,
   type MidiPitch,
@@ -28,6 +29,7 @@ export type RandomExerciseResult =
 export interface FiniteFrameInput {
   readonly pitches: readonly number[];
   readonly duration?: NoteDuration;
+  readonly role?: ExerciseFrameRole;
 }
 
 export function createMidiPitch(value: number): MidiPitch | null {
@@ -50,7 +52,7 @@ export function parseScientificPitch(value: string): MidiPitch | null {
 }
 
 export function createFiniteExercise(input: {
-  readonly source: 'song' | 'coach';
+  readonly source: 'song' | 'coach' | 'lesson';
   readonly id: string;
   readonly clef: Clef;
   readonly handMode?: HandMode;
@@ -108,6 +110,7 @@ function decodeFrame(id: string, input: FiniteFrameInput, index: number): ScoreF
     index,
     pitches: pitches as [MidiPitch, ...MidiPitch[]],
     ...(input.duration ? { duration: input.duration } : {}),
+    ...(input.role ? { role: input.role } : {}),
   };
 }
 

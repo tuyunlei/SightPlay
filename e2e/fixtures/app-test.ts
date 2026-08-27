@@ -111,7 +111,9 @@ const unexpectedEvents = (state: DiagnosticsState) => {
       if (
         event.failure === 'net::ERR_ABORTED' &&
         event.method === 'GET' &&
-        (url.pathname === '/api/auth/session' || url.pathname === '/api/auth/passkeys')
+        (url.pathname === '/api/auth/session' ||
+          url.pathname === '/api/auth/passkeys' ||
+          url.pathname === '/api/auth/invitation-access')
       ) {
         return false;
       }
@@ -195,6 +197,13 @@ export async function mockAuthenticatedSession(page: Page): Promise<void> {
       status: 200,
       contentType: 'application/json',
       body: identitySuccess({ authenticated: true, hasPasskeys: true }),
+    })
+  );
+  await page.route('**/api/auth/invitation-access', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: identitySuccess({ credential: null }),
     })
   );
 }

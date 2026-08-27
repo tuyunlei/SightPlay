@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
   asSecretDigest,
+  asInvitationAccessId,
   asSessionId,
   asTimestamp,
   type CeremonyRecord,
@@ -247,6 +248,47 @@ describe('D1 IdentityStore transaction contract', () => {
         key.id
       )
     ).toBe(1);
+  });
+
+  it('rotates one invitation access credential and rejects the previous token', async () => {
+    const accountRecord = account('invitation-access-account');
+    await seedAccountAndCredential(
+      accountRecord,
+      credential('invitation-access-passkey', accountRecord.id)
+    );
+    const first = {
+      id: asInvitationAccessId('access-first'),
+      tokenDigest: asSecretDigest('access-token-first'),
+      accountId: accountRecord.id,
+      createdAt: now,
+      expiresAt: asTimestamp(20_000),
+      revokedAt: null,
+    };
+    const second = {
+      ...first,
+      id: asInvitationAccessId('access-second'),
+      tokenDigest: asSecretDigest('access-token-second'),
+    };
+
+    expect(await store.replaceInvitationAccess({ now, credential: first })).toEqual({
+      ok: true,
+      value: undefined,
+    });
+    expect(await store.replaceInvitationAccess({ now, credential: second })).toEqual({
+      ok: true,
+      value: undefined,
+    });
+    expect(await store.findInvitationAccess({ now, tokenDigest: first.tokenDigest })).toMatchObject(
+      { ok: false, failure: { code: 'authenticationRequired' } }
+    );
+    expect(
+      await store.findInvitationAccess({ now, tokenDigest: second.tokenDigest })
+    ).toMatchObject({ ok: true, value: { accountId: accountRecord.id } });
+
+    await store.revokeInvitationAccess({ accountId: accountRecord.id, now });
+    expect(
+      await store.findInvitationAccess({ now, tokenDigest: second.tokenDigest })
+    ).toMatchObject({ ok: false, failure: { code: 'authenticationRequired' } });
   });
 });
 
