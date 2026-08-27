@@ -72,7 +72,7 @@ describe('Song Library', () => {
     it('keeps the original route and provides a graded pitch-reading path', () => {
       const canonSongs = SONG_LIBRARY.filter((song) => song.id.startsWith('canon-in-d'));
 
-      expect(getSongById('canon-in-d')?.title).toBe('Canon in D — Opening Melody');
+      expect(getSongById('canon-in-d')?.title).toBe('Pachelbel Canon — White-Key Melody');
       expect(canonSongs.map((song) => song.difficulty)).toEqual([
         'beginner',
         'beginner',
@@ -85,11 +85,37 @@ describe('Song Library', () => {
       ).toBe(true);
     });
 
+    it('starts with short white-key phrases before introducing the original key', () => {
+      const introductorySongs = [
+        getSongById('canon-in-d-ground-bass'),
+        getSongById('canon-in-d'),
+        getSongById('canon-in-d-two-hands'),
+      ];
+      const isWhiteKey = (pitch: number) => ![1, 3, 6, 8, 10].includes(pitch % 12);
+
+      expect(introductorySongs.every((song) => song?.frames.length === 8)).toBe(true);
+      expect(
+        introductorySongs.every((song) =>
+          song?.frames.every((frame) => frame.pitches.every(isWhiteKey))
+        )
+      ).toBe(true);
+
+      const melodyPitches =
+        getSongById('canon-in-d')?.frames.flatMap((frame) => frame.pitches) ?? [];
+      expect(Math.max(...melodyPitches) - Math.min(...melodyPitches)).toBeLessThanOrEqual(9);
+      expect(getSongById('canon-in-d-flowing-variation')?.frames).toHaveLength(32);
+      expect(
+        getSongById('canon-in-d-flowing-variation')?.frames.some((frame) =>
+          frame.pitches.some((pitch) => !isWhiteKey(pitch))
+        )
+      ).toBe(true);
+    });
+
     it('models the two-hand theme as simultaneous bass and melody events', () => {
       const song = getSongById('canon-in-d-two-hands');
 
       expect(song?.handMode).toBe('both-hands');
-      expect(song?.frames).toHaveLength(32);
+      expect(song?.frames).toHaveLength(8);
       expect(song?.frames.every((frame) => frame.pitches.length === 2)).toBe(true);
       expect(song?.frames.every((frame) => frame.duration === 'quarter')).toBe(true);
     });

@@ -113,7 +113,7 @@ test.describe('Song Library Practice flow', () => {
     if (!firstFrame) throw new Error('missing Canon two-hand opening frame');
 
     await openSongLibrary(page);
-    await page.getByText('Canon in D — Two-Hand Theme').click();
+    await page.getByText('Pachelbel Canon — White-Key Two Hands').click();
     await expect(page).toHaveURL(/\/songs\/canon-in-d-two-hands$/);
     await expect(page.getByText(/normalizes rhythm|统一了节奏/i)).toBeVisible();
     await expect(page.getByRole('link', { name: /source|谱源/i })).toBeVisible();
